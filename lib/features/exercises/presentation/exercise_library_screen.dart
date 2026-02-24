@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
 import '../../../theme/app_radius.dart';
@@ -114,7 +114,7 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
                       },
                       child: Padding(
                         padding: EdgeInsets.all(8.r),
-                        child: Icon(LucideIcons.arrowLeft, size: 20.r, color: context.foreground),
+                        child: Icon(AppIcons.arrowLeft, size: 20.r, color: context.foreground),
                       ),
                     ),
                   ),
@@ -129,7 +129,7 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
                 decoration: InputDecoration(
                   hintText: 'Search exercises...',
                   hintStyle: AppTextStyles.body.copyWith(color: context.mutedForeground),
-                  prefixIcon: Icon(LucideIcons.search, size: 20.r, color: context.mutedForeground),
+                  prefixIcon: Icon(AppIcons.search, size: 20.r, color: context.mutedForeground),
                   filled: true,
                   fillColor: context.mutedColor,
                   border: OutlineInputBorder(borderRadius: AppRadius.borderLg, borderSide: BorderSide(color: context.borderColor)),
@@ -204,7 +204,7 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(LucideIcons.dumbbell, size: 16.r, color: context.primaryColor),
+                      Icon(AppIcons.dumbbell, size: 16.r, color: context.primaryColor),
                       SizedBox(width: 8.w),
                       Expanded(
                         child: Text(exercise.name, style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
@@ -249,7 +249,7 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
                 child: Padding(
                   padding: EdgeInsets.all(8.r),
                   child: Icon(
-                    exercise.isFavorite ? LucideIcons.heart : LucideIcons.heart,
+                    exercise.isFavorite ? AppIcons.heart : AppIcons.heart,
                     size: 20.r,
                     color: exercise.isFavorite ? Colors.red : context.mutedForeground,
                   ),
@@ -267,7 +267,7 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(LucideIcons.dumbbell, size: 48.r, color: context.mutedForeground.withValues(alpha: 0.5)),
+          Icon(AppIcons.dumbbell, size: 48.r, color: context.mutedForeground.withValues(alpha: 0.5)),
           SizedBox(height: 12.h),
           Text('No exercises found', style: AppTextStyles.body.copyWith(color: context.mutedForeground)),
         ],

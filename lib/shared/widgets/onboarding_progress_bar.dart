@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../theme/app_icons.dart';
 
 import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
@@ -45,7 +45,7 @@ class OnboardingProgressBar extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                LucideIcons.arrowLeft,
+                AppIcons.arrowLeft,
                 size: 20.r,
                 color: isDark
                     ? AppColors.darkForeground
@@ -62,7 +62,7 @@ class OnboardingProgressBar extends StatelessWidget {
                 return Expanded(
                   child: Container(
                     height: 4.h,
-                    margin: EdgeInsets.symmetric(horizontal: 1.w),
+                    margin: EdgeInsets.symmetric(horizontal: 1.5.w),
                     decoration: BoxDecoration(
                       color: isCompleted ? primary : muted,
                       borderRadius: AppRadius.borderFull,

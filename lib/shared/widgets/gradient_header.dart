@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../theme/app_icons.dart';
 
 import '../../theme/app_gradients.dart';
+import '../../theme/app_radius.dart';
 import '../../theme/app_shadows.dart';
 import '../../theme/app_spacing.dart';
 import '../utils/platform_adapter.dart';
@@ -26,8 +27,10 @@ class GradientHeader extends StatelessWidget {
 
     return Container(
       width: double.infinity,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: AppGradients.primary(isDark: isDark),
+        borderRadius: AppRadius.headerBottom,
         boxShadow: AppShadows.lg,
       ),
       child: SafeArea(
@@ -64,7 +67,7 @@ class GradientHeader extends StatelessWidget {
                               borderRadius: BorderRadius.circular(10.r),
                             ),
                             child: Icon(
-                              LucideIcons.arrowLeft,
+                              AppIcons.arrowLeft,
                               color: Colors.white,
                               size: 20.r,
                             ),

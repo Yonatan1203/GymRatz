@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../../../app/providers.dart';
@@ -83,7 +83,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
               showBackButton: true,
               child: Column(
                 children: [
-                  Icon(LucideIcons.crown, size: 48.r, color: Colors.white),
+                  Icon(AppIcons.crown, size: 48.r, color: Colors.white),
                   SizedBox(height: 12.h),
                   Text('Upgrade to Pro', style: AppTextStyles.h1.copyWith(color: Colors.white)),
                   SizedBox(height: 4.h),
@@ -124,12 +124,12 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
   Widget _buildFeatureComparison(BuildContext context, bool isDark) {
     final features = [
-      ('Active Programs', '1', 'Unlimited', LucideIcons.dumbbell),
-      ('Workout History', '2 weeks', 'Full', LucideIcons.calendar),
-      ('Exercise Library', 'Basic', 'All', LucideIcons.list),
-      ('Progressive Overload', 'Basic', 'Advanced', LucideIcons.trendingUp),
-      ('Export Data', '-', 'Yes', LucideIcons.download),
-      ('Priority Support', '-', 'Yes', LucideIcons.headphones),
+      ('Active Programs', '1', 'Unlimited', AppIcons.dumbbell),
+      ('Workout History', '2 weeks', 'Full', AppIcons.calendar),
+      ('Exercise Library', 'Basic', 'All', AppIcons.list),
+      ('Progressive Overload', 'Basic', 'Advanced', AppIcons.trendingUp),
+      ('Export Data', '-', 'Yes', AppIcons.download),
+      ('Priority Support', '-', 'Yes', AppIcons.headphones),
     ];
 
     return Container(

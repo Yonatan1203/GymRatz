@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
 import '../../../theme/app_radius.dart';
@@ -32,25 +32,25 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
   IconData _iconForName(String iconName) {
     switch (iconName) {
       case 'trophy':
-        return LucideIcons.trophy;
+        return AppIcons.trophy;
       case 'flame':
-        return LucideIcons.flame;
+        return AppIcons.flame;
       case 'award':
-        return LucideIcons.award;
+        return AppIcons.award;
       case 'target':
-        return LucideIcons.target;
+        return AppIcons.target;
       case 'star':
-        return LucideIcons.star;
+        return AppIcons.star;
       case 'crown':
-        return LucideIcons.crown;
+        return AppIcons.crown;
       case 'calendar':
-        return LucideIcons.calendar;
+        return AppIcons.calendar;
       case 'sunrise':
-        return LucideIcons.sunrise;
+        return AppIcons.sunrise;
       case 'checkCircle':
-        return LucideIcons.checkCircle;
+        return AppIcons.checkCircle;
       default:
-        return LucideIcons.trophy;
+        return AppIcons.trophy;
     }
   }
 
@@ -109,9 +109,9 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
                 StatsGrid(
                   useTransparentBg: true,
                   items: [
-                    StatsGridItem(icon: LucideIcons.trophy, iconColor: Colors.white, value: '$unlockedCount', label: 'Unlocked'),
-                    StatsGridItem(icon: LucideIcons.target, iconColor: Colors.white, value: '${achievements.length}', label: 'Total'),
-                    StatsGridItem(icon: LucideIcons.star, iconColor: Colors.white, value: '$totalPoints', label: 'Points'),
+                    StatsGridItem(icon: AppIcons.trophy, iconColor: Colors.white, value: '$unlockedCount', label: 'Unlocked'),
+                    StatsGridItem(icon: AppIcons.target, iconColor: Colors.white, value: '${achievements.length}', label: 'Total'),
+                    StatsGridItem(icon: AppIcons.star, iconColor: Colors.white, value: '$totalPoints', label: 'Points'),
                   ],
                 ),
               ],
@@ -203,7 +203,7 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
                   boxShadow: AppShadows.md,
                 ),
                 child: Icon(
-                  achievement.unlocked ? _iconForName(achievement.iconName) : LucideIcons.lock,
+                  achievement.unlocked ? _iconForName(achievement.iconName) : AppIcons.lock,
                   size: 28.r,
                   color: achievement.unlocked ? Colors.white : context.mutedForeground,
                 ),
@@ -224,7 +224,7 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(LucideIcons.star, size: 16.r, color: context.primaryColor),
+                            Icon(AppIcons.star, size: 16.r, color: context.primaryColor),
                             SizedBox(width: 4.w),
                             Text(
                               '${achievement.points}',
@@ -286,7 +286,7 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(LucideIcons.trophy, size: 48.r, color: context.mutedForeground.withValues(alpha: 0.5)),
+          Icon(AppIcons.trophy, size: 48.r, color: context.mutedForeground.withValues(alpha: 0.5)),
           SizedBox(height: 12.h),
           Text('No achievements in this category', style: AppTextStyles.body.copyWith(color: context.mutedForeground)),
         ],

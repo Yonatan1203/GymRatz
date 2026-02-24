@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../theme/app_icons.dart';
 
 import '../../app/providers.dart';
 import '../../theme/app_colors.dart';
@@ -34,7 +34,7 @@ class ThemeToggleButton extends ConsumerWidget {
           boxShadow: AppShadows.lg,
         ),
         child: Icon(
-          isDark ? LucideIcons.sun : LucideIcons.moon,
+          isDark ? AppIcons.sun : AppIcons.moon,
           size: 20,
           color: isDark ? AppColors.darkForeground : AppColors.lightForeground,
         ),

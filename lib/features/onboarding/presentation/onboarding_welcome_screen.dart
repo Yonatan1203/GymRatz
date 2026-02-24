@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../theme/app_gradients.dart';
 import '../../../theme/app_radius.dart';
@@ -55,7 +55,7 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                       boxShadow: AppShadows.xxl,
                     ),
                     child: Icon(
-                      LucideIcons.dumbbell,
+                      AppIcons.dumbbell,
                       size: 40.r,
                       color: Colors.white,
                     ),
@@ -81,7 +81,7 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                       (index) => Padding(
                         padding: EdgeInsets.symmetric(horizontal: 2.w),
                         child: Icon(
-                          Icons.star_rounded,
+                          AppIcons.star,
                           color: const Color(0xFFEAB308),
                           size: 28.r,
                         ),

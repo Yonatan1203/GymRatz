@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../theme/app_icons.dart';
 
 import '../../app/providers.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_shadows.dart';
 import '../utils/platform_adapter.dart';
+import 'active_workout_banner.dart';
 
 class CustomScaffold extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
@@ -17,6 +19,7 @@ class CustomScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final activeSession = ref.watch(activeWorkoutSessionProvider);
 
     return Scaffold(
       body: Stack(
@@ -28,64 +31,80 @@ class CustomScaffold extends ConsumerWidget {
             right: 16,
             child: _ThemeToggle(isDark: isDark, ref: ref),
           ),
+          // Floating active workout banner
+          if (activeSession != null)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 8.h),
+                child: const ActiveWorkoutBanner(),
+              ),
+            ),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCard : AppColors.lightCard,
-          border: Border(
-            top: BorderSide(
-              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkCard : AppColors.lightCard,
+              border: Border(
+                top: BorderSide(
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                ),
+              ),
+              boxShadow: AppShadows.sm,
+            ),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _NavItem(
+                      icon: AppIcons.dumbbell,
+                      label: 'Workout',
+                      isActive: navigationShell.currentIndex == 0,
+                      onTap: () => navigationShell.goBranch(0),
+                      isDark: isDark,
+                    ),
+                    _NavItem(
+                      icon: AppIcons.calendar,
+                      label: 'Calendar',
+                      isActive: navigationShell.currentIndex == 1,
+                      onTap: () => navigationShell.goBranch(1),
+                      isDark: isDark,
+                    ),
+                    _NavItem(
+                      icon: AppIcons.home,
+                      label: 'Home',
+                      isActive: navigationShell.currentIndex == 2,
+                      onTap: () => navigationShell.goBranch(2),
+                      isDark: isDark,
+                    ),
+                    _NavItem(
+                      icon: AppIcons.library,
+                      label: 'Programs',
+                      isActive: navigationShell.currentIndex == 3,
+                      onTap: () => navigationShell.goBranch(3),
+                      isDark: isDark,
+                    ),
+                    _NavItem(
+                      icon: AppIcons.user,
+                      label: 'Profile',
+                      isActive: navigationShell.currentIndex == 4,
+                      onTap: () => navigationShell.goBranch(4),
+                      isDark: isDark,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-          boxShadow: AppShadows.xxl,
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NavItem(
-                  icon: LucideIcons.dumbbell,
-                  label: 'Workout',
-                  isActive: navigationShell.currentIndex == 0,
-                  onTap: () => navigationShell.goBranch(0),
-                  isDark: isDark,
-                ),
-                _NavItem(
-                  icon: LucideIcons.calendar,
-                  label: 'Calendar',
-                  isActive: navigationShell.currentIndex == 1,
-                  onTap: () => navigationShell.goBranch(1),
-                  isDark: isDark,
-                ),
-                _NavItem(
-                  icon: LucideIcons.home,
-                  label: 'Home',
-                  isActive: navigationShell.currentIndex == 2,
-                  onTap: () => navigationShell.goBranch(2),
-                  isDark: isDark,
-                ),
-                _NavItem(
-                  icon: LucideIcons.library,
-                  label: 'Programs',
-                  isActive: navigationShell.currentIndex == 3,
-                  onTap: () => navigationShell.goBranch(3),
-                  isDark: isDark,
-                ),
-                _NavItem(
-                  icon: LucideIcons.user,
-                  label: 'Profile',
-                  isActive: navigationShell.currentIndex == 4,
-                  onTap: () => navigationShell.goBranch(4),
-                  isDark: isDark,
-                ),
-              ],
-            ),
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -119,7 +138,7 @@ class _ThemeToggle extends StatelessWidget {
           boxShadow: AppShadows.lg,
         ),
         child: Icon(
-          isDark ? LucideIcons.sun : LucideIcons.moon,
+          isDark ? AppIcons.sun : AppIcons.moon,
           size: 20,
           color: isDark ? AppColors.darkForeground : AppColors.lightForeground,
         ),

@@ -7,6 +7,7 @@ class WorkoutExercise {
   final EquipmentType equipmentType;
   final String repRange;
   final int targetRir;
+  final int restSeconds;
   final List<WorkoutSet> sets;
 
   const WorkoutExercise({
@@ -15,6 +16,7 @@ class WorkoutExercise {
     this.equipmentType = EquipmentType.barbell,
     required this.repRange,
     required this.targetRir,
+    this.restSeconds = 120,
     required this.sets,
   });
 
@@ -26,6 +28,7 @@ class WorkoutExercise {
         'equipmentType': equipmentType.name,
         'repRange': repRange,
         'targetRir': targetRir,
+        'restSeconds': restSeconds,
         'sets': sets.map((s) => s.toJson()).toList(),
       };
 
@@ -39,6 +42,7 @@ class WorkoutExercise {
         ),
         repRange: json['repRange'] as String? ?? '',
         targetRir: json['targetRir'] as int? ?? 2,
+        restSeconds: json['restSeconds'] as int? ?? 120,
         sets: (json['sets'] as List<dynamic>?)
                 ?.map((s) => WorkoutSet.fromJson(s as Map<String, dynamic>))
                 .toList() ??
@@ -51,6 +55,7 @@ class WorkoutExercise {
     EquipmentType? equipmentType,
     String? repRange,
     int? targetRir,
+    int? restSeconds,
     List<WorkoutSet>? sets,
   }) =>
       WorkoutExercise(
@@ -59,6 +64,7 @@ class WorkoutExercise {
         equipmentType: equipmentType ?? this.equipmentType,
         repRange: repRange ?? this.repRange,
         targetRir: targetRir ?? this.targetRir,
+        restSeconds: restSeconds ?? this.restSeconds,
         sets: sets ?? this.sets,
       );
 }

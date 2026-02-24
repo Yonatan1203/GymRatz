@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../theme/app_gradients.dart';
 import '../../../theme/app_radius.dart';
@@ -38,16 +38,16 @@ class ProfileScreen extends ConsumerWidget {
                   _buildPersonalRecords(context, ref),
                   SizedBox(height: AppSpacing.sectionGap),
                   _buildMenuSection(context, 'WORKOUTS & TRAINING', [
-                    MenuItemWidget(icon: LucideIcons.dumbbell, label: 'Exercises', onTap: () => context.push('/exercises')),
-                    MenuItemWidget(icon: LucideIcons.heart, label: 'Favorites', onTap: () => context.push('/favorites')),
-                    MenuItemWidget(icon: LucideIcons.trendingUp, label: 'Progress', onTap: () => context.push('/progress')),
-                    MenuItemWidget(icon: LucideIcons.trophy, label: 'Achievements', badge: '4', onTap: () => context.push('/achievements')),
-                    MenuItemWidget(icon: LucideIcons.calendar, label: 'Calendar', onTap: () => context.go('/calendar')),
+                    MenuItemWidget(icon: AppIcons.dumbbell, label: 'Exercises', onTap: () => context.push('/exercises')),
+                    MenuItemWidget(icon: AppIcons.heart, label: 'Favorites', onTap: () => context.push('/favorites')),
+                    MenuItemWidget(icon: AppIcons.trendingUp, label: 'Progress', onTap: () => context.push('/progress')),
+                    MenuItemWidget(icon: AppIcons.trophy, label: 'Achievements', badge: '4', onTap: () => context.push('/achievements')),
+                    MenuItemWidget(icon: AppIcons.calendar, label: 'Calendar', onTap: () => context.go('/calendar')),
                   ]),
                   SizedBox(height: AppSpacing.sectionGap),
                   _buildMenuSection(context, 'ACCOUNT', [
-                    MenuItemWidget(icon: LucideIcons.settings, label: 'Settings', onTap: () => context.push('/settings')),
-                    MenuItemWidget(icon: LucideIcons.helpCircle, label: 'Help & FAQ', onTap: () {}),
+                    MenuItemWidget(icon: AppIcons.settings, label: 'Settings', onTap: () => context.push('/settings')),
+                    MenuItemWidget(icon: AppIcons.helpCircle, label: 'Help & FAQ', onTap: () {}),
                   ]),
                   SizedBox(height: 100.h),
                 ],
@@ -65,9 +65,10 @@ class ProfileScreen extends ConsumerWidget {
     final totalWorkouts = stats['totalWorkouts'] ?? 24;
     final streak = stats['streak'] ?? 12;
     return Container(
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: context.cardColor,
-        border: Border(bottom: BorderSide(color: context.borderColor)),
+        borderRadius: AppRadius.headerBottom,
         boxShadow: AppShadows.md,
       ),
       child: SafeArea(
@@ -82,7 +83,7 @@ class ProfileScreen extends ConsumerWidget {
                   Text('Profile', style: AppTextStyles.h1.copyWith(color: context.foreground)),
                   GestureDetector(
                     onTap: () => context.push('/profile/edit'),
-                    child: Icon(LucideIcons.edit, size: 22.r, color: context.primaryColor),
+                    child: Icon(AppIcons.edit, size: 22.r, color: context.primaryColor),
                   ),
                 ],
               ),
@@ -105,9 +106,9 @@ class ProfileScreen extends ConsumerWidget {
               Text('Fitness Enthusiast', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
               SizedBox(height: 20.h),
               StatsGrid(items: [
-                StatsGridItem(icon: LucideIcons.flame, iconColor: context.primaryColor, value: '$totalWorkouts', label: 'Workouts'),
-                StatsGridItem(icon: LucideIcons.flame, iconColor: Colors.orange, value: '$streak', label: 'Streak'),
-                StatsGridItem(icon: LucideIcons.award, iconColor: context.secondaryColor, value: '4', label: 'Badges'),
+                StatsGridItem(icon: AppIcons.flame, iconColor: context.primaryColor, value: '$totalWorkouts', label: 'Workouts'),
+                StatsGridItem(icon: AppIcons.flame, iconColor: Colors.orange, value: '$streak', label: 'Streak'),
+                StatsGridItem(icon: AppIcons.award, iconColor: context.secondaryColor, value: '4', label: 'Badges'),
               ]),
             ],
           ),
@@ -127,18 +128,18 @@ class ProfileScreen extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(LucideIcons.users, size: 24.r, color: Colors.white),
+          Icon(AppIcons.users, size: 24.r, color: Colors.white),
           SizedBox(width: 16.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Invite Friends', style: AppTextStyles.h4.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
-                Text('Share GymRatz with your gym buddies', style: AppTextStyles.caption.copyWith(color: Colors.white70)),
+                Text('Invite Your Friends', style: AppTextStyles.h4.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
+                Text('Earn rewards together', style: AppTextStyles.caption.copyWith(color: Colors.white70)),
               ],
             ),
           ),
-          Icon(LucideIcons.chevronRight, size: 20.r, color: Colors.white70),
+          Icon(AppIcons.chevronRight, size: 20.r, color: Colors.white70),
         ],
       ),
     );
@@ -162,7 +163,7 @@ class ProfileScreen extends ConsumerWidget {
 
     return Column(
       children: [
-        const SectionHeader(title: 'Personal Records'),
+        SectionHeader(title: 'PERSONAL RECORDS', actionText: 'View All', onAction: () {}),
         SizedBox(height: AppSpacing.lg),
         ...prList.map((pr) => Padding(
           padding: EdgeInsets.only(bottom: 8.h),
@@ -177,7 +178,7 @@ class ProfileScreen extends ConsumerWidget {
                     color: context.primaryColor.withValues(alpha: 0.2),
                     borderRadius: AppRadius.borderLg,
                   ),
-                  child: Icon(LucideIcons.trophy, size: 20.r, color: context.primaryColor),
+                  child: Icon(AppIcons.trophy, size: 20.r, color: context.primaryColor),
                 ),
                 SizedBox(width: 12.w),
                 Expanded(
@@ -194,7 +195,7 @@ class ProfileScreen extends ConsumerWidget {
                   style: AppTextStyles.h4.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600),
                 ),
                 SizedBox(width: 8.w),
-                Icon(LucideIcons.share2, size: 16.r, color: context.mutedForeground),
+                Icon(AppIcons.share2, size: 16.r, color: context.mutedForeground),
               ],
             ),
           ),

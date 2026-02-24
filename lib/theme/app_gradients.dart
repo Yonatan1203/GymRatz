@@ -4,13 +4,31 @@ import 'app_colors.dart';
 class AppGradients {
   AppGradients._();
 
-  // Primary gradient: from-primary to-accent (headers, CTAs, workout cards)
+  // Primary gradient: bg-gradient-to-br from-primary to-accent (headers, CTAs, workout cards)
   static LinearGradient primary({bool isDark = false}) => LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: isDark
             ? [AppColors.darkPrimary, AppColors.darkAccent]
             : [AppColors.lightPrimary, AppColors.lightAccent],
+      );
+
+  // Horizontal primary→accent: bg-gradient-to-r (progress bars, action buttons)
+  static LinearGradient primaryHorizontal({bool isDark = false}) => LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: isDark
+            ? [AppColors.darkPrimary, AppColors.darkAccent]
+            : [AppColors.lightPrimary, AppColors.lightAccent],
+      );
+
+  // Subtle 10% opacity: bg-gradient-to-r from-primary/10 to-accent/10 (exercise headers)
+  static LinearGradient primarySubtle({bool isDark = false}) => LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: isDark
+            ? [AppColors.darkPrimary.withValues(alpha: 0.1), AppColors.darkAccent.withValues(alpha: 0.1)]
+            : [AppColors.lightPrimary.withValues(alpha: 0.1), AppColors.lightAccent.withValues(alpha: 0.1)],
       );
 
   // Secondary gradient: from-secondary to-accent
@@ -75,5 +93,12 @@ class AppGradients {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [Color(0xFFA8B8C8), Color(0xFFEAB308)],
+  );
+
+  // Health screen: bg-gradient-to-br from-red-500 to-pink-500
+  static const LinearGradient health = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFEF4444), Color(0xFFEC4899)],
   );
 }

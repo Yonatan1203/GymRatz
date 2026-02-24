@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
@@ -68,7 +68,7 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
                     hint: 'you@example.com',
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
-                    prefixIcon: Icon(LucideIcons.mail, size: 20.r),
+                    prefixIcon: Icon(AppIcons.mail, size: 20.r),
                     onChanged: (_) => setState(() {}),
                   ),
                   SizedBox(height: 16.h),
@@ -78,14 +78,14 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
                     hint: 'At least 6 characters',
                     obscureText: _obscurePassword,
                     textInputAction: TextInputAction.done,
-                    prefixIcon: Icon(LucideIcons.lock, size: 20.r),
+                    prefixIcon: Icon(AppIcons.lock, size: 20.r),
                     suffixIcon: GestureDetector(
                       onTap: () =>
                           setState(() => _obscurePassword = !_obscurePassword),
                       child: Icon(
                         _obscurePassword
-                            ? LucideIcons.eyeOff
-                            : LucideIcons.eye,
+                            ? AppIcons.eyeOff
+                            : AppIcons.eye,
                         size: 20.r,
                       ),
                     ),

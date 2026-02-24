@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
 import '../../../shared/models/enums.dart';
@@ -62,8 +62,10 @@ class HomeScreen extends ConsumerWidget {
     final streak = stats?['streak'] as int? ?? 0;
 
     return Container(
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: AppGradients.primary(isDark: isDark),
+        borderRadius: AppRadius.headerBottom,
         boxShadow: AppShadows.lg,
       ),
       child: SafeArea(
@@ -101,7 +103,7 @@ class HomeScreen extends ConsumerWidget {
                           color: Colors.white.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(LucideIcons.user, size: 18.r, color: Colors.white),
+                        child: Icon(AppIcons.user, size: 18.r, color: Colors.white),
                       ),
                     ),
                   ),
@@ -115,7 +117,7 @@ class HomeScreen extends ConsumerWidget {
               SizedBox(height: 4.h),
               Row(
                 children: [
-                  Icon(LucideIcons.flame, size: 16.r, color: Colors.white.withValues(alpha: 0.9)),
+                  Icon(AppIcons.flame, size: 16.r, color: Colors.white.withValues(alpha: 0.9)),
                   SizedBox(width: 6.w),
                   Text(
                     '$streak day streak',
@@ -137,7 +139,7 @@ class HomeScreen extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: isToday ? Colors.white : Colors.white.withValues(alpha: 0.2),
                         borderRadius: AppRadius.borderLg,
-                        boxShadow: AppShadows.md,
+                        boxShadow: AppShadows.sm,
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -208,19 +210,19 @@ class HomeScreen extends ConsumerWidget {
     return StatsGrid(
       items: [
         StatsGridItem(
-          icon: LucideIcons.flame,
+          icon: AppIcons.flame,
           iconColor: isDark ? AppColors.darkPrimary : AppColors.lightPrimary,
           value: '$totalWorkouts',
           label: 'Workouts',
         ),
         StatsGridItem(
-          icon: LucideIcons.trendingUp,
+          icon: AppIcons.trendingUp,
           iconColor: isDark ? AppColors.darkAccent : AppColors.lightAccent,
           value: formatVolume(weeklyVolume),
           label: 'Weekly Vol',
         ),
         StatsGridItem(
-          icon: LucideIcons.award,
+          icon: AppIcons.award,
           iconColor: isDark ? AppColors.darkSecondary : AppColors.lightSecondary,
           value: recentPRWeight,
           label: 'Recent PR',
@@ -274,7 +276,7 @@ class HomeScreen extends ConsumerWidget {
                         color: Colors.white.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(LucideIcons.play, size: 24.r, color: Colors.white),
+                      child: Icon(AppIcons.play, size: 24.r, color: Colors.white),
                     ),
                   ],
                 ),
@@ -348,7 +350,7 @@ class HomeScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(LucideIcons.trendingUp, size: 24.r, color: context.primaryColor),
+                    Icon(AppIcons.trendingUp, size: 24.r, color: context.primaryColor),
                     SizedBox(height: 8.h),
                     Text('Progress', style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
                     Text('View stats', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
@@ -363,7 +365,7 @@ class HomeScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(LucideIcons.award, size: 24.r, color: context.secondaryColor),
+                    Icon(AppIcons.award, size: 24.r, color: context.secondaryColor),
                     SizedBox(height: 8.h),
                     Text('Programs', style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
                     Text('Browse all', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
@@ -422,7 +424,7 @@ class HomeScreen extends ConsumerWidget {
                             color: context.mutedColor,
                             borderRadius: AppRadius.borderLg,
                           ),
-                          child: Icon(LucideIcons.flame, size: 20.r, color: context.primaryColor),
+                          child: Icon(AppIcons.flame, size: 20.r, color: context.primaryColor),
                         ),
                         SizedBox(width: 12.w),
                         Expanded(
@@ -434,7 +436,7 @@ class HomeScreen extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        Icon(LucideIcons.chevronRight, size: 20.r, color: context.mutedForeground),
+                        Icon(AppIcons.chevronRight, size: 20.r, color: context.mutedForeground),
                       ],
                     ),
                   ),

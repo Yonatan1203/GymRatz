@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
 import '../../../theme/app_spacing.dart';
@@ -47,7 +47,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                     child: Row(
                       children: [
-                        Icon(isDark ? LucideIcons.moon : LucideIcons.sun, size: 20.r, color: context.mutedForeground),
+                        Icon(isDark ? AppIcons.moon : AppIcons.sun, size: 20.r, color: context.mutedForeground),
                         SizedBox(width: 12.w),
                         Expanded(
                           child: Text('Dark Mode', style: AppTextStyles.body.copyWith(color: context.foreground)),
@@ -79,9 +79,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: Column(
                       children: [
-                        MenuItemWidget(icon: LucideIcons.user, label: 'Edit Profile', onTap: () => context.push('/profile/edit')),
+                        MenuItemWidget(icon: AppIcons.user, label: 'Edit Profile', onTap: () => context.push('/profile/edit')),
                         Divider(color: context.borderColor, height: 1),
-                        MenuItemWidget(icon: LucideIcons.shield, label: 'Privacy & Security', onTap: () {}),
+                        MenuItemWidget(icon: AppIcons.shield, label: 'Privacy & Security', onTap: () {}),
                       ],
                     ),
                   ),
@@ -91,9 +91,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: Column(
                       children: [
-                        MenuItemWidget(icon: LucideIcons.download, label: 'Export Data', onTap: () {}),
+                        MenuItemWidget(icon: AppIcons.download, label: 'Export Data', onTap: () {}),
                         Divider(color: context.borderColor, height: 1),
-                        MenuItemWidget(icon: LucideIcons.trash2, label: 'Clear All Data', iconColor: context.destructiveColor, onTap: () {}),
+                        MenuItemWidget(icon: AppIcons.trash2, label: 'Clear All Data', iconColor: context.destructiveColor, onTap: () {}),
                       ],
                     ),
                   ),
@@ -103,9 +103,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: Column(
                       children: [
-                        MenuItemWidget(icon: LucideIcons.crown, label: 'Manage Subscription', onTap: () => context.push('/paywall')),
+                        MenuItemWidget(icon: AppIcons.crown, label: 'Manage Subscription', onTap: () => context.push('/paywall')),
                         Divider(color: context.borderColor, height: 1),
-                        MenuItemWidget(icon: LucideIcons.refreshCw, label: 'Restore Purchases', onTap: () async {
+                        MenuItemWidget(icon: AppIcons.refreshCw, label: 'Restore Purchases', onTap: () async {
                           final success = await ref.read(entitlementServiceProvider).restorePurchases();
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -122,9 +122,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: Column(
                       children: [
-                        MenuItemWidget(icon: LucideIcons.helpCircle, label: 'Help & FAQ', onTap: () {}),
+                        MenuItemWidget(icon: AppIcons.helpCircle, label: 'Help & FAQ', onTap: () {}),
                         Divider(color: context.borderColor, height: 1),
-                        MenuItemWidget(icon: LucideIcons.info, label: 'About', onTap: () {}),
+                        MenuItemWidget(icon: AppIcons.info, label: 'About', onTap: () {}),
                       ],
                     ),
                   ),
@@ -132,7 +132,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   CustomCard(
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: MenuItemWidget(
-                      icon: LucideIcons.logOut,
+                      icon: AppIcons.logOut,
                       label: 'Sign Out',
                       iconColor: context.destructiveColor,
                       onTap: () async {

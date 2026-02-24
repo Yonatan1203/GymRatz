@@ -13,6 +13,10 @@ class AppRadius {
   static double get full => 999.r; // rounded-full
 
   // BorderRadius helpers
+  static BorderRadius get headerBottom => BorderRadius.only(
+        bottomLeft: Radius.circular(20.r),
+        bottomRight: Radius.circular(20.r),
+      );
   static BorderRadius get borderSm => BorderRadius.circular(sm);
   static BorderRadius get borderMd => BorderRadius.circular(md);
   static BorderRadius get borderLg => BorderRadius.circular(lg);

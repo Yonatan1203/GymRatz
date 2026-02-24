@@ -2,7 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
 import '../../../theme/app_colors.dart';
@@ -53,9 +53,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                   StatsGrid(
                     useTransparentBg: true,
                     items: [
-                      StatsGridItem(icon: LucideIcons.dumbbell, iconColor: Colors.white, value: '$totalWorkouts', label: 'Total'),
-                      StatsGridItem(icon: LucideIcons.flame, iconColor: Colors.white, value: '$streak', label: 'Streak'),
-                      StatsGridItem(icon: LucideIcons.trophy, iconColor: Colors.white, value: '$prCount', label: 'New PRs'),
+                      StatsGridItem(icon: AppIcons.dumbbell, iconColor: Colors.white, value: '$totalWorkouts', label: 'Total'),
+                      StatsGridItem(icon: AppIcons.flame, iconColor: Colors.white, value: '$streak', label: 'Streak'),
+                      StatsGridItem(icon: AppIcons.trophy, iconColor: Colors.white, value: '$prCount', label: 'New PRs'),
                     ],
                   ),
                 ],
@@ -288,7 +288,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 Container(
                   width: 40.r, height: 40.r,
                   decoration: BoxDecoration(color: context.primaryColor.withValues(alpha: 0.2), borderRadius: AppRadius.borderLg),
-                  child: Icon(LucideIcons.trophy, size: 20.r, color: context.primaryColor),
+                  child: Icon(AppIcons.trophy, size: 20.r, color: context.primaryColor),
                 ),
                 SizedBox(width: 12.w),
                 Expanded(

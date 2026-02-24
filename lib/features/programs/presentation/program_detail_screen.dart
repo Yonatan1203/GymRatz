@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
 import '../../../shared/models/workout_day.dart';
@@ -93,11 +93,11 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                   SizedBox(height: 12.h),
                   Row(
                     children: [
-                      Icon(LucideIcons.clock, size: 16.r, color: Colors.white70),
+                      Icon(AppIcons.clock, size: 16.r, color: Colors.white70),
                       SizedBox(width: 4.w),
                       Text('$programWeeks weeks', style: AppTextStyles.caption.copyWith(color: Colors.white70)),
                       SizedBox(width: 16.w),
-                      Icon(LucideIcons.dumbbell, size: 16.r, color: Colors.white70),
+                      Icon(AppIcons.dumbbell, size: 16.r, color: Colors.white70),
                       SizedBox(width: 4.w),
                       Text('$totalWorkouts workouts', style: AppTextStyles.caption.copyWith(color: Colors.white70)),
                       SizedBox(width: 16.w),
@@ -157,7 +157,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                         child: CustomButton(
                           text: 'Continue',
                           variant: ButtonVariant.gradient,
-                          icon: LucideIcons.play,
+                          icon: AppIcons.play,
                           onPressed: () => context.push('/workout/1'),
                         ),
                       ),
@@ -218,7 +218,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                                         ),
                                       ),
                                       Icon(
-                                        isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                                        isExpanded ? AppIcons.chevronUp : AppIcons.chevronDown,
                                         size: 20.r,
                                         color: context.mutedForeground,
                                       ),
@@ -329,7 +329,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                     ),
                   ),
                   Icon(
-                    _expandedWeek == 1 ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                    _expandedWeek == 1 ? AppIcons.chevronUp : AppIcons.chevronDown,
                     size: 20.r,
                     color: context.mutedForeground,
                   ),

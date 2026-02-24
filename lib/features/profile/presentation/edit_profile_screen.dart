@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../theme/app_gradients.dart';
 import '../../../theme/app_shadows.dart';
@@ -100,7 +100,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               shape: BoxShape.circle,
                               border: Border.all(color: context.cardColor, width: 2),
                             ),
-                            child: Icon(LucideIcons.camera, size: 16.r, color: Colors.white),
+                            child: Icon(AppIcons.camera, size: 16.r, color: Colors.white),
                           ),
                         ),
                       ],

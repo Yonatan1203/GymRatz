@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../theme/app_gradients.dart';
 import '../../../theme/app_radius.dart';
@@ -28,7 +28,7 @@ class ProgramsScreen extends ConsumerWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildHeader(context),
+            _buildHeader(context, isDark),
             Padding(
               padding: EdgeInsets.all(AppSpacing.screenPadding),
               child: Column(
@@ -48,18 +48,18 @@ class ProgramsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, bool isDark) {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: context.cardColor,
-        border: Border(bottom: BorderSide(color: context.borderColor)),
-        boxShadow: AppShadows.md,
+        gradient: AppGradients.primary(isDark: isDark),
+        boxShadow: AppShadows.lg,
       ),
       child: SafeArea(
         bottom: false,
         child: Padding(
           padding: EdgeInsets.fromLTRB(AppSpacing.screenPadding, 12.h, AppSpacing.screenPadding, AppSpacing.xxl),
-          child: Text('Programs', style: AppTextStyles.h1.copyWith(color: context.foreground)),
+          child: Text('Programs', style: AppTextStyles.h1.copyWith(color: Colors.white)),
         ),
       ),
     );
@@ -88,14 +88,14 @@ class ProgramsScreen extends ConsumerWidget {
                 color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: AppRadius.borderLg,
               ),
-              child: Icon(LucideIcons.plus, size: 24.r, color: Colors.white),
+              child: Icon(AppIcons.plus, size: 24.r, color: Colors.white),
             ),
             SizedBox(width: 16.w),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Create Program', style: AppTextStyles.h3.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
-                Text('Build your custom plan', style: AppTextStyles.bodySmall.copyWith(color: Colors.white70)),
+                Text('Create New Program', style: AppTextStyles.h3.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
+                Text('Build your custom workout plan', style: AppTextStyles.bodySmall.copyWith(color: Colors.white70)),
               ],
             ),
           ],
@@ -110,7 +110,7 @@ class ProgramsScreen extends ConsumerWidget {
     final programs = programsAsync.valueOrNull ?? SampleData.myPrograms;
     return Column(
       children: [
-        const SectionHeader(title: 'My Programs'),
+        SectionHeader(title: 'My Programs', actionText: 'Manage', onAction: () {}),
         SizedBox(height: AppSpacing.lg),
         ...programs.map((p) => Padding(
           padding: EdgeInsets.only(bottom: 12.h),
@@ -119,7 +119,14 @@ class ProgramsScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(p.name, style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(p.name, style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
+                    ),
+                    Icon(AppIcons.chevronRight, size: 20.r, color: context.mutedForeground),
+                  ],
+                ),
                 SizedBox(height: 4.h),
                 Text('${p.workouts} workouts/week \u2022 ${p.weeks} weeks', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
                 SizedBox(height: 12.h),
@@ -141,7 +148,7 @@ class ProgramsScreen extends ConsumerWidget {
   Widget _buildExplorePrograms(BuildContext context) {
     return Column(
       children: [
-        const SectionHeader(title: 'Explore Programs'),
+        SectionHeader(title: 'Explore Programs', actionText: 'See All', onAction: () {}),
         SizedBox(height: AppSpacing.lg),
         ...SampleData.explorePrograms.map((p) => Padding(
           padding: EdgeInsets.only(bottom: 12.h),
@@ -156,7 +163,7 @@ class ProgramsScreen extends ConsumerWidget {
                     color: context.primaryColor.withValues(alpha: 0.2),
                     borderRadius: AppRadius.borderLg,
                   ),
-                  child: Icon(LucideIcons.dumbbell, size: 24.r, color: context.primaryColor),
+                  child: Icon(AppIcons.dumbbell, size: 24.r, color: context.primaryColor),
                 ),
                 SizedBox(width: 16.w),
                 Expanded(

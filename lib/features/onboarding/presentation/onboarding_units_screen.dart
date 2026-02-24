@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_shadows.dart';
@@ -65,7 +65,7 @@ class _OnboardingUnitsScreenState
                     title: 'Metric',
                     subtitle: 'Kilograms & centimeters',
                     units: 'kg, cm',
-                    icon: LucideIcons.ruler,
+                    icon: AppIcons.ruler,
                   ),
                   SizedBox(height: AppSpacing.xl),
                   _buildUnitCard(
@@ -73,7 +73,7 @@ class _OnboardingUnitsScreenState
                     title: 'Imperial',
                     subtitle: 'Pounds & feet/inches',
                     units: 'lbs, ft/in',
-                    icon: LucideIcons.scale,
+                    icon: AppIcons.scale,
                   ),
                 ],
               ),
@@ -183,7 +183,7 @@ class _OnboardingUnitsScreenState
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  LucideIcons.check,
+                  AppIcons.check,
                   size: 16.r,
                   color: Colors.white,
                 ),

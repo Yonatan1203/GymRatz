@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../theme/app_gradients.dart';
 import '../../../theme/app_radius.dart';
@@ -19,25 +19,25 @@ class OnboardingShowcaseScreen extends StatelessWidget {
     {
       'title': 'Workout Tracker',
       'desc': 'Log sets, reps, and weights with ease',
-      'icon': LucideIcons.dumbbell,
+      'icon': AppIcons.dumbbell,
       'gradient': 'primary',
     },
     {
       'title': 'Smart Challenges',
       'desc': 'Progressive overload built right in',
-      'icon': LucideIcons.target,
+      'icon': AppIcons.target,
       'gradient': 'yellow',
     },
     {
       'title': 'Progress Charts',
       'desc': 'Visualize your gains over time',
-      'icon': LucideIcons.trendingUp,
+      'icon': AppIcons.trendingUp,
       'gradient': 'green',
     },
     {
       'title': 'Community',
       'desc': 'Connect with fellow gym rats',
-      'icon': LucideIcons.users,
+      'icon': AppIcons.users,
       'gradient': 'purple',
     },
   ];

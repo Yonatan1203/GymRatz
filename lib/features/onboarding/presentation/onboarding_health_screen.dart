@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../theme/app_gradients.dart';
 import '../../../theme/app_radius.dart';
@@ -47,7 +47,7 @@ class _OnboardingHealthScreenState extends ConsumerState<OnboardingHealthScreen>
                       borderRadius: AppRadius.borderXxl,
                       boxShadow: AppShadows.lg,
                     ),
-                    child: Icon(LucideIcons.heartPulse, size: 40.r, color: Colors.white),
+                    child: Icon(AppIcons.heartPulse, size: 40.r, color: Colors.white),
                   ),
                   SizedBox(height: 24.h),
                   Text(

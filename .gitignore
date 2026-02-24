@@ -54,3 +54,9 @@ nul
 
 # Flutter generated
 .flutter-plugins
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Android bug reports
+bugreport-*.zip

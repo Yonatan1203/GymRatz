@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../theme/app_gradients.dart';
 import '../../../theme/app_radius.dart';
@@ -49,7 +49,7 @@ class OnboardingSummaryScreen extends ConsumerWidget {
                   _buildSummaryCard(
                     context,
                     isDark: isDark,
-                    icon: LucideIcons.target,
+                    icon: AppIcons.target,
                     title: 'Goal',
                     value: state.selectedGoal ?? 'Not set',
                   ),
@@ -57,7 +57,7 @@ class OnboardingSummaryScreen extends ConsumerWidget {
                   _buildSummaryCard(
                     context,
                     isDark: isDark,
-                    icon: LucideIcons.award,
+                    icon: AppIcons.award,
                     title: 'Experience',
                     value: state.selectedExperience ?? 'Not set',
                   ),
@@ -65,7 +65,7 @@ class OnboardingSummaryScreen extends ConsumerWidget {
                   _buildSummaryCard(
                     context,
                     isDark: isDark,
-                    icon: LucideIcons.ruler,
+                    icon: AppIcons.ruler,
                     title: 'Body Stats',
                     value: '${state.height.round()} cm • ${state.weight.round()} kg',
                   ),
@@ -82,7 +82,7 @@ class OnboardingSummaryScreen extends ConsumerWidget {
                     ),
                     child: Row(
                       children: [
-                        Icon(LucideIcons.info, size: 20.r, color: context.primaryColor),
+                        Icon(AppIcons.info, size: 20.r, color: context.primaryColor),
                         SizedBox(width: 12.w),
                         Expanded(
                           child: Text(

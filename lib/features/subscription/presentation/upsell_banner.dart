@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../theme/app_gradients.dart';
 import '../../../theme/app_radius.dart';
@@ -35,7 +35,7 @@ class UpsellBanner extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(LucideIcons.crown, size: 24.r, color: Colors.white),
+            Icon(AppIcons.crown, size: 24.r, color: Colors.white),
             SizedBox(width: 12.w),
             Expanded(
               child: Column(
@@ -46,7 +46,7 @@ class UpsellBanner extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(LucideIcons.chevronRight, size: 20.r, color: Colors.white70),
+            Icon(AppIcons.chevronRight, size: 20.r, color: Colors.white70),
           ],
         ),
       ),

@@ -1,13 +1,13 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 abstract final class PlatformAdapter {
-  static bool get isCupertino =>
-      Platform.isIOS || Platform.isMacOS;
+  static bool get isCupertino => !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.iOS ||
+       defaultTargetPlatform == TargetPlatform.macOS);
 
   static ScrollPhysics get scrollPhysics => isCupertino
       ? const BouncingScrollPhysics()

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_shadows.dart';
@@ -178,7 +178,7 @@ class _OnboardingStyleScreenState
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  LucideIcons.check,
+                  AppIcons.check,
                   size: 16.r,
                   color: Colors.white,
                 ),

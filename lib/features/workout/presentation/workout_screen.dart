@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
 import '../../../theme/app_gradients.dart';
@@ -42,11 +42,11 @@ class WorkoutScreen extends ConsumerWidget {
                 children: [
                   if (days.isEmpty)
                     ...[
-                      _buildWorkoutCard(context, isDark, 'Push Day', 'Upper Body', 6, '45-60 min', 18, '4,200', true, '1'),
+                      _buildWorkoutCard(context, isDark, 'Push Day', 'Upper Body', 6, '45-60 min', 18, '4.2k', true, '1'),
                       SizedBox(height: AppSpacing.lg),
-                      _buildWorkoutCard(context, isDark, 'Pull Day', 'Back & Biceps', 5, '40-50 min', 15, '3,800', false, '2'),
+                      _buildWorkoutCard(context, isDark, 'Pull Day', 'Back & Biceps', 5, '40-50 min', 15, '4.2k', false, '2'),
                       SizedBox(height: AppSpacing.lg),
-                      _buildWorkoutCard(context, isDark, 'Leg Day', 'Lower Body', 6, '50-65 min', 20, '5,100', false, '3'),
+                      _buildWorkoutCard(context, isDark, 'Leg Day', 'Lower Body', 6, '50-65 min', 20, '5.1k', false, '3'),
                     ]
                   else
                     ...days.asMap().entries.map((entry) {
@@ -78,6 +78,7 @@ class WorkoutScreen extends ConsumerWidget {
 
   Widget _buildHeader(BuildContext context, bool isDark) {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         gradient: AppGradients.primary(isDark: isDark),
         boxShadow: AppShadows.lg,
@@ -112,47 +113,87 @@ class WorkoutScreen extends ConsumerWidget {
     String dayId,
   ) {
     return CustomCard(
+      padding: EdgeInsets.zero,
       onTap: () => context.push('/workout/$dayId'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: EdgeInsets.all(16.r),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text(name, style: AppTextStyles.h3.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
-                    SizedBox(height: 2.h),
-                    Text(subtitle, style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(name, style: AppTextStyles.h3.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
+                          SizedBox(height: 2.h),
+                          Text(subtitle, style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+                        ],
+                      ),
+                    ),
+                    CustomBadge(
+                      text: isReady ? 'Start Now' : 'Scheduled',
+                      backgroundColor: isReady
+                          ? context.primaryColor.withValues(alpha: 0.2)
+                          : context.secondaryColor.withValues(alpha: 0.2),
+                      textColor: isReady ? context.primaryColor : context.secondaryColor,
+                    ),
                   ],
                 ),
+                SizedBox(height: 12.h),
+                Row(
+                  children: [
+                    Icon(AppIcons.dumbbell, size: 14.r, color: context.mutedForeground),
+                    SizedBox(width: 4.w),
+                    Text('$exercises exercises', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+                    Text('  \u2022  ', style: TextStyle(color: context.mutedForeground)),
+                    Icon(AppIcons.clock, size: 14.r, color: context.mutedForeground),
+                    SizedBox(width: 4.w),
+                    Text(duration, style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+                  ],
+                ),
+                SizedBox(height: 12.h),
+                Row(
+                  children: [
+                    _miniStat(context, 'Total Sets', '$sets'),
+                    SizedBox(width: 8.w),
+                    _miniStat(context, 'Est. Volume', '$volume kg'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (isReady)
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                gradient: AppGradients.primary(isDark: isDark),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(14.r),
+                  bottomRight: Radius.circular(14.r),
+                ),
               ),
-              CustomBadge(
-                text: isReady ? 'Start Now' : 'Scheduled',
-                backgroundColor: isReady
-                    ? context.primaryColor.withValues(alpha: 0.2)
-                    : context.secondaryColor.withValues(alpha: 0.2),
-                textColor: isReady ? context.primaryColor : context.secondaryColor,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Start Workout', style: AppTextStyles.bodySmall.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
+                  Container(
+                    width: 28.r,
+                    height: 28.r,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(AppIcons.play, size: 16.r, color: Colors.white),
+                  ),
+                ],
               ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          Row(
-            children: [
-              Text('$exercises Exercises', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
-              Text('  \u2022  ', style: TextStyle(color: context.mutedForeground)),
-              Text(duration, style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          Row(
-            children: [
-              _miniStat(context, 'Sets', '$sets'),
-              SizedBox(width: 8.w),
-              _miniStat(context, 'Volume', '${volume}kg'),
-            ],
-          ),
+            ),
         ],
       ),
     );
@@ -177,19 +218,30 @@ class WorkoutScreen extends ConsumerWidget {
   }
 
   Widget _buildWeeklyStats(BuildContext context, bool isDark, int completed, int remaining, int pct) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('This Week', style: AppTextStyles.h3.copyWith(color: context.foreground)),
-        SizedBox(height: AppSpacing.lg),
-        StatsGrid(
-          items: [
-            StatsGridItem(icon: LucideIcons.checkCircle, iconColor: context.primaryColor, value: '$completed', label: 'Completed'),
-            StatsGridItem(icon: LucideIcons.clock, iconColor: context.secondaryColor, value: '$remaining', label: 'Remaining'),
-            StatsGridItem(icon: LucideIcons.trendingUp, iconColor: context.accentColor, value: '$pct%', label: 'Complete'),
-          ],
-        ),
-      ],
+    return CustomCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('This Week', style: AppTextStyles.h3.copyWith(color: context.foreground)),
+          SizedBox(height: 4.h),
+          Text(
+            pct >= 100
+                ? 'All workouts done \u2014 great week!'
+                : pct >= 50
+                    ? 'Keep it up, you\u2019re on track!'
+                    : 'Let\u2019s get moving this week!',
+            style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+          ),
+          SizedBox(height: 16.h),
+          StatsGrid(
+            items: [
+              StatsGridItem(icon: AppIcons.checkCircle, iconColor: context.primaryColor, value: '$completed', label: 'Completed'),
+              StatsGridItem(icon: AppIcons.clock, iconColor: context.secondaryColor, value: '$remaining', label: 'Remaining'),
+              StatsGridItem(icon: AppIcons.trendingUp, iconColor: context.accentColor, value: '$pct%', label: 'Progress'),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
@@ -54,7 +54,7 @@ class FavoritesScreen extends ConsumerWidget {
                         padding: EdgeInsets.all(12.r),
                         child: Row(
                           children: [
-                            Icon(LucideIcons.dumbbell, size: 20.r, color: context.primaryColor),
+                            Icon(AppIcons.dumbbell, size: 20.r, color: context.primaryColor),
                             SizedBox(width: 12.w),
                             Expanded(
                               child: Column(
@@ -65,7 +65,7 @@ class FavoritesScreen extends ConsumerWidget {
                                 ],
                               ),
                             ),
-                            Icon(LucideIcons.heart, size: 20.r, color: Colors.red),
+                            Icon(AppIcons.heart, size: 20.r, color: Colors.red),
                           ],
                         ),
                       ),
@@ -86,7 +86,7 @@ class FavoritesScreen extends ConsumerWidget {
       padding: EdgeInsets.all(32.r),
       child: Column(
         children: [
-          Icon(LucideIcons.heart, size: 48.r, color: context.mutedForeground.withValues(alpha: 0.5)),
+          Icon(AppIcons.heart, size: 48.r, color: context.mutedForeground.withValues(alpha: 0.5)),
           SizedBox(height: 12.h),
           Text(message, style: AppTextStyles.body.copyWith(color: context.mutedForeground)),
         ],

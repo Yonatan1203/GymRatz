@@ -34,58 +34,62 @@ class StatsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Row(
-      children: items.map((item) {
-        return Expanded(
-          child: Container(
-            margin: EdgeInsets.symmetric(horizontal: 4.w),
-            padding: EdgeInsets.all(12.r),
-            decoration: BoxDecoration(
-              color: useTransparentBg
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : (isDark ? AppColors.darkCard : AppColors.lightCard),
-              borderRadius: AppRadius.borderLg,
-              border: useTransparentBg
-                  ? null
-                  : Border.all(
-                      color: isDark
-                          ? AppColors.darkBorder
-                          : AppColors.lightBorder,
+    return IntrinsicHeight(
+      child: Row(
+        children: items.map((item) {
+          return Expanded(
+            child: Container(
+              margin: EdgeInsets.symmetric(horizontal: 4.w),
+              padding: EdgeInsets.all(12.r),
+              decoration: BoxDecoration(
+                color: useTransparentBg
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : (isDark ? AppColors.darkCard : AppColors.lightCard),
+                borderRadius: AppRadius.borderXl,
+                border: useTransparentBg
+                    ? null
+                    : Border.all(
+                        color: isDark
+                            ? AppColors.darkBorder
+                            : AppColors.lightBorder,
+                      ),
+                boxShadow: useTransparentBg ? null : AppShadows.md,
+              ),
+              child: Column(
+                children: [
+                  Icon(item.icon, size: 20.r, color: item.iconColor),
+                  SizedBox(height: 8.h),
+                  Text(
+                    item.value,
+                    style: AppTextStyles.h2.copyWith(
+                      color: useTransparentBg
+                          ? Colors.white
+                          : (isDark
+                              ? AppColors.darkForeground
+                              : AppColors.lightForeground),
+                      fontWeight: FontWeight.w600,
                     ),
-              boxShadow: useTransparentBg ? null : AppShadows.md,
-            ),
-            child: Column(
-              children: [
-                Icon(item.icon, size: 20.r, color: item.iconColor),
-                SizedBox(height: 8.h),
-                Text(
-                  item.value,
-                  style: AppTextStyles.h2.copyWith(
-                    color: useTransparentBg
-                        ? Colors.white
-                        : (isDark
-                            ? AppColors.darkForeground
-                            : AppColors.lightForeground),
-                    fontWeight: FontWeight.w600,
                   ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  item.label,
-                  style: AppTextStyles.caption.copyWith(
-                    color: useTransparentBg
-                        ? Colors.white70
-                        : (isDark
-                            ? AppColors.darkMutedForeground
-                            : AppColors.lightMutedForeground),
+                  SizedBox(height: 2.h),
+                  Text(
+                    item.label,
+                    style: AppTextStyles.caption.copyWith(
+                      color: useTransparentBg
+                          ? Colors.white70
+                          : (isDark
+                              ? AppColors.darkMutedForeground
+                              : AppColors.lightMutedForeground),
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 }

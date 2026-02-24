@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../shared/utils/extensions.dart';
 import '../../../shared/widgets/custom_button.dart';
@@ -58,7 +58,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft),
+          icon: const Icon(AppIcons.arrowLeft),
           onPressed: () => context.pop(),
         ),
         backgroundColor: Colors.transparent,
@@ -99,7 +99,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(LucideIcons.checkCircle, color: Colors.green, size: 20.r),
+                      Icon(AppIcons.checkCircle, color: Colors.green, size: 20.r),
                       SizedBox(width: 12.w),
                       Expanded(
                         child: Text(
@@ -119,7 +119,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   hint: 'you@example.com',
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.done,
-                  prefixIcon: Icon(LucideIcons.mail, size: 20.r),
+                  prefixIcon: Icon(AppIcons.mail, size: 20.r),
                   onChanged: (_) => setState(() {}),
                   onFieldSubmitted: (_) => _sendReset(),
                 ),

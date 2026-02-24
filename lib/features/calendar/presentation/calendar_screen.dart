@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import 'package:uuid/uuid.dart';
 
@@ -79,9 +79,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   Widget _buildHeader(BuildContext context, bool isDark) {
     return Container(
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: context.cardColor,
-        border: Border(bottom: BorderSide(color: context.borderColor)),
+        borderRadius: AppRadius.headerBottom,
         boxShadow: AppShadows.md,
       ),
       child: SafeArea(
@@ -101,7 +102,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       _currentMonth--;
                       if (_currentMonth < 1) { _currentMonth = 12; _currentYear--; }
                     }),
-                    child: _navButton(context, LucideIcons.chevronLeft),
+                    child: _navButton(context, AppIcons.chevronLeft),
                   ),
                   Text('${_monthName(_currentMonth)} $_currentYear', style: AppTextStyles.h2.copyWith(color: context.foreground)),
                   GestureDetector(
@@ -109,7 +110,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       _currentMonth++;
                       if (_currentMonth > 12) { _currentMonth = 1; _currentYear++; }
                     }),
-                    child: _navButton(context, LucideIcons.chevronRight),
+                    child: _navButton(context, AppIcons.chevronRight),
                   ),
                 ],
               ),
@@ -342,7 +343,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         children: [
           Row(
             children: [
-              Icon(LucideIcons.scale, size: 20.r, color: context.primaryColor),
+              Icon(AppIcons.scale, size: 20.r, color: context.primaryColor),
               SizedBox(width: 8.w),
               Text('Log Your Weight', style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
             ],

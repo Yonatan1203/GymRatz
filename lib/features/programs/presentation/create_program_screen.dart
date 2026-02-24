@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
 import '../../../shared/models/enums.dart';
@@ -202,7 +202,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                 CustomButton(
                   text: '+ Add Workout Day',
                   variant: ButtonVariant.dashed,
-                  icon: LucideIcons.plus,
+                  icon: AppIcons.plus,
                   onPressed: _addWorkoutDay,
                 ),
                 SizedBox(height: 80.h),
@@ -234,7 +234,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                     onTap: () => context.pop(),
                     child: Padding(
                       padding: EdgeInsets.all(8.r),
-                      child: Icon(LucideIcons.arrowLeft, size: 20.r, color: context.foreground),
+                      child: Icon(AppIcons.arrowLeft, size: 20.r, color: context.foreground),
                     ),
                   ),
                   SizedBox(width: 8.w),
@@ -255,7 +255,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                           if (_saving)
                             SizedBox(width: 16.r, height: 16.r, child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                           else
-                            Icon(LucideIcons.save, size: 16.r, color: Colors.white),
+                            Icon(AppIcons.save, size: 16.r, color: Colors.white),
                           SizedBox(width: 4.w),
                           Text(_saving ? 'Saving...' : 'Save', style: AppTextStyles.bodySmall.copyWith(color: Colors.white, fontWeight: FontWeight.w500)),
                         ],
@@ -307,7 +307,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(LucideIcons.gripVertical, size: 20.r, color: Colors.white.withValues(alpha: 0.5)),
+                  Icon(AppIcons.gripVertical, size: 20.r, color: Colors.white.withValues(alpha: 0.5)),
                   SizedBox(width: 8.w),
                   Expanded(
                     child: Column(
@@ -330,7 +330,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                         SizedBox(height: 8.h),
                         Row(
                           children: [
-                            Icon(LucideIcons.calendar, size: 16.r, color: Colors.white70),
+                            Icon(AppIcons.calendar, size: 16.r, color: Colors.white70),
                             SizedBox(width: 8.w),
                             Expanded(
                               child: Container(
@@ -347,7 +347,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                                     isDense: true,
                                     dropdownColor: context.cardColor,
                                     style: AppTextStyles.bodySmall.copyWith(color: Colors.white),
-                                    icon: Icon(LucideIcons.chevronDown, size: 16.r, color: Colors.white70),
+                                    icon: Icon(AppIcons.chevronDown, size: 16.r, color: Colors.white70),
                                     items: _daysOfWeek.map((d) => DropdownMenuItem(
                                       value: d,
                                       child: Text(d, style: AppTextStyles.bodySmall.copyWith(color: context.foreground)),
@@ -368,7 +368,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                       onTap: () => _removeWorkoutDay(day.id),
                       child: Padding(
                         padding: EdgeInsets.all(8.r),
-                        child: Icon(LucideIcons.trash2, size: 24.r, color: Colors.white),
+                        child: Icon(AppIcons.trash2, size: 24.r, color: Colors.white),
                       ),
                     ),
                   ],
@@ -384,7 +384,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                       padding: EdgeInsets.symmetric(vertical: 32.h),
                       child: Column(
                         children: [
-                          Icon(LucideIcons.dumbbell, size: 32.r, color: context.mutedForeground.withValues(alpha: 0.5)),
+                          Icon(AppIcons.dumbbell, size: 32.r, color: context.mutedForeground.withValues(alpha: 0.5)),
                           SizedBox(height: 8.h),
                           Text('No exercises added yet', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
                         ],
@@ -401,7 +401,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                     CustomButton(
                       text: '+ Add Exercise',
                       variant: ButtonVariant.dashed,
-                      icon: LucideIcons.plus,
+                      icon: AppIcons.plus,
                       onPressed: () => setState(() => _pickerOpenForDay = day.id),
                     ),
                 ],
@@ -428,7 +428,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
           children: [
             Row(
               children: [
-                Icon(LucideIcons.gripVertical, size: 16.r, color: context.mutedForeground),
+                Icon(AppIcons.gripVertical, size: 16.r, color: context.mutedForeground),
                 SizedBox(width: 4.w),
                 Expanded(
                   child: Wrap(
@@ -451,7 +451,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                   onTap: () => _removeExercise(dayId, ex.id),
                   child: Padding(
                     padding: EdgeInsets.all(4.r),
-                    child: Icon(LucideIcons.trash2, size: 20.r, color: context.destructiveColor),
+                    child: Icon(AppIcons.trash2, size: 20.r, color: context.destructiveColor),
                   ),
                 ),
               ],
@@ -547,7 +547,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
           CustomButton(
             text: '+ Create Custom Exercise',
             variant: ButtonVariant.dashed,
-            icon: LucideIcons.plus,
+            icon: AppIcons.plus,
             onPressed: () => setState(() {
               _pickerOpenForDay = null;
               _customFormOpenForDay = dayId;

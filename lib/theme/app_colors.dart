@@ -17,7 +17,7 @@ class AppColors {
   static const lightMutedForeground = Color(0xFF6E6E73);
   static const lightDestructive = Color(0xFFD4183D);
   static const lightDestructiveForeground = Color(0xFFFFFFFF);
-  static const lightBorder = Color(0x268FC4C4); // rgba(143,196,196,0.15)
+  static const lightBorder = Color(0x268FC4C4); // 15% primary teal
   static const lightInputBackground = Color(0xFFF5F5F7);
   static const lightSwitchBackground = Color(0xFFC7C7CC);
   static const lightRing = Color(0xFF8FC4C4);
@@ -34,8 +34,8 @@ class AppColors {
   static const darkAccentForeground = Color(0xFFFFFFFF);
   static const darkMuted = Color(0xFF252830);
   static const darkMutedForeground = Color(0xFFB0B2B5);
-  static const darkDestructive = Color(0xFF8B3333);
-  static const darkDestructiveForeground = Color(0xFFE57373);
+  static const darkDestructive = Color(0xFF8B2F39);
+  static const darkDestructiveForeground = Color(0xFFD4808F);
   static const darkBorder = Color(0xFF2A2D32);
   static const darkInput = Color(0xFF252830);
   static const darkRing = Color(0xFF2A5A5A);

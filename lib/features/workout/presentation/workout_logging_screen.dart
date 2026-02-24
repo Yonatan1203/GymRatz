@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_gradients.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_shadows.dart';
@@ -37,60 +38,138 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   int _restSeconds = 120;
   bool _restActive = false;
   bool _restMinimized = false;
+  bool _timerRunning = false;
   bool _completed = false;
   Timer? _timer;
+  Timer? _durationTimer;
+  int _elapsedSeconds = 0;
   String _notes = '';
+  String _workoutName = 'Workout';
   bool _initialized = false;
+  late DateTime _startTime;
 
   void _initFromProvider() {
     if (_initialized) return;
     _initialized = true;
 
-    final activeProgram = ref.read(activeProgramProvider).valueOrNull;
-    final matchingDay = activeProgram?.days
-        .where((d) => d.id == widget.dayId)
-        .toList();
+    // Check if there's an existing session for this day (returning from banner)
+    final existingSession = ref.read(activeWorkoutSessionProvider.notifier)
+        .getSessionForDay(widget.dayId);
 
-    if (matchingDay != null && matchingDay.isNotEmpty) {
-      final day = matchingDay.first;
-      // Convert ProgramExercise -> WorkoutExercise for the logging screen
-      _exercises = day.exercises.map((pe) => WorkoutExercise(
-        name: pe.name,
-        equipment: pe.equipment ?? 'Barbell',
-        equipmentType: pe.equipmentType,
-        repRange: '${pe.repMin}-${pe.repMax}',
-        targetRir: pe.targetRir,
-        sets: List.generate(pe.sets, (_) => const WorkoutSet()),
-      )).toList();
-      _sets = _exercises.map((e) => List<WorkoutSet>.from(e.sets)).toList();
+    if (existingSession != null) {
+      _startTime = existingSession.startTime;
+      _workoutName = existingSession.workoutName;
+      _exercises = List.from(existingSession.exercises);
+      _sets = existingSession.sets.map((s) => List<WorkoutSet>.from(s)).toList();
+      _expanded = Set.from(existingSession.expandedIndices);
+      _restSeconds = existingSession.restSeconds;
+      _restActive = existingSession.restActive;
+      _restMinimized = existingSession.restMinimized;
+      _timerRunning = existingSession.timerRunning;
+      _notes = existingSession.notes;
+      _elapsedSeconds = DateTime.now().difference(_startTime).inSeconds;
+      if (_restActive && _timerRunning) {
+        _beginCountdown();
+      }
     } else {
-      // Fallback to sample data
-      final sampleExercises = SampleData.todayExercises;
-      _exercises = sampleExercises;
-      _sets = sampleExercises.map((e) => List<WorkoutSet>.from(e.sets)).toList();
+      _startTime = DateTime.now();
+
+      final activeProgram = ref.read(activeProgramProvider).valueOrNull;
+      final matchingDay = activeProgram?.days
+          .where((d) => d.id == widget.dayId)
+          .toList();
+
+      if (matchingDay != null && matchingDay.isNotEmpty) {
+        final day = matchingDay.first;
+        _workoutName = day.name;
+        // Convert ProgramExercise -> WorkoutExercise for the logging screen
+        _exercises = day.exercises.map((pe) => WorkoutExercise(
+          name: pe.name,
+          equipment: pe.equipment ?? 'Barbell',
+          equipmentType: pe.equipmentType,
+          repRange: '${pe.repMin}-${pe.repMax}',
+          targetRir: pe.targetRir,
+          restSeconds: pe.restSeconds,
+          sets: List.generate(pe.sets, (_) => const WorkoutSet()),
+        )).toList();
+        _sets = _exercises.map((e) => List<WorkoutSet>.from(e.sets)).toList();
+      } else {
+        // Fallback to sample data
+        final sampleExercises = SampleData.todayExercises;
+        _exercises = sampleExercises;
+        _sets = sampleExercises.map((e) => List<WorkoutSet>.from(e.sets)).toList();
+      }
+      _expanded = {0};
+
+      // Start a new session in the provider (deferred to avoid modifying during build)
+      Future(() {
+        ref.read(activeWorkoutSessionProvider.notifier).startSession(
+          dayId: widget.dayId,
+          workoutName: _workoutName,
+          exercises: _exercises,
+          sets: _sets,
+        );
+      });
     }
-    _expanded = {0};
+
+    _durationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() => _elapsedSeconds++);
+    });
+  }
+
+  void _syncToProvider() {
+    final currentExercise = _expanded.isNotEmpty && _expanded.first < _exercises.length
+        ? _exercises[_expanded.first].name
+        : '';
+    ref.read(activeWorkoutSessionProvider.notifier).syncState(
+      exercises: List.from(_exercises),
+      sets: _sets.map((s) => List<WorkoutSet>.from(s)).toList(),
+      expandedIndices: Set.from(_expanded),
+      restSeconds: _restSeconds,
+      restActive: _restActive,
+      restMinimized: _restMinimized,
+      timerRunning: _timerRunning,
+      currentExerciseName: currentExercise,
+      notes: _notes,
+    );
+  }
+
+  String _formatElapsed(int totalSeconds) {
+    final h = totalSeconds ~/ 3600;
+    final m = (totalSeconds % 3600) ~/ 60;
+    final s = totalSeconds % 60;
+    if (h > 0) {
+      return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    }
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _durationTimer?.cancel();
     super.dispose();
   }
 
-  void _startRest() {
+  void _showRestTimer() {
     _timer?.cancel();
     setState(() {
       _restActive = true;
-      _restSeconds = 120;
+      _timerRunning = false;
+      _restSeconds = _expanded.isNotEmpty ? _exercises[_expanded.first].restSeconds : 120;
       _restMinimized = false;
     });
+    _syncToProvider();
+  }
+
+  void _beginCountdown() {
+    setState(() => _timerRunning = true);
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (_restSeconds > 0) {
         setState(() => _restSeconds--);
       } else {
         t.cancel();
-        setState(() => _restActive = false);
+        setState(() { _restActive = false; _timerRunning = false; });
       }
     });
   }
@@ -100,14 +179,18 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     setState(() {
       _sets[exIdx][setIdx] = _sets[exIdx][setIdx].copyWith(completed: true);
     });
-    _startRest();
+    _showRestTimer();
+    _beginCountdown();
     _checkCompletion();
+    _syncToProvider();
   }
 
   void _checkCompletion() {
     final allDone = _sets.every((ex) => ex.every((s) => s.completed));
     if (allDone) {
       _timer?.cancel();
+      _durationTimer?.cancel();
+      ref.read(activeWorkoutSessionProvider.notifier).endSession();
       setState(() => _completed = true);
     }
   }
@@ -120,30 +203,55 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     final isDark = context.isDark;
     final exercises = _exercises;
 
+    final bool timerVisible = _restActive;
+
     return Scaffold(
       body: Column(
         children: [
           _buildHeader(context, isDark),
-          if (_restActive && !_restMinimized) _buildRestTimer(context),
-          if (_restActive && _restMinimized) _buildMinimizedTimer(context),
           Expanded(
-            child: ListView(
-              padding: EdgeInsets.all(AppSpacing.screenPadding),
+            child: Stack(
               children: [
-                ...List.generate(exercises.length, (i) => _buildExerciseCard(context, isDark, i, exercises[i])),
-                SizedBox(height: 16.h),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4.w),
-                  child: CustomInput(
-                    label: 'Workout Notes',
-                    hint: 'How did it go?',
-                    maxLines: 3,
-                    onChanged: (v) => _notes = v,
+                ListView(
+                  padding: EdgeInsets.only(
+                    left: AppSpacing.screenPadding,
+                    right: AppSpacing.screenPadding,
+                    bottom: AppSpacing.screenPadding,
+                    top: timerVisible
+                        ? (_restMinimized ? 52.h : 72.h)
+                        : AppSpacing.screenPadding,
                   ),
+                  children: [
+                    ...List.generate(exercises.length, (i) => _buildExerciseCard(context, isDark, i, exercises[i])),
+                    CustomCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text('\ud83d\udcdd', style: TextStyle(fontSize: 18.sp)),
+                              SizedBox(width: 8.w),
+                              Text('Workout Notes', style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                          SizedBox(height: 12.h),
+                          CustomInput(
+                            hint: 'How did it go?',
+                            maxLines: 3,
+                            onChanged: (v) => _notes = v,
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    CustomButton(text: '+ Add Exercise', variant: ButtonVariant.dashed, icon: AppIcons.plus, onPressed: () {}),
+                    SizedBox(height: 80.h),
+                  ],
                 ),
-                SizedBox(height: 16.h),
-                CustomButton(text: '+ Add Exercise', variant: ButtonVariant.dashed, icon: LucideIcons.plus, onPressed: () {}),
-                SizedBox(height: 80.h),
+                if (_restActive && !_restMinimized)
+                  Positioned(top: 0, left: 0, right: 0, child: _buildRestTimer(context)),
+                if (_restActive && _restMinimized)
+                  Positioned(top: 0, left: 0, right: 0, child: _buildMinimizedTimer(context)),
               ],
             ),
           ),
@@ -154,6 +262,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
 
   Widget _buildHeader(BuildContext context, bool isDark) {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         gradient: AppGradients.primary(isDark: isDark),
         boxShadow: AppShadows.lg,
@@ -170,31 +279,52 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                 child: GestureDetector(
                   onTap: () {
                     PlatformAdapter.hapticLight();
+                    _syncToProvider();
                     context.pop();
                   },
                   child: Container(
                     width: 40.r, height: 40.r,
                     decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: AppRadius.borderLg),
-                    child: Icon(LucideIcons.arrowLeft, size: 20.r, color: Colors.white),
+                    child: Icon(AppIcons.arrowLeft, size: 20.r, color: Colors.white),
                   ),
                 ),
               ),
-              SizedBox(width: 12.w),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text('Push Day', style: AppTextStyles.h3.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
-                    Text('Upper Body', style: AppTextStyles.caption.copyWith(color: Colors.white70)),
+                    Text(_workoutName, style: AppTextStyles.h3.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
+                    Text(
+                      _formatElapsed(_elapsedSeconds),
+                      style: AppTextStyles.tabular.copyWith(color: Colors.white70, fontSize: 14.sp),
+                    ),
                   ],
                 ),
               ),
+              Semantics(
+                button: true,
+                label: 'Open rest timer',
+                child: GestureDetector(
+                  onTap: () {
+                    PlatformAdapter.hapticLight();
+                    _showRestTimer();
+                  },
+                  child: Container(
+                    width: 40.r, height: 40.r,
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: AppRadius.borderLg),
+                    child: Icon(AppIcons.timer, size: 20.r, color: Colors.white),
+                  ),
+                ),
+              ),
+              SizedBox(width: 8.w),
               Semantics(
                 button: true,
                 label: 'Finish workout',
                 child: GestureDetector(
                   onTap: () {
                     PlatformAdapter.hapticMedium();
+                    _durationTimer?.cancel();
+                    ref.read(activeWorkoutSessionProvider.notifier).endSession();
                     setState(() => _completed = true);
                   },
                   child: Container(
@@ -213,56 +343,67 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
 
   Widget _buildRestTimer(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16.r),
-      color: context.primaryColor,
-      child: Column(
+      width: double.infinity,
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: context.primaryColor.withValues(alpha: 0.9),
+        borderRadius: AppRadius.borderXl,
+        boxShadow: AppShadows.md,
+      ),
+      child: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Rest Timer', style: AppTextStyles.h4.copyWith(color: Colors.white)),
-              Row(
-                children: [
-                  Semantics(
-                    button: true,
-                    label: 'Minimize timer',
-                    child: GestureDetector(
-                      onTap: () => setState(() => _restMinimized = true),
-                      child: Icon(LucideIcons.minimize2, size: 20.r, color: Colors.white),
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Semantics(
-                    button: true,
-                    label: 'Dismiss timer',
-                    child: GestureDetector(
-                      onTap: () { _timer?.cancel(); setState(() => _restActive = false); },
-                      child: Icon(LucideIcons.x, size: 20.r, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
+          // Time display
           Text(
             Formatters.timer(_restSeconds),
-            style: TextStyle(fontSize: 48.sp, fontWeight: FontWeight.w700, color: Colors.white, fontFeatures: const [FontFeature.tabularFigures()]),
+            style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.w700, color: Colors.white, fontFeatures: const [FontFeature.tabularFigures()]),
           ),
-          SizedBox(height: 16.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                icon: Icon(LucideIcons.minusCircle, color: Colors.white, size: 32.r),
-                onPressed: () => setState(() => _restSeconds = (_restSeconds - 10).clamp(0, 999)),
+          SizedBox(width: 12.w),
+          // +/- buttons (only when not running)
+          if (!_timerRunning) ...[
+            GestureDetector(
+              onTap: () => setState(() => _restSeconds = (_restSeconds - 10).clamp(0, 999)),
+              child: Icon(AppIcons.minusCircle, color: Colors.white70, size: 22.r),
+            ),
+            SizedBox(width: 8.w),
+            GestureDetector(
+              onTap: () => setState(() => _restSeconds += 10),
+              child: Icon(AppIcons.plusCircle, color: Colors.white70, size: 22.r),
+            ),
+          ],
+          const Spacer(),
+          // Start button or action buttons
+          if (!_timerRunning)
+            GestureDetector(
+              onTap: _beginCountdown,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: AppRadius.borderFull,
+                ),
+                child: Text('Start', style: AppTextStyles.bodySmall.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600)),
               ),
-              SizedBox(width: 24.w),
-              IconButton(
-                icon: Icon(LucideIcons.plusCircle, color: Colors.white, size: 32.r),
-                onPressed: () => setState(() => _restSeconds += 10),
+            )
+          else ...[
+            Semantics(
+              button: true,
+              label: 'Minimize timer',
+              child: GestureDetector(
+                onTap: () => setState(() => _restMinimized = true),
+                child: Icon(AppIcons.minimize2, size: 18.r, color: Colors.white70),
               ),
-            ],
+            ),
+            SizedBox(width: 12.w),
+          ],
+          SizedBox(width: 8.w),
+          Semantics(
+            button: true,
+            label: 'Dismiss timer',
+            child: GestureDetector(
+              onTap: () { _timer?.cancel(); setState(() { _restActive = false; _timerRunning = false; }); },
+              child: Icon(AppIcons.x, size: 18.r, color: Colors.white70),
+            ),
           ),
         ],
       ),
@@ -273,13 +414,24 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     return GestureDetector(
       onTap: () => setState(() => _restMinimized = false),
       child: Container(
+        width: double.infinity,
+        margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-        color: context.primaryColor,
+        decoration: BoxDecoration(
+          color: context.primaryColor.withValues(alpha: 0.9),
+          borderRadius: AppRadius.borderXl,
+          boxShadow: AppShadows.md,
+        ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Rest: ${_restSeconds}s', style: AppTextStyles.bodySmall.copyWith(color: Colors.white)),
-            Icon(LucideIcons.chevronUp, size: 20.r, color: Colors.white),
+            Icon(AppIcons.timer, size: 16.r, color: Colors.white),
+            SizedBox(width: 8.w),
+            Text(
+              Formatters.timer(_restSeconds),
+              style: AppTextStyles.bodySmall.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+            ),
+            const Spacer(),
+            Icon(AppIcons.chevronDown, size: 18.r, color: Colors.white70),
           ],
         ),
       ),
@@ -298,9 +450,12 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
         child: Column(
           children: [
             InkWell(
-              onTap: () => setState(() {
-                if (isExpanded) { _expanded.remove(exIdx); } else { _expanded.add(exIdx); }
-              }),
+              onTap: () {
+                setState(() {
+                  if (isExpanded) { _expanded.clear(); } else { _expanded.clear(); _expanded.add(exIdx); }
+                });
+                _syncToProvider();
+              },
               borderRadius: AppRadius.borderXl,
               child: Padding(
                 padding: EdgeInsets.all(16.r),
@@ -326,7 +481,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                         ],
                       ),
                     ),
-                    Icon(isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown, size: 24.r, color: context.mutedForeground),
+                    Icon(isExpanded ? AppIcons.chevronUp : AppIcons.chevronDown, size: 24.r, color: context.mutedForeground),
                   ],
                 ),
               ),
@@ -360,7 +515,10 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                 child: CustomButton(
                   text: '+ Add Set',
                   variant: ButtonVariant.dashed,
-                  onPressed: () => setState(() => _sets[exIdx].add(const WorkoutSet())),
+                  onPressed: () {
+                    setState(() => _sets[exIdx].add(const WorkoutSet()));
+                    _syncToProvider();
+                  },
                 ),
               ),
             ],
@@ -400,7 +558,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                   shape: BoxShape.circle,
                   border: Border.all(color: set.completed ? context.primaryColor : context.borderColor, width: 2),
                 ),
-                child: set.completed ? Icon(LucideIcons.check, size: 16.r, color: Colors.white) : null,
+                child: set.completed ? Icon(AppIcons.check, size: 16.r, color: Colors.white) : null,
               ),
             ),
           ),
@@ -439,45 +597,108 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
 
   Widget _buildCompletionScreen(BuildContext context) {
     final isDark = context.isDark;
+    final completedSets = _sets.fold<int>(0, (sum, ex) => sum + ex.where((s) => s.completed).length);
     final totalSets = _sets.fold<int>(0, (sum, ex) => sum + ex.length);
     final totalReps = _sets.fold<int>(0, (sum, ex) => sum + ex.fold<int>(0, (s, set) => s + set.reps));
+    final totalVolume = _sets.fold<double>(0, (sum, ex) => sum + ex.fold<double>(0, (s, set) => s + (set.weight * set.reps)));
+    final duration = DateTime.now().difference(_startTime);
+    final durationStr = '${duration.inMinutes}m ${(duration.inSeconds % 60).toString().padLeft(2, '0')}s';
+    final completionPct = totalSets > 0 ? ((completedSets / totalSets) * 100).round() : 0;
 
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Padding(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              context.primaryColor.withValues(alpha: 0.15),
+              isDark ? Colors.black : Colors.white,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
             padding: EdgeInsets.all(AppSpacing.screenPadding),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                SizedBox(height: 32.h),
+                // Trophy icon with glow
                 Container(
-                  width: 96.r, height: 96.r,
+                  width: 120.r, height: 120.r,
                   decoration: BoxDecoration(
                     gradient: AppGradients.primary(isDark: isDark),
                     shape: BoxShape.circle,
-                    boxShadow: AppShadows.xxl,
+                    boxShadow: [
+                      BoxShadow(
+                        color: context.primaryColor.withValues(alpha: 0.4),
+                        blurRadius: 40,
+                        spreadRadius: 8,
+                      ),
+                    ],
                   ),
-                  child: Icon(LucideIcons.trophy, size: 48.r, color: Colors.white),
+                  child: Icon(AppIcons.trophy, size: 56.r, color: Colors.white),
                 ),
                 SizedBox(height: 24.h),
-                Text('Great Job!', style: AppTextStyles.h1.copyWith(color: context.foreground, fontWeight: FontWeight.w700)),
+                Text('Workout Complete!', style: AppTextStyles.h1.copyWith(color: context.foreground, fontWeight: FontWeight.w700)),
+                SizedBox(height: 4.h),
+                Text('You absolutely crushed it today', style: AppTextStyles.body.copyWith(color: context.mutedForeground)),
                 SizedBox(height: 8.h),
-                Text('You crushed it today', style: AppTextStyles.body.copyWith(color: context.mutedForeground)),
-                SizedBox(height: 32.h),
+                // Completion badge
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: context.primaryColor.withValues(alpha: 0.15),
+                    borderRadius: AppRadius.borderFull,
+                  ),
+                  child: Text(
+                    '$completionPct% completed',
+                    style: AppTextStyles.bodySmall.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                SizedBox(height: 28.h),
+                // Stats grid — 2x2
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _statChip(context, '$totalSets', 'Sets'),
-                    _statChip(context, '$totalReps', 'Reps'),
-                    _statChip(context, '${_exercises.length}', 'Exercises'),
+                    Expanded(child: _completionStatCard(context, isDark, AppIcons.clock, 'Duration', durationStr)),
+                    SizedBox(width: 12.w),
+                    Expanded(child: _completionStatCard(context, isDark, AppIcons.layers, 'Sets', '$completedSets / $totalSets')),
                   ],
                 ),
-                SizedBox(height: 48.h),
+                SizedBox(height: 12.h),
+                Row(
+                  children: [
+                    Expanded(child: _completionStatCard(context, isDark, AppIcons.repeat, 'Total Reps', '$totalReps')),
+                    SizedBox(width: 12.w),
+                    Expanded(child: _completionStatCard(context, isDark, AppIcons.barChart2, 'Volume', '${totalVolume.toInt()} lbs')),
+                  ],
+                ),
+                SizedBox(height: 12.h),
+                Row(
+                  children: [
+                    Expanded(child: _completionStatCard(context, isDark, AppIcons.dumbbell, 'Exercises', '${_exercises.length}')),
+                    SizedBox(width: 12.w),
+                    Expanded(child: _completionStatCard(context, isDark, AppIcons.flame, 'Intensity', completionPct >= 80 ? 'High' : completionPct >= 50 ? 'Medium' : 'Light')),
+                  ],
+                ),
+                SizedBox(height: 32.h),
+                // Buttons
                 CustomButton(
                   text: 'Back to Home',
                   variant: ButtonVariant.gradient,
+                  icon: AppIcons.home,
                   onPressed: () => context.go('/home'),
                 ),
+                SizedBox(height: 12.h),
+                CustomButton(
+                  text: 'Share Workout',
+                  variant: ButtonVariant.outline,
+                  icon: AppIcons.share2,
+                  onPressed: () {},
+                ),
+                SizedBox(height: 32.h),
               ],
             ),
           ),
@@ -486,12 +707,25 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     );
   }
 
-  Widget _statChip(BuildContext context, String value, String label) {
-    return Column(
-      children: [
-        Text(value, style: AppTextStyles.h1.copyWith(color: context.primaryColor, fontWeight: FontWeight.w700)),
-        Text(label, style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
-      ],
+  Widget _completionStatCard(BuildContext context, bool isDark, IconData icon, String label, String value) {
+    return Container(
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.lightCard,
+        borderRadius: AppRadius.borderXl,
+        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+        boxShadow: AppShadows.sm,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20.r, color: context.primaryColor),
+          SizedBox(height: 8.h),
+          Text(value, style: AppTextStyles.h3.copyWith(color: context.foreground, fontWeight: FontWeight.w700)),
+          SizedBox(height: 2.h),
+          Text(label, style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+        ],
+      ),
     );
   }
 
