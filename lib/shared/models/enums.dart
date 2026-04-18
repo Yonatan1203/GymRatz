@@ -24,18 +24,34 @@ enum EquipmentType {
 
 /// How the PO engine prioritises load vs reps.
 enum ProgressionMode {
-  loadFirst,
-  repsFirst,
-  mixed;
+  strength,
+  hypertrophy,
+  endurance;
 
   String get label {
     switch (this) {
-      case loadFirst:
-        return 'Load First';
-      case repsFirst:
-        return 'Reps First';
-      case mixed:
-        return 'Mixed';
+      case ProgressionMode.strength:
+        return 'Strength';
+      case ProgressionMode.hypertrophy:
+        return 'Hypertrophy';
+      case ProgressionMode.endurance:
+        return 'Endurance';
+    }
+  }
+
+  /// Migration from old values
+  static ProgressionMode fromLegacy(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'loadfirst':
+      case 'load first':
+        return ProgressionMode.strength;
+      case 'repsfirst':
+      case 'reps first':
+        return ProgressionMode.endurance;
+      case 'mixed':
+        return ProgressionMode.hypertrophy;
+      default:
+        return ProgressionMode.hypertrophy;
     }
   }
 }
