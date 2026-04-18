@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../core/exceptions.dart';
 
@@ -68,6 +68,26 @@ class AuthRepository {
     final user = _auth.currentUser;
     if (user != null) {
       await user.delete();
+    }
+  }
+
+  Future<UserCredential> signInWithGoogle() async {
+    try {
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        throw AuthException('Google sign-in was cancelled');
+      }
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      return await _auth.signInWithCredential(credential);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_mapAuthErrorMessage(e.code));
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException('Google sign-in failed: $e');
     }
   }
 
