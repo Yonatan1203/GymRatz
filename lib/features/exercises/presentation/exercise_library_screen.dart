@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../../theme/app_icons.dart';
+import '../../../shared/widgets/empty_state_widget.dart';
 
 import '../../../app/providers.dart';
 import '../../../theme/app_radius.dart';
@@ -79,7 +80,7 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
                       ),
                       SizedBox(height: 12.h),
                       ...nonFavorites.map((ex) => _buildExerciseCard(context, ex)),
-                      SizedBox(height: 40.h),
+                      SizedBox(height: 16.h),
                     ],
                   ),
           ),
@@ -155,7 +156,7 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: items.length,
-        separatorBuilder: (_, __) => SizedBox(width: 8.w),
+        separatorBuilder: (_, _) => SizedBox(width: 8.w),
         itemBuilder: (_, index) {
           final isSelected = selected == items[index];
           return Semantics(
@@ -263,15 +264,10 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(AppIcons.dumbbell, size: 48.r, color: context.mutedForeground.withValues(alpha: 0.5)),
-          SizedBox(height: 12.h),
-          Text('No exercises found', style: AppTextStyles.body.copyWith(color: context.mutedForeground)),
-        ],
-      ),
+    return EmptyStateWidget(
+      icon: AppIcons.search,
+      title: 'No exercises found',
+      subtitle: 'Try adjusting your search or filters',
     );
   }
 }

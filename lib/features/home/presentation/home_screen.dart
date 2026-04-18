@@ -14,6 +14,8 @@ import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
 import '../../../shared/widgets/custom_card.dart';
+import '../../../shared/widgets/empty_state_widget.dart';
+import '../../../shared/widgets/gym_ratz_background.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/stats_grid.dart';
 
@@ -25,26 +27,28 @@ class HomeScreen extends ConsumerWidget {
     final isDark = context.isDark;
 
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(context, isDark, ref),
-            Padding(
-              padding: EdgeInsets.all(AppSpacing.screenPadding),
-              child: Column(
-                children: [
-                  _buildStatsGrid(context, isDark, ref),
-                  SizedBox(height: AppSpacing.sectionGap),
-                  _buildTodaysWorkout(context, isDark),
-                  SizedBox(height: AppSpacing.sectionGap),
-                  _buildQuickActions(context, isDark),
-                  SizedBox(height: AppSpacing.sectionGap),
-                  _buildRecentActivity(context, isDark, ref),
-                  SizedBox(height: 100.h),
-                ],
+      body: GymRatzBackground(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildHeader(context, isDark, ref),
+              Padding(
+                padding: EdgeInsets.all(AppSpacing.screenPadding),
+                child: Column(
+                  children: [
+                    _buildStatsGrid(context, isDark, ref),
+                    SizedBox(height: AppSpacing.sectionGap),
+                    _buildTodaysWorkout(context, isDark),
+                    SizedBox(height: AppSpacing.sectionGap),
+                    _buildQuickActions(context, isDark),
+                    SizedBox(height: AppSpacing.sectionGap),
+                    _buildRecentActivity(context, isDark, ref),
+                    SizedBox(height: 16.h),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -131,7 +135,7 @@ class HomeScreen extends ConsumerWidget {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: weekDays.length,
-                  separatorBuilder: (_, __) => SizedBox(width: 8.w),
+                  separatorBuilder: (_, _) => SizedBox(width: 8.w),
                   itemBuilder: (context, index) {
                     final isToday = index == today;
                     return Container(
@@ -269,14 +273,10 @@ class HomeScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    Container(
+                    SizedBox(
                       width: 48.r,
                       height: 48.r,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(AppIcons.play, size: 24.r, color: Colors.white),
+                      child: Center(child: Icon(AppIcons.play, size: 24.r, color: Colors.white)),
                     ),
                   ],
                 ),
@@ -389,12 +389,10 @@ class HomeScreen extends ConsumerWidget {
         recentWorkouts.when(
           data: (workouts) {
             if (workouts.isEmpty) {
-              return Padding(
-                padding: EdgeInsets.symmetric(vertical: 24.h),
-                child: Text(
-                  'No recent workouts yet',
-                  style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
-                ),
+              return EmptyStateWidget(
+                icon: AppIcons.dumbbell,
+                title: 'No recent activity',
+                subtitle: 'Your completed workouts will appear here',
               );
             }
             return Column(
@@ -417,14 +415,10 @@ class HomeScreen extends ConsumerWidget {
                     padding: EdgeInsets.all(12.r),
                     child: Row(
                       children: [
-                        Container(
+                        SizedBox(
                           width: 40.r,
                           height: 40.r,
-                          decoration: BoxDecoration(
-                            color: context.mutedColor,
-                            borderRadius: AppRadius.borderLg,
-                          ),
-                          child: Icon(AppIcons.flame, size: 20.r, color: context.primaryColor),
+                          child: Center(child: Icon(AppIcons.flame, size: 20.r, color: context.primaryColor)),
                         ),
                         SizedBox(width: 12.w),
                         Expanded(

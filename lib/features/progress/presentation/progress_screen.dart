@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,17 +7,19 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
+import '../../../shared/models/enums.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
+import '../../../shared/utils/formatters.dart';
 import '../../../shared/utils/platform_adapter.dart';
 import '../../../shared/widgets/custom_card.dart';
+import '../../../shared/widgets/empty_state_widget.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/stats_grid.dart';
-import '../../../shared/data/sample_data.dart';
 
 class ProgressScreen extends ConsumerStatefulWidget {
   const ProgressScreen({super.key});
@@ -27,11 +31,9 @@ class ProgressScreen extends ConsumerStatefulWidget {
 class _ProgressScreenState extends ConsumerState<ProgressScreen> {
   String _chartView = 'Exercise Progress';
   String _selectedExercise = 'All';
-  String _selectedMetric = 'Volume';
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.isDark;
     final stats = ref.watch(workoutStatsProvider).valueOrNull;
     final prs = ref.watch(personalRecordsProvider).valueOrNull;
 
@@ -41,6 +43,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
 
     return Scaffold(
       body: SingleChildScrollView(
+        physics: PlatformAdapter.scrollPhysics,
         child: Column(
           children: [
             GradientHeader(
@@ -61,25 +64,39 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 ],
               ),
             ),
-            Padding(
-              padding: EdgeInsets.all(AppSpacing.screenPadding),
-              child: Column(
-                children: [
-                  _buildViewToggle(context),
-                  SizedBox(height: 16.h),
-                  _buildExerciseFilters(context),
-                  SizedBox(height: 16.h),
-                  _buildChart(context, isDark),
-                  SizedBox(height: 16.h),
-                  _buildMetricButtons(context),
-                  SizedBox(height: AppSpacing.sectionGap),
-                  _buildPRSection(context),
-                  SizedBox(height: AppSpacing.sectionGap),
-                  _buildBodyMetrics(context),
-                  SizedBox(height: 40.h),
-                ],
+            if (totalWorkouts == 0 && streak == 0 && prCount == 0)
+              Padding(
+                padding: EdgeInsets.all(AppSpacing.screenPadding),
+                child: EmptyStateWidget(
+                  icon: AppIcons.barChart2,
+                  title: 'No progress data yet',
+                  subtitle: 'Complete your first workout to start tracking your progress',
+                ),
+              )
+            else
+              Padding(
+                padding: EdgeInsets.all(AppSpacing.screenPadding),
+                child: Column(
+                  children: [
+                    _buildViewToggle(context),
+                    SizedBox(height: 16.h),
+                    if (_chartView == 'Exercise Progress') ...[
+                      _buildExerciseFilters(context),
+                      SizedBox(height: 16.h),
+                      _buildChart(context),
+                    ] else ...[
+                      _buildBodyWeightChart(context),
+                      SizedBox(height: 16.h),
+                      _buildWeightSummary(context),
+                    ],
+                    SizedBox(height: AppSpacing.sectionGap),
+                    _buildPRSection(context),
+                    SizedBox(height: AppSpacing.sectionGap),
+                    _buildRecentWorkouts(context),
+                    SizedBox(height: 16.h),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -96,25 +113,25 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             label: v,
             selected: isSelected,
             child: GestureDetector(
-            onTap: () {
-              PlatformAdapter.hapticSelection();
-              setState(() => _chartView = v);
-            },
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 10.h),
-              margin: EdgeInsets.symmetric(horizontal: 4.w),
-              decoration: BoxDecoration(
-                color: isSelected ? context.primaryColor : context.mutedColor,
-                borderRadius: AppRadius.borderLg,
-              ),
-              child: Center(
-                child: Text(v, style: AppTextStyles.bodySmall.copyWith(
-                  color: isSelected ? Colors.white : context.mutedForeground,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                )),
+              onTap: () {
+                PlatformAdapter.hapticSelection();
+                setState(() => _chartView = v);
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 10.h),
+                margin: EdgeInsets.symmetric(horizontal: 4.w),
+                decoration: BoxDecoration(
+                  color: isSelected ? context.primaryColor : context.mutedColor,
+                  borderRadius: AppRadius.borderLg,
+                ),
+                child: Center(
+                  child: Text(v, style: AppTextStyles.bodySmall.copyWith(
+                    color: isSelected ? Colors.white : context.mutedForeground,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  )),
+                ),
               ),
             ),
-          ),
           ),
         );
       }).toList(),
@@ -122,13 +139,13 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
   }
 
   Widget _buildExerciseFilters(BuildContext context) {
-    final filters = ['All', 'Bench', 'Squat', 'Deadlift', 'OHP'];
+    final filters = ref.watch(exerciseFilterProvider);
     return SizedBox(
       height: 36.h,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: filters.length,
-        separatorBuilder: (_, __) => SizedBox(width: 8.w),
+        separatorBuilder: (_, _) => SizedBox(width: 8.w),
         itemBuilder: (context, index) {
           final isSelected = _selectedExercise == filters[index];
           return Semantics(
@@ -161,10 +178,45 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     );
   }
 
-  Widget _buildChart(BuildContext context, bool isDark) {
-    final volumeData = ref.watch(weeklyVolumeProvider).valueOrNull;
-    final data = (volumeData != null && volumeData.isNotEmpty) ? volumeData : SampleData.volumeData;
+  Widget _buildChart(BuildContext context) {
+    final isDark = context.isDark;
+    final asyncData = ref.watch(weeklyVolumeProvider);
+
+    return asyncData.when(
+      loading: () => CustomCard(
+        child: SizedBox(
+          height: 220.h,
+          child: Center(child: CircularProgressIndicator(color: context.primaryColor)),
+        ),
+      ),
+      error: (_, _) => CustomCard(
+        child: SizedBox(
+          height: 220.h,
+          child: Center(
+            child: Text('Failed to load chart data', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+          ),
+        ),
+      ),
+      data: (data) {
+        if (data.isEmpty || data.every((d) => (d['value'] as double) == 0)) {
+          return _buildEmptyChart(context, 'No workout data yet');
+        }
+        return _buildLineChart(context, data, isDark);
+      },
+    );
+  }
+
+  Widget _buildLineChart(BuildContext context, List<Map<String, dynamic>> data, bool isDark) {
     final primary = isDark ? AppColors.darkPrimary : AppColors.lightPrimary;
+    final values = data.map((d) => d['value'] as double).toList();
+    final dataMin = values.reduce(min);
+    final dataMax = values.reduce(max);
+    final range = dataMax - dataMin;
+    final padding = range > 0 ? range * 0.2 : dataMax * 0.2;
+    final chartMin = max(0.0, dataMin - padding);
+    final chartMax = dataMax + padding;
+
+    final interval = max(1.0, ((chartMax - chartMin) / 4).roundToDouble());
 
     return CustomCard(
       child: SizedBox(
@@ -174,15 +226,22 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             gridData: FlGridData(
               show: true,
               drawVerticalLine: false,
-              horizontalInterval: 3000,
-              getDrawingHorizontalLine: (value) => FlLine(color: context.borderColor, strokeWidth: 1, dashArray: [5, 5]),
+              horizontalInterval: interval,
+              getDrawingHorizontalLine: (value) => FlLine(
+                color: context.borderColor,
+                strokeWidth: 1,
+                dashArray: [5, 5],
+              ),
             ),
             titlesData: FlTitlesData(
               leftTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
-                  reservedSize: 40,
-                  getTitlesWidget: (value, meta) => Text('${(value / 1000).toStringAsFixed(0)}k', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                  reservedSize: 44,
+                  getTitlesWidget: (value, meta) {
+                    if (value == meta.min || value == meta.max) return const SizedBox();
+                    return Text(Formatters.volume(value), style: AppTextStyles.caption.copyWith(color: context.mutedForeground));
+                  },
                 ),
               ),
               bottomTitles: AxisTitles(
@@ -204,6 +263,13 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
             borderData: FlBorderData(show: false),
+            lineTouchData: LineTouchData(
+              touchTooltipData: LineTouchTooltipData(
+                getTooltipItems: (spots) => spots.map((spot) {
+                  return LineTooltipItem(Formatters.volume(spot.y), AppTextStyles.caption.copyWith(color: Colors.white));
+                }).toList(),
+              ),
+            ),
             lineBarsData: [
               LineChartBarData(
                 spots: List.generate(data.length, (i) => FlSpot(i.toDouble(), data[i]['value'] as double)),
@@ -212,129 +278,365 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 barWidth: 3,
                 dotData: FlDotData(
                   show: true,
-                  getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(radius: 5, color: primary, strokeWidth: 2, strokeColor: Colors.white),
+                  getDotPainter: (spot, percent, barData, index) =>
+                      FlDotCirclePainter(radius: 5, color: primary, strokeWidth: 2, strokeColor: Colors.white),
                 ),
                 belowBarData: BarAreaData(show: true, color: primary.withValues(alpha: 0.1)),
               ),
             ],
-            minY: 6000,
-            maxY: 14000,
+            minY: chartMin,
+            maxY: chartMax,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildMetricButtons(BuildContext context) {
-    final metrics = ['Volume', 'Frequency', 'Intensity'];
-    return Row(
-      children: metrics.map((m) {
-        final isSelected = _selectedMetric == m;
-        return Expanded(
-          child: Semantics(
-            button: true,
-            label: m,
-            selected: isSelected,
-            child: GestureDetector(
-              onTap: () {
-                PlatformAdapter.hapticSelection();
-                setState(() => _selectedMetric = m);
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 10.h),
-                margin: EdgeInsets.symmetric(horizontal: 4.w),
-                decoration: BoxDecoration(
-                  color: isSelected ? context.primaryColor.withValues(alpha: 0.15) : context.mutedColor,
-                  borderRadius: AppRadius.borderLg,
-                  border: isSelected ? Border.all(color: context.primaryColor) : null,
+  Widget _buildEmptyChart(BuildContext context, String message) {
+    return CustomCard(
+      child: SizedBox(
+        height: 220.h,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(AppIcons.barChart2, size: 40.r, color: context.mutedForeground.withValues(alpha: 0.5)),
+              SizedBox(height: 12.h),
+              Text(message, style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBodyWeightChart(BuildContext context) {
+    final isDark = context.isDark;
+    final asyncEntries = ref.watch(weightEntriesProvider);
+
+    return asyncEntries.when(
+      loading: () => CustomCard(
+        child: SizedBox(
+          height: 220.h,
+          child: Center(child: CircularProgressIndicator(color: context.primaryColor)),
+        ),
+      ),
+      error: (_, _) => CustomCard(
+        child: SizedBox(
+          height: 220.h,
+          child: Center(
+            child: Text('Failed to load weight data', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+          ),
+        ),
+      ),
+      data: (entries) {
+        if (entries.isEmpty) {
+          return _buildEmptyChart(context, 'No weight entries yet');
+        }
+
+        final sorted = entries.toList()..sort((a, b) => a.date.compareTo(b.date));
+        final recent = sorted.length > 30 ? sorted.sublist(sorted.length - 30) : sorted;
+        final accent = isDark ? AppColors.darkAccent : AppColors.lightAccent;
+        final weights = recent.map((e) => e.weight).toList();
+        final dataMin = weights.reduce(min);
+        final dataMax = weights.reduce(max);
+        final pad = max(2.0, (dataMax - dataMin) * 0.2);
+        final chartMin = max(0.0, dataMin - pad);
+        final chartMax = dataMax + pad;
+
+        return CustomCard(
+          child: SizedBox(
+            height: 220.h,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: max(1.0, ((chartMax - chartMin) / 4).roundToDouble()),
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: context.borderColor,
+                    strokeWidth: 1,
+                    dashArray: [5, 5],
+                  ),
                 ),
-                child: Center(
-                  child: Text(m, style: AppTextStyles.bodySmall.copyWith(
-                    color: isSelected ? context.primaryColor : context.mutedForeground,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  )),
+                titlesData: FlTitlesData(
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 44,
+                      getTitlesWidget: (value, meta) {
+                        if (value == meta.min || value == meta.max) return const SizedBox();
+                        return Text('${value.toInt()}', style: AppTextStyles.caption.copyWith(color: context.mutedForeground));
+                      },
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: max(1, (recent.length / 5).ceil()).toDouble(),
+                      getTitlesWidget: (value, meta) {
+                        final idx = value.toInt();
+                        if (idx >= 0 && idx < recent.length) {
+                          final d = recent[idx].date;
+                          final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                          return Padding(
+                            padding: EdgeInsets.only(top: 8.h),
+                            child: Text('${months[d.month - 1]} ${d.day}', style: AppTextStyles.caption.copyWith(color: context.mutedForeground, fontSize: 10.sp)),
+                          );
+                        }
+                        return const SizedBox();
+                      },
+                    ),
+                  ),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
+                borderData: FlBorderData(show: false),
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipItems: (spots) => spots.map((spot) {
+                      final idx = spot.x.toInt();
+                      final unit = idx < recent.length ? recent[idx].unit : 'lbs';
+                      return LineTooltipItem(
+                        Formatters.weight(spot.y, unit),
+                        AppTextStyles.caption.copyWith(color: Colors.white),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: List.generate(recent.length, (i) => FlSpot(i.toDouble(), recent[i].weight)),
+                    isCurved: true,
+                    color: accent,
+                    barWidth: 3,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) =>
+                          FlDotCirclePainter(radius: 4, color: accent, strokeWidth: 2, strokeColor: Colors.white),
+                    ),
+                    belowBarData: BarAreaData(show: true, color: accent.withValues(alpha: 0.1)),
+                  ),
+                ],
+                minY: chartMin,
+                maxY: chartMax,
               ),
             ),
           ),
         );
-      }).toList(),
+      },
+    );
+  }
+
+  Widget _buildWeightSummary(BuildContext context) {
+    final entries = ref.watch(weightEntriesProvider).valueOrNull;
+    if (entries == null || entries.isEmpty) return const SizedBox.shrink();
+
+    final sorted = entries.toList()..sort((a, b) => b.date.compareTo(a.date));
+    final latest = sorted.first;
+    final change = sorted.length >= 2 ? latest.weight - sorted[1].weight : null;
+
+    return CustomCard(
+      padding: EdgeInsets.all(16.r),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 44.r,
+            height: 44.r,
+            child: Center(child: Icon(AppIcons.scale, size: 22.r, color: context.primaryColor)),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Current Weight', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+                SizedBox(height: 2.h),
+                Text(Formatters.weight(latest.weight, latest.unit), style: AppTextStyles.h3.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+          if (change != null)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: (change <= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444)).withValues(alpha: 0.1),
+                borderRadius: AppRadius.borderFull,
+              ),
+              child: Text(
+                '${change > 0 ? '+' : ''}${change.toStringAsFixed(1)} ${latest.unit}',
+                style: AppTextStyles.caption.copyWith(
+                  color: change <= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
   Widget _buildPRSection(BuildContext context) {
-    final prsList = ref.watch(personalRecordsProvider).valueOrNull;
-    final prList = (prsList != null && prsList.isNotEmpty)
-        ? prsList
-            .map((p) => {
-                  'exercise': p.exerciseName,
-                  'weight': p.weight.toInt(),
-                  'unit': 'lbs',
-                  'date': '${p.date.month}/${p.date.day}/${p.date.year}',
-                })
-            .toList()
-        : SampleData.personalRecords;
+    final profile = ref.watch(userProfileProvider).valueOrNull;
+    final unit = profile?.unit ?? 'lbs';
+    final asyncPrs = ref.watch(personalRecordsProvider);
 
-    return Column(
-      children: [
-        const SectionHeader(title: 'Personal Records'),
-        SizedBox(height: AppSpacing.lg),
-        ...prList.map((pr) => Padding(
-          padding: EdgeInsets.only(bottom: 8.h),
-          child: CustomCard(
-            padding: EdgeInsets.all(12.r),
-            child: Row(
-              children: [
-                Container(
-                  width: 40.r, height: 40.r,
-                  decoration: BoxDecoration(color: context.primaryColor.withValues(alpha: 0.2), borderRadius: AppRadius.borderLg),
-                  child: Icon(AppIcons.trophy, size: 20.r, color: context.primaryColor),
+    return asyncPrs.when(
+      loading: () => Column(
+        children: [
+          const SectionHeader(title: 'Personal Records'),
+          SizedBox(height: AppSpacing.lg),
+          SizedBox(height: 60.h, child: Center(child: CircularProgressIndicator(color: context.primaryColor))),
+        ],
+      ),
+      error: (_, _) => Column(
+        children: [
+          const SectionHeader(title: 'Personal Records'),
+          SizedBox(height: AppSpacing.lg),
+          Center(child: Text('Failed to load PRs', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground))),
+        ],
+      ),
+      data: (prsList) {
+        final filtered = _selectedExercise == 'All' || _chartView != 'Exercise Progress'
+            ? prsList
+            : prsList.where((p) => p.exerciseName.toLowerCase().contains(_selectedExercise.toLowerCase())).toList();
+
+        return Column(
+          children: [
+            const SectionHeader(title: 'Personal Records'),
+            SizedBox(height: AppSpacing.lg),
+            if (filtered.isEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 24.h),
+                child: Column(
+                  children: [
+                    Icon(AppIcons.trophy, size: 36.r, color: context.mutedForeground.withValues(alpha: 0.4)),
+                    SizedBox(height: 8.h),
+                    Text(
+                      prsList.isEmpty ? 'No personal records yet' : 'No PRs for this exercise',
+                      style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              )
+            else
+              ...filtered.map((pr) => Padding(
+                padding: EdgeInsets.only(bottom: 8.h),
+                child: CustomCard(
+                  padding: EdgeInsets.all(12.r),
+                  child: Row(
                     children: [
-                      Text(pr['exercise'] as String, style: AppTextStyles.bodySmall.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
-                      Text(pr['date'] as String, style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                      SizedBox(
+                        width: 40.r,
+                        height: 40.r,
+                        child: Center(child: Icon(AppIcons.trophy, size: 20.r, color: context.primaryColor)),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(pr.exerciseName, style: AppTextStyles.bodySmall.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
+                            Text(Formatters.dayDate(pr.date), style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(Formatters.weight(pr.weight, unit), style: AppTextStyles.h4.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600)),
+                          Text('${pr.reps} rep${pr.reps == 1 ? '' : 's'}', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                Text('${pr['weight']} ${pr['unit']}', style: AppTextStyles.h4.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ),
-        )),
-      ],
-    );
-  }
-
-  Widget _buildBodyMetrics(BuildContext context) {
-    return Column(
-      children: [
-        const SectionHeader(title: 'Body Metrics'),
-        SizedBox(height: AppSpacing.lg),
-        _metricRow(context, 'Body Weight', '175.2 lbs', '\u2193 1.6 lbs', true),
-        _metricRow(context, 'Body Fat %', '15.2%', '\u2193 0.8%', true),
-        _metricRow(context, 'Muscle Mass', '145 lbs', '\u2191 1.2 lbs', true),
-      ],
-    );
-  }
-
-  Widget _metricRow(BuildContext context, String label, String value, String change, bool positive) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
-      child: CustomCard(
-        padding: EdgeInsets.all(12.r),
-        child: Row(
-          children: [
-            Expanded(child: Text(label, style: AppTextStyles.body.copyWith(color: context.foreground))),
-            Text(value, style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
-            SizedBox(width: 8.w),
-            Text(change, style: AppTextStyles.caption.copyWith(color: positive ? Colors.green : context.destructiveColor)),
+              )),
           ],
-        ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRecentWorkouts(BuildContext context) {
+    final asyncWorkouts = ref.watch(recentWorkoutsProvider);
+
+    return asyncWorkouts.when(
+      loading: () => Column(
+        children: [
+          const SectionHeader(title: 'Recent Workouts'),
+          SizedBox(height: AppSpacing.lg),
+          SizedBox(height: 60.h, child: Center(child: CircularProgressIndicator(color: context.primaryColor))),
+        ],
       ),
+      error: (_, _) => Column(
+        children: [
+          const SectionHeader(title: 'Recent Workouts'),
+          SizedBox(height: AppSpacing.lg),
+          Center(child: Text('Failed to load workouts', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground))),
+        ],
+      ),
+      data: (workouts) {
+        final completed = workouts.where((w) => w.status == WorkoutStatus.completed).take(5).toList();
+
+        return Column(
+          children: [
+            const SectionHeader(title: 'Recent Workouts'),
+            SizedBox(height: AppSpacing.lg),
+            if (completed.isEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 24.h),
+                child: Column(
+                  children: [
+                    Icon(AppIcons.dumbbell, size: 36.r, color: context.mutedForeground.withValues(alpha: 0.4)),
+                    SizedBox(height: 8.h),
+                    Text('No workouts logged yet', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+                  ],
+                ),
+              )
+            else
+              ...completed.map((w) {
+                final names = w.exercises.map((e) => e.name).toList();
+                final display = names.length <= 2
+                    ? names.join(', ')
+                    : '${names.take(2).join(', ')} +${names.length - 2} more';
+
+                return Padding(
+                  padding: EdgeInsets.only(bottom: 8.h),
+                  child: CustomCard(
+                    padding: EdgeInsets.all(12.r),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 40.r,
+                          height: 40.r,
+                          child: Center(child: Icon(AppIcons.dumbbell, size: 20.r, color: context.primaryColor)),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(display, style: AppTextStyles.bodySmall.copyWith(color: context.foreground, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
+                              Text(Formatters.dayDate(w.date), style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(Formatters.volume(w.totalVolume), style: AppTextStyles.bodySmall.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
+                            Text(Formatters.duration(w.duration ~/ 60), style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+          ],
+        );
+      },
     );
   }
 }
