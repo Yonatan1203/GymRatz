@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gymratz/core/analytics_service.dart';
 
 import '../../features/achievements/domain/achievement_service.dart';
 import '../../features/progression/domain/progression_engine.dart';
@@ -24,4 +25,8 @@ final programServiceProvider = Provider<ProgramService>((ref) {
 
 final achievementServiceProvider = Provider<AchievementService>((ref) {
   return AchievementService(ref.watch(achievementRepositoryProvider));
+});
+
+final analyticsServiceProvider = Provider<AnalyticsService>((ref) {
+  return AnalyticsService();
 });
