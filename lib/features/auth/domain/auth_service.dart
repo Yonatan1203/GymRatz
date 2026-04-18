@@ -132,6 +132,44 @@ class AuthService {
     }
   }
 
+  /// Sign in with Apple and create profile if first time.
+  Future<void> signInWithApple() async {
+    final credential = await _authRepo.signInWithApple();
+    final uid = credential.user!.uid;
+
+    // Link with RevenueCat
+    await _entitlementService?.loginUser(uid);
+
+    // Create profile if first time
+    final hasExistingProfile = await hasProfile(uid);
+    if (!hasExistingProfile) {
+      final user = credential.user!;
+      final displayName = user.displayName ?? 'User';
+      final parts = displayName.trim().split(' ');
+      final initials = parts.length >= 2
+          ? '${parts.first[0]}${parts.last[0]}'.toUpperCase()
+          : displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+
+      final now = DateTime.now();
+      final profile = UserProfile(
+        uid: uid,
+        name: displayName,
+        initials: initials,
+        email: user.email ?? '',
+        createdAt: now,
+        updatedAt: now,
+      );
+      await _firestore.collection('users').doc(uid).set(profile.toJson());
+
+      // Initialize default achievements for the new user
+      try {
+        await _achievementService?.initForNewUser(uid);
+      } catch (e) {
+        debugPrint('AUTH: Failed to init achievements for Apple user: $e');
+      }
+    }
+  }
+
   /// Check if the user's Firestore profile exists.
   /// Returns true if the profile doc exists, false otherwise.
   Future<bool> hasProfile(String uid) async {

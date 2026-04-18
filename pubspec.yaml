@@ -27,6 +27,8 @@ dependencies:
   uuid: ^4.5.1
   intl: ^0.20.2
   connectivity_plus: ^6.1.4
+  sign_in_with_apple: ^6.1.4
+  crypto: ^3.0.6
 
 dev_dependencies:
   flutter_test:
