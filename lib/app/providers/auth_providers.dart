@@ -3,10 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/achievements/data/achievement_repository.dart';
+import '../../features/achievements/domain/achievement_service.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/domain/auth_service.dart';
 import '../../features/subscription/domain/entitlement_service.dart';
 import '../../features/subscription/data/entitlement_repository.dart';
+import '../../features/user/data/user_repository.dart';
 
 /// Returns null when Firebase hasn't been initialized (no google-services.json yet).
 final firebaseAuthProvider = Provider<FirebaseAuth?>((ref) {
@@ -36,9 +39,12 @@ final authServiceProvider = Provider<AuthService>((ref) {
   if (auth == null || firestore == null) {
     throw StateError('Firebase not initialized — cannot create AuthService');
   }
-  final service = AuthService(AuthRepository(auth), firestore);
+  final service = AuthService(AuthRepository(auth), firestore, UserRepository(firestore));
   service.setEntitlementService(
     EntitlementService(EntitlementRepository()),
+  );
+  service.setAchievementService(
+    AchievementService(AchievementRepository(firestore)),
   );
   return service;
 });

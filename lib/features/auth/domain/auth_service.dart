@@ -5,15 +5,17 @@ import 'package:flutter/foundation.dart';
 import '../../../shared/models/user_profile.dart';
 import '../../achievements/domain/achievement_service.dart';
 import '../../subscription/domain/entitlement_service.dart';
+import '../../user/data/user_repository.dart';
 import '../data/auth_repository.dart';
 
 class AuthService {
   final AuthRepository _authRepo;
   final FirebaseFirestore _firestore;
+  final UserRepository _userRepository;
   EntitlementService? _entitlementService;
   AchievementService? _achievementService;
 
-  AuthService(this._authRepo, this._firestore);
+  AuthService(this._authRepo, this._firestore, this._userRepository);
 
   /// Set the entitlement service for RevenueCat integration.
   void setEntitlementService(EntitlementService service) {
@@ -183,14 +185,16 @@ class AuthService {
     await _authRepo.signOut();
   }
 
-  /// Delete account and Firestore data.
-  /// The user doc is deleted here; subcollections are cascade-deleted
-  /// by the onUserDelete Cloud Function when the auth user is removed.
+  /// Delete account and all associated data.
   Future<void> deleteAccount() async {
     final uid = _authRepo.currentUser?.uid;
-    if (uid != null) {
-      await _firestore.collection('users').doc(uid).delete();
-    }
+    if (uid == null) throw Exception('No user signed in');
+
+    // 1. Delete all Firestore data (user doc + subcollections)
+    await _userRepository.deleteAllUserData(uid);
+    // 2. Clear RevenueCat
+    await _entitlementService?.logoutUser();
+    // 3. Delete Firebase Auth account
     await _authRepo.deleteAccount();
   }
 

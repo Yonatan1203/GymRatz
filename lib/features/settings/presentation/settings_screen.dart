@@ -24,6 +24,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _pushNotifications = true;
   bool _workoutReminders = true;
   bool _restTimerSound = false;
+  bool _isDeletingAccount = false;
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +94,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       children: [
                         MenuItemWidget(icon: AppIcons.download, label: 'Export Data', onTap: () {}),
                         Divider(color: context.borderColor, height: 1),
-                        MenuItemWidget(icon: AppIcons.trash2, label: 'Clear All Data', iconColor: context.destructiveColor, onTap: () {}),
+                        MenuItemWidget(
+                          icon: AppIcons.trash2,
+                          label: 'Delete Account',
+                          iconColor: context.destructiveColor,
+                          onTap: _isDeletingAccount ? null : _handleDeleteAccount,
+                        ),
                       ],
                     ),
                   ),
@@ -154,6 +160,48 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleDeleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: const Text(
+          'This will permanently delete your account, all workout data, programs, and achievements. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isDeletingAccount = true);
+
+    try {
+      final authService = ref.read(authServiceProvider);
+      await authService.deleteAccount();
+      if (mounted) {
+        context.go('/onboarding/welcome');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isDeletingAccount = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete account: $e')),
+        );
+      }
+    }
   }
 
   Widget _sectionTitle(BuildContext context, String title) {
