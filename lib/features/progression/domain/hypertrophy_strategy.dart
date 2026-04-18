@@ -56,9 +56,6 @@ class HypertrophyStrategy extends ProgressionStrategy {
       }
     }
 
-    // Last set RIR for effort tracking.
-    final lastSetRir = workingSets.last.rir;
-
     // Smoothing: 0.7 * previous + 0.3 * current.
     final prevSmoothed = history.latestSmoothedE1RM;
     final smoothed =
@@ -76,7 +73,7 @@ class HypertrophyStrategy extends ProgressionStrategy {
       totalTonnage: _round2(totalTonnage),
       topSetWeight: topWeight,
       topSetReps: topReps,
-      topSetRir: lastSetRir,
+      topSetRir: topRir,
     );
   }
 
