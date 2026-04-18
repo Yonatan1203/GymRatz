@@ -331,13 +331,14 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
         setState(() => _restSeconds--);
       } else {
         t.cancel();
+        PlatformAdapter.hapticSelection();
         setState(() { _restActive = false; _timerRunning = false; });
       }
     });
   }
 
   void _toggleSet(int exIdx, int setIdx) {
-    PlatformAdapter.hapticHeavy();
+    PlatformAdapter.hapticLight();
     final current = _sets[exIdx][setIdx];
     final wasCompleted = current.completed;
 
@@ -392,6 +393,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       try {
         final summary = await ref.read(workoutServiceProvider).completeWorkout(uid, workout, unit);
         if (mounted) {
+          PlatformAdapter.hapticMedium();
           setState(() {
             _workoutSummary = summary;
             _completed = true;

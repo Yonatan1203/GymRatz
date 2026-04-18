@@ -4,9 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
-import '../../../theme/app_radius.dart';
-import '../../../theme/app_gradients.dart';
-import '../../../theme/app_shadows.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
@@ -150,7 +147,11 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
               selected: isSelected,
               child: GestureDetector(
               onTap: () {
-                PlatformAdapter.hapticSelection();
+                if (tab == 'Unlocked') {
+                  PlatformAdapter.hapticHeavy();
+                } else {
+                  PlatformAdapter.hapticSelection();
+                }
                 setState(() => _selectedTab = tab);
               },
               child: Container(
@@ -181,7 +182,6 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
   }
 
   Widget _buildAchievementCard(BuildContext context, Achievement achievement) {
-    final isDark = context.isDark;
     final progressPercent = achievement.total > 0 ? achievement.progress / achievement.total : 0.0;
 
     return Padding(
@@ -193,19 +193,15 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
+              SizedBox(
                 width: 56.r,
                 height: 56.r,
-                decoration: BoxDecoration(
-                  gradient: achievement.unlocked ? AppGradients.primary(isDark: isDark) : null,
-                  color: achievement.unlocked ? null : context.mutedColor,
-                  borderRadius: AppRadius.borderXl,
-                  boxShadow: AppShadows.md,
-                ),
-                child: Icon(
-                  achievement.unlocked ? _iconForName(achievement.iconName) : AppIcons.lock,
-                  size: 28.r,
-                  color: achievement.unlocked ? Colors.white : context.mutedForeground,
+                child: Center(
+                  child: Icon(
+                    achievement.unlocked ? _iconForName(achievement.iconName) : AppIcons.lock,
+                    size: 28.r,
+                    color: achievement.unlocked ? context.primaryColor : context.mutedForeground,
+                  ),
                 ),
               ),
               SizedBox(width: 16.w),
