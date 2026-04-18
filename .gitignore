@@ -60,3 +60,15 @@ nul
 
 # Android bug reports
 bugreport-*.zip
+
+# Cloud Functions build output and dependencies
+functions/lib/
+functions/node_modules/
+
+# Environment files
+.env.*
+
+# Release signing
+android/key.properties
+android/*.keystore
+*.jks
