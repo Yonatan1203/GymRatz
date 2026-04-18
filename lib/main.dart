@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'app/app.dart';
@@ -29,6 +32,21 @@ Future<void> main() async {
       await FirebaseAuth.instance.setSettings(
         appVerificationDisabledForTesting: true,
       );
+    }
+
+    // Initialize Crashlytics — only enable crash reporting in non-debug mode.
+    if (!kDebugMode) {
+      FlutterError.onError =
+          FirebaseCrashlytics.instance.recordFlutterFatalError;
+
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+    } else {
+      // In debug mode, disable Crashlytics collection.
+      await FirebaseCrashlytics.instance
+          .setCrashlyticsCollectionEnabled(false);
     }
   } catch (e) {
     debugPrint('Firebase init skipped: $e');
