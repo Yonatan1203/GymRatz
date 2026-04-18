@@ -68,5 +68,38 @@ Future<void> main() async {
     debugPrint('Notification init skipped: $e');
   }
 
+  // Replace red error screen in release mode
+  if (!kDebugMode) {
+    ErrorWidget.builder = (FlutterErrorDetails details) {
+      return MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.warning_amber_rounded,
+                      size: 64, color: Colors.orange),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Something went wrong',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'The app encountered an error. Please try restarting.',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    };
+  }
+
   runApp(const ProviderScope(child: GymRatzApp()));
 }
