@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.email == request.auth.token.email;
+      allow update: if isOwner(uid)
+        && request.resource.data.uid == uid;
+      allow delete: if isOwner(uid);
+
+      match /workouts/{workoutId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && request.resource.data.id == workoutId;
+        allow update, delete: if isOwner(uid);
+      }
+
+      match /programs/{programId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && request.resource.data.id == programId;
+        allow update, delete: if isOwner(uid);
+      }
+
+      match /prs/{exerciseId} {
+        allow read: if isOwner(uid);
+        allow write: if isOwner(uid)
+          && request.resource.data.weight is number
+          && request.resource.data.reps is int;
+      }
+
+      match /achievements/{achievementId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid);
+        allow update: if isOwner(uid) && request.resource.data.progress is int;
+      }
+
+      match /weightEntries/{entryId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && request.resource.data.weight is number;
+        allow update, delete: if isOwner(uid);
+      }
+
+      match /exercises/{exerciseId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
