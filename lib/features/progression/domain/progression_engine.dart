@@ -1,55 +1,44 @@
 import '../../../shared/models/enums.dart';
 import '../../../shared/models/workout_set.dart';
-import 'progression_rules.dart';
+import 'progression_strategy.dart';
 import 'progression_suggestion.dart';
-import 'session_analyzer.dart';
+import 'strength_strategy.dart';
+import 'hypertrophy_strategy.dart';
+import 'endurance_strategy.dart';
+import 'models/progression_history.dart';
 
 class ProgressionEngine {
-  static final _rules = <EquipmentType, ProgressionRule>{
-    EquipmentType.barbell: BarbellProgression(),
-    EquipmentType.dumbbell: DumbbellProgression(),
-    EquipmentType.machineStack: MachineStackProgression(),
-    EquipmentType.machinePlateLoaded: PlateMachineProgression(),
-    EquipmentType.bodyweight: BodyweightProgression(),
+  static final Map<ProgressionMode, ProgressionStrategy> _strategies = {
+    ProgressionMode.strength: StrengthStrategy(),
+    ProgressionMode.hypertrophy: HypertrophyStrategy(),
+    ProgressionMode.endurance: EnduranceStrategy(),
   };
 
-  /// Generate a progression suggestion for an exercise.
-  ///
-  /// [performedSets] - sets the user just logged
-  /// [repMin], [repMax], [targetRir] - prescription from ProgramExercise
-  /// [equipment] - equipment type
-  /// [unit] - 'kg' or 'lbs'
-  /// [poorSessionCount] - consecutive sessions below range or rirLow
-  ProgressionSuggestion suggest({
+  static ProgressionStrategy getStrategy(ProgressionMode mode) {
+    return _strategies[mode] ?? HypertrophyStrategy();
+  }
+
+  static ProgressionSuggestion suggest({
     required List<WorkoutSet> performedSets,
     required double currentWeight,
-    required int currentSets,
     required int repMin,
     required int repMax,
     required int targetRir,
     required EquipmentType equipment,
     required String unit,
-    int poorSessionCount = 0,
+    required ProgressionMode mode,
+    ProgressionHistory history = const ProgressionHistory(),
   }) {
-    final session = SessionAnalyzer.analyze(
-      sets: performedSets,
-      repMin: repMin,
-      repMax: repMax,
-      targetRir: targetRir,
-    );
-
-    final rule = _rules[equipment] ?? BarbellProgression();
-
-    return rule.suggest(
-      session: session,
+    final strategy = getStrategy(mode);
+    return strategy.suggest(
+      performedSets: performedSets,
       currentWeight: currentWeight,
-      currentSets: currentSets,
       repMin: repMin,
       repMax: repMax,
       targetRir: targetRir,
       equipment: equipment,
       unit: unit,
-      poorSessionCount: poorSessionCount,
+      history: history,
     );
   }
 }

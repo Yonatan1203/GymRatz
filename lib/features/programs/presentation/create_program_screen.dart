@@ -187,7 +187,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
               repMax: ex.repMax,
               targetRir: ex.targetRir,
               restSeconds: ex.restSeconds,
-              progressionType: ex.progressionType.label,
+              progressionMode: ex.progressionType,
               category: ex.category,
               equipment: ex.equipment,
               equipmentType: ex.equipmentType,

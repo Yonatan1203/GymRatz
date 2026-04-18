@@ -136,9 +136,9 @@ class SampleData {
       name: 'Push Day A',
       dayOfWeek: 'Monday',
       exercises: [
-        ProgramExercise(id: '1', name: 'Bench Press', sets: 3, repMin: 8, repMax: 10, targetRir: 2, restSeconds: 120, progressionType: 'Load First', category: 'Chest', equipment: 'Barbell', equipmentType: EquipmentType.barbell),
-        ProgramExercise(id: '2', name: 'Incline DB Press', sets: 3, repMin: 10, repMax: 12, targetRir: 2, restSeconds: 90, progressionType: 'Load First', category: 'Chest', equipment: 'Dumbbell', equipmentType: EquipmentType.dumbbell),
-        ProgramExercise(id: '3', name: 'Overhead Press', sets: 3, repMin: 8, repMax: 10, targetRir: 2, restSeconds: 120, progressionType: 'Load First', category: 'Shoulders', equipment: 'Barbell', equipmentType: EquipmentType.barbell),
+        ProgramExercise(id: '1', name: 'Bench Press', sets: 3, repMin: 8, repMax: 10, targetRir: 2, restSeconds: 120, progressionMode: ProgressionMode.strength, category: 'Chest', equipment: 'Barbell', equipmentType: EquipmentType.barbell),
+        ProgramExercise(id: '2', name: 'Incline DB Press', sets: 3, repMin: 10, repMax: 12, targetRir: 2, restSeconds: 90, progressionMode: ProgressionMode.strength, category: 'Chest', equipment: 'Dumbbell', equipmentType: EquipmentType.dumbbell),
+        ProgramExercise(id: '3', name: 'Overhead Press', sets: 3, repMin: 8, repMax: 10, targetRir: 2, restSeconds: 120, progressionMode: ProgressionMode.strength, category: 'Shoulders', equipment: 'Barbell', equipmentType: EquipmentType.barbell),
       ],
     ),
     WorkoutDay(
@@ -146,9 +146,9 @@ class SampleData {
       name: 'Pull Day A',
       dayOfWeek: 'Tuesday',
       exercises: [
-        ProgramExercise(id: '4', name: 'Barbell Row', sets: 3, repMin: 8, repMax: 10, targetRir: 2, restSeconds: 120, progressionType: 'Load First', category: 'Back', equipment: 'Barbell', equipmentType: EquipmentType.barbell),
-        ProgramExercise(id: '5', name: 'Pull-ups', sets: 3, repMin: 6, repMax: 10, targetRir: 2, restSeconds: 120, progressionType: 'Reps First', category: 'Back', equipment: 'Body Weight', equipmentType: EquipmentType.bodyweight),
-        ProgramExercise(id: '6', name: 'Barbell Curl', sets: 3, repMin: 10, repMax: 12, targetRir: 1, restSeconds: 60, progressionType: 'Reps First', category: 'Arms', equipment: 'Barbell', equipmentType: EquipmentType.barbell),
+        ProgramExercise(id: '4', name: 'Barbell Row', sets: 3, repMin: 8, repMax: 10, targetRir: 2, restSeconds: 120, progressionMode: ProgressionMode.strength, category: 'Back', equipment: 'Barbell', equipmentType: EquipmentType.barbell),
+        ProgramExercise(id: '5', name: 'Pull-ups', sets: 3, repMin: 6, repMax: 10, targetRir: 2, restSeconds: 120, progressionMode: ProgressionMode.endurance, category: 'Back', equipment: 'Body Weight', equipmentType: EquipmentType.bodyweight),
+        ProgramExercise(id: '6', name: 'Barbell Curl', sets: 3, repMin: 10, repMax: 12, targetRir: 1, restSeconds: 60, progressionMode: ProgressionMode.endurance, category: 'Arms', equipment: 'Barbell', equipmentType: EquipmentType.barbell),
       ],
     ),
     WorkoutDay(
@@ -156,9 +156,9 @@ class SampleData {
       name: 'Leg Day',
       dayOfWeek: 'Wednesday',
       exercises: [
-        ProgramExercise(id: '7', name: 'Squat', sets: 4, repMin: 6, repMax: 8, targetRir: 2, restSeconds: 180, progressionType: 'Load First', category: 'Legs', equipment: 'Barbell', equipmentType: EquipmentType.barbell),
-        ProgramExercise(id: '8', name: 'Romanian Deadlift', sets: 3, repMin: 8, repMax: 10, targetRir: 2, restSeconds: 120, progressionType: 'Load First', category: 'Legs', equipment: 'Barbell', equipmentType: EquipmentType.barbell),
-        ProgramExercise(id: '9', name: 'Leg Press', sets: 3, repMin: 10, repMax: 12, targetRir: 1, restSeconds: 90, progressionType: 'Mixed', category: 'Legs', equipment: 'Machine', equipmentType: EquipmentType.machinePlateLoaded),
+        ProgramExercise(id: '7', name: 'Squat', sets: 4, repMin: 6, repMax: 8, targetRir: 2, restSeconds: 180, progressionMode: ProgressionMode.strength, category: 'Legs', equipment: 'Barbell', equipmentType: EquipmentType.barbell),
+        ProgramExercise(id: '8', name: 'Romanian Deadlift', sets: 3, repMin: 8, repMax: 10, targetRir: 2, restSeconds: 120, progressionMode: ProgressionMode.strength, category: 'Legs', equipment: 'Barbell', equipmentType: EquipmentType.barbell),
+        ProgramExercise(id: '9', name: 'Leg Press', sets: 3, repMin: 10, repMax: 12, targetRir: 1, restSeconds: 90, progressionMode: ProgressionMode.hypertrophy, category: 'Legs', equipment: 'Machine', equipmentType: EquipmentType.machinePlateLoaded),
       ],
     ),
   ];

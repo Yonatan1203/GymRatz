@@ -8,6 +8,7 @@ class WorkoutExercise {
   final String repRange;
   final int targetRir;
   final int restSeconds;
+  final ProgressionMode progressionMode;
   final List<WorkoutSet> sets;
 
   const WorkoutExercise({
@@ -17,6 +18,7 @@ class WorkoutExercise {
     required this.repRange,
     required this.targetRir,
     this.restSeconds = 120,
+    this.progressionMode = ProgressionMode.hypertrophy,
     required this.sets,
   });
 
@@ -29,6 +31,7 @@ class WorkoutExercise {
         'repRange': repRange,
         'targetRir': targetRir,
         'restSeconds': restSeconds,
+        'progressionMode': progressionMode.name,
         'sets': sets.map((s) => s.toJson()).toList(),
       };
 
@@ -43,6 +46,10 @@ class WorkoutExercise {
         repRange: json['repRange'] as String? ?? '',
         targetRir: json['targetRir'] as int? ?? 2,
         restSeconds: json['restSeconds'] as int? ?? 120,
+        progressionMode: ProgressionMode.values.firstWhere(
+          (e) => e.name == json['progressionMode'],
+          orElse: () => ProgressionMode.hypertrophy,
+        ),
         sets: (json['sets'] as List<dynamic>?)
                 ?.map((s) => WorkoutSet.fromJson(s as Map<String, dynamic>))
                 .toList() ??
@@ -56,6 +63,7 @@ class WorkoutExercise {
     String? repRange,
     int? targetRir,
     int? restSeconds,
+    ProgressionMode? progressionMode,
     List<WorkoutSet>? sets,
   }) =>
       WorkoutExercise(
@@ -65,6 +73,7 @@ class WorkoutExercise {
         repRange: repRange ?? this.repRange,
         targetRir: targetRir ?? this.targetRir,
         restSeconds: restSeconds ?? this.restSeconds,
+        progressionMode: progressionMode ?? this.progressionMode,
         sets: sets ?? this.sets,
       );
 }

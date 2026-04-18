@@ -8,7 +8,7 @@ class ProgramExercise {
   final int repMax;
   final int targetRir;
   final int restSeconds;
-  final String progressionType;
+  final ProgressionMode progressionMode;
   final String category;
   final String? equipment;
   final EquipmentType equipmentType;
@@ -21,7 +21,7 @@ class ProgramExercise {
     this.repMax = 12,
     this.targetRir = 2,
     this.restSeconds = 120,
-    this.progressionType = 'Load First',
+    this.progressionMode = ProgressionMode.hypertrophy,
     this.category = 'Chest',
     this.equipment,
     this.equipmentType = EquipmentType.barbell,
@@ -35,29 +35,41 @@ class ProgramExercise {
         'repMax': repMax,
         'targetRir': targetRir,
         'restSeconds': restSeconds,
-        'progressionType': progressionType,
+        'progressionMode': progressionMode.name,
         'category': category,
         'equipment': equipment,
         'equipmentType': equipmentType.name,
       };
 
-  factory ProgramExercise.fromJson(Map<String, dynamic> json) =>
-      ProgramExercise(
-        id: json['id'] as String,
-        name: json['name'] as String? ?? '',
-        sets: json['sets'] as int? ?? 3,
-        repMin: json['repMin'] as int? ?? 8,
-        repMax: json['repMax'] as int? ?? 12,
-        targetRir: json['targetRir'] as int? ?? 2,
-        restSeconds: json['restSeconds'] as int? ?? 120,
-        progressionType: json['progressionType'] as String? ?? 'Load First',
-        category: json['category'] as String? ?? '',
-        equipment: json['equipment'] as String?,
-        equipmentType: EquipmentType.values.firstWhere(
-          (e) => e.name == json['equipmentType'],
-          orElse: () => EquipmentType.barbell,
-        ),
+  factory ProgramExercise.fromJson(Map<String, dynamic> json) {
+    ProgressionMode mode;
+    if (json['progressionMode'] != null) {
+      mode = ProgressionMode.values.firstWhere(
+        (e) => e.name == json['progressionMode'],
+        orElse: () => ProgressionMode.hypertrophy,
       );
+    } else {
+      // Legacy migration from old progressionType string
+      mode = ProgressionMode.fromLegacy(json['progressionType'] as String?);
+    }
+
+    return ProgramExercise(
+      id: json['id'] as String,
+      name: json['name'] as String? ?? '',
+      sets: json['sets'] as int? ?? 3,
+      repMin: json['repMin'] as int? ?? 8,
+      repMax: json['repMax'] as int? ?? 12,
+      targetRir: json['targetRir'] as int? ?? 2,
+      restSeconds: json['restSeconds'] as int? ?? 120,
+      progressionMode: mode,
+      category: json['category'] as String? ?? '',
+      equipment: json['equipment'] as String?,
+      equipmentType: EquipmentType.values.firstWhere(
+        (e) => e.name == json['equipmentType'],
+        orElse: () => EquipmentType.barbell,
+      ),
+    );
+  }
 
   ProgramExercise copyWith({
     String? id,
@@ -67,7 +79,7 @@ class ProgramExercise {
     int? repMax,
     int? targetRir,
     int? restSeconds,
-    String? progressionType,
+    ProgressionMode? progressionMode,
     String? category,
     String? equipment,
     EquipmentType? equipmentType,
@@ -80,7 +92,7 @@ class ProgramExercise {
         repMax: repMax ?? this.repMax,
         targetRir: targetRir ?? this.targetRir,
         restSeconds: restSeconds ?? this.restSeconds,
-        progressionType: progressionType ?? this.progressionType,
+        progressionMode: progressionMode ?? this.progressionMode,
         category: category ?? this.category,
         equipment: equipment ?? this.equipment,
         equipmentType: equipmentType ?? this.equipmentType,
