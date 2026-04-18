@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../core/constants.dart';
 import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
@@ -140,6 +142,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: Column(
                       children: [
                         MenuItemWidget(icon: AppIcons.helpCircle, label: 'Help & FAQ', onTap: () {}),
+                        Divider(color: context.borderColor, height: 1),
+                        MenuItemWidget(icon: AppIcons.shield, label: 'Privacy Policy', onTap: () => launchUrl(Uri.parse(AppConstants.privacyPolicyUrl))),
+                        Divider(color: context.borderColor, height: 1),
+                        MenuItemWidget(icon: AppIcons.fileText, label: 'Terms of Service', onTap: () => launchUrl(Uri.parse(AppConstants.termsOfServiceUrl))),
                         Divider(color: context.borderColor, height: 1),
                         MenuItemWidget(icon: AppIcons.info, label: 'About', onTap: () {}),
                       ],
