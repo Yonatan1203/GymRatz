@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +15,7 @@ import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/gradient_header.dart';
+import '../../../shared/widgets/gym_ratz_background.dart';
 
 class PaywallScreen extends ConsumerStatefulWidget {
   const PaywallScreen({super.key});
@@ -46,7 +48,26 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     setState(() => _purchasing = true);
     try {
       final success = await ref.read(entitlementServiceProvider).purchase(package);
-      if (success && mounted) context.pop();
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Purchase successful! Welcome to Pro.')),
+        );
+        context.pop();
+      }
+    } on PlatformException catch (e) {
+      if (e.code == 'PURCHASE_CANCELLED') {
+        // User cancelled — do nothing
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Purchase failed: ${e.message}')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An error occurred: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _purchasing = false);
     }
@@ -76,7 +97,9 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     final isDark = context.isDark;
 
     return Scaffold(
-      body: SingleChildScrollView(
+      body: GymRatzBackground(
+        intensity: BackgroundIntensity.medium,
+        child: SingleChildScrollView(
         child: Column(
           children: [
             GradientHeader(
@@ -118,6 +141,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

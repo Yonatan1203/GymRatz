@@ -111,14 +111,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       children: [
                         MenuItemWidget(icon: AppIcons.crown, label: 'Manage Subscription', onTap: () => context.push('/paywall')),
                         Divider(color: context.borderColor, height: 1),
-                        MenuItemWidget(icon: AppIcons.refreshCw, label: 'Restore Purchases', onTap: () async {
-                          final success = await ref.read(entitlementServiceProvider).restorePurchases();
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(success ? 'Purchases restored!' : 'No purchases found')),
-                            );
-                          }
-                        }),
+                        MenuItemWidget(icon: AppIcons.refreshCw, label: 'Restore Purchases', onTap: _restorePurchases),
                       ],
                     ),
                   ),
@@ -199,6 +192,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         setState(() => _isDeletingAccount = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to delete account: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _restorePurchases() async {
+    try {
+      final service = ref.read(entitlementServiceProvider);
+      await service.restorePurchases();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Purchases restored successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Restore failed: $e')),
         );
       }
     }
