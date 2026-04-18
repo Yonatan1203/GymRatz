@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../../../core/constants.dart';
@@ -17,8 +18,12 @@ class EntitlementRepository {
         ? AppConstants.revenueCatAppleApiKey
         : AppConstants.revenueCatGoogleApiKey;
 
-    final configuration = PurchasesConfiguration(apiKey);
-    await Purchases.configure(configuration);
+    if (apiKey.contains('REPLACE_ME')) {
+      debugPrint('RevenueCat: placeholder API key detected — subscription features disabled');
+      return;
+    }
+
+    await Purchases.configure(PurchasesConfiguration(apiKey));
   }
 
   /// Associate a Firebase UID with RevenueCat.
