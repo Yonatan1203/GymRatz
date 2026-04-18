@@ -9,6 +9,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'app/app.dart';
+import 'core/env.dart';
 import 'features/subscription/data/entitlement_repository.dart';
 import 'firebase_options.dart';
 
@@ -34,8 +35,8 @@ Future<void> main() async {
       );
     }
 
-    // Initialize Crashlytics — only enable crash reporting in non-debug mode.
-    if (!kDebugMode) {
+    // Initialize Crashlytics — only enable crash reporting in prod.
+    if (Env.crashlyticsEnabled) {
       FlutterError.onError =
           FirebaseCrashlytics.instance.recordFlutterFatalError;
 
@@ -44,7 +45,7 @@ Future<void> main() async {
         return true;
       };
     } else {
-      // In debug mode, disable Crashlytics collection.
+      // In non-prod environments, disable Crashlytics collection.
       await FirebaseCrashlytics.instance
           .setCrashlyticsCollectionEnabled(false);
     }
