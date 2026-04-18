@@ -1,8 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
@@ -20,8 +24,12 @@ import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_card.dart';
 import '../../../shared/widgets/custom_input.dart';
 import '../../../shared/data/sample_data.dart';
+import '../../../shared/models/enums.dart';
+import '../../../shared/models/exercise.dart';
+import '../../../shared/models/workout.dart';
 import '../../../shared/models/workout_set.dart';
 import '../../../shared/models/workout_exercise.dart';
+import '../domain/workout_summary.dart';
 
 class WorkoutLoggingScreen extends ConsumerStatefulWidget {
   final String dayId;
@@ -40,6 +48,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   bool _restMinimized = false;
   bool _timerRunning = false;
   bool _completed = false;
+  bool _saving = false;
   Timer? _timer;
   Timer? _durationTimer;
   int _elapsedSeconds = 0;
@@ -47,12 +56,131 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   String _workoutName = 'Workout';
   bool _initialized = false;
   late DateTime _startTime;
+  WorkoutSummary? _workoutSummary;
+
+  static const _workoutCacheKey = 'in_progress_workout';
+
+  /// Save current workout state after each set update
+  Future<void> _saveWorkoutState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = {
+      'dayId': widget.dayId,
+      'workoutName': _workoutName,
+      'elapsedSeconds': _elapsedSeconds,
+      'exercises': _exercises.map((e) => e.toJson()).toList(),
+      'sets': _sets
+          .map((exSets) => exSets.map((s) => s.toJson()).toList())
+          .toList(),
+      'savedAt': DateTime.now().toIso8601String(),
+    };
+    await prefs.setString(_workoutCacheKey, json.encode(data));
+  }
+
+  /// Check for and restore incomplete workout on screen init
+  Future<bool> _checkForRecovery() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getString(_workoutCacheKey);
+    if (cached == null) return false;
+
+    final data = json.decode(cached) as Map<String, dynamic>;
+    final savedAt = DateTime.parse(data['savedAt'] as String);
+    // Only offer recovery if saved within last 24 hours
+    if (DateTime.now().difference(savedAt).inHours > 24) {
+      await prefs.remove(_workoutCacheKey);
+      return false;
+    }
+    return true;
+  }
+
+  static Future<void> clearWorkoutCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_workoutCacheKey);
+  }
+
+  Future<void> _restoreWorkoutFromCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getString(_workoutCacheKey);
+    if (cached == null) return;
+
+    try {
+      final data = json.decode(cached) as Map<String, dynamic>;
+      final exercisesList = (data['exercises'] as List)
+          .map((e) => WorkoutExercise.fromJson(e as Map<String, dynamic>))
+          .toList();
+      final setsList = (data['sets'] as List)
+          .map((exSets) => (exSets as List)
+              .map((s) => WorkoutSet.fromJson(s as Map<String, dynamic>))
+              .toList())
+          .toList();
+
+      if (mounted) {
+        setState(() {
+          _workoutName = data['workoutName'] as String? ?? _workoutName;
+          _elapsedSeconds = data['elapsedSeconds'] as int? ?? _elapsedSeconds;
+          _exercises = exercisesList;
+          _sets = setsList;
+        });
+        _rebuildAllControllers();
+        _syncToProvider();
+      }
+    } catch (e) {
+      debugPrint('Failed to restore workout from cache: $e');
+      await clearWorkoutCache();
+    }
+  }
+
+  // Persistent controllers keyed by 'exIdx-setIdx-field'
+  final Map<String, TextEditingController> _controllers = {};
+
+  TextEditingController _getController(int exIdx, int setIdx, String field, String initialValue) {
+    final key = '$exIdx-$setIdx-$field';
+    if (!_controllers.containsKey(key)) {
+      _controllers[key] = TextEditingController(text: initialValue);
+    }
+    return _controllers[key]!;
+  }
+
+  void _rebuildAllControllers() {
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
+    _controllers.clear();
+    for (int exIdx = 0; exIdx < _sets.length; exIdx++) {
+      for (int setIdx = 0; setIdx < _sets[exIdx].length; setIdx++) {
+        final s = _sets[exIdx][setIdx];
+        _getController(exIdx, setIdx, 'reps', s.reps > 0 ? '${s.reps}' : '');
+        _getController(exIdx, setIdx, 'weight', s.weight > 0 ? '${s.weight.toInt()}' : '');
+        _getController(exIdx, setIdx, 'rir', s.rir > 0 ? '${s.rir}' : '');
+      }
+    }
+  }
+
+  void _updateSet(int exIdx, int setIdx, String field, String text) {
+    final current = _sets[exIdx][setIdx];
+    WorkoutSet updated;
+    switch (field) {
+      case 'reps':
+        updated = current.copyWith(reps: int.tryParse(text) ?? 0);
+        break;
+      case 'weight':
+        updated = current.copyWith(weight: double.tryParse(text) ?? 0);
+        break;
+      case 'rir':
+        updated = current.copyWith(rir: int.tryParse(text) ?? 0);
+        break;
+      default:
+        return;
+    }
+    _sets[exIdx][setIdx] = updated;
+    // Debounce sync — don't setState here to avoid rebuild during typing
+    _syncToProvider();
+    _saveWorkoutState();
+  }
 
   void _initFromProvider() {
     if (_initialized) return;
     _initialized = true;
 
-    // Check if there's an existing session for this day (returning from banner)
     final existingSession = ref.read(activeWorkoutSessionProvider.notifier)
         .getSessionForDay(widget.dayId);
 
@@ -82,7 +210,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       if (matchingDay != null && matchingDay.isNotEmpty) {
         final day = matchingDay.first;
         _workoutName = day.name;
-        // Convert ProgramExercise -> WorkoutExercise for the logging screen
         _exercises = day.exercises.map((pe) => WorkoutExercise(
           name: pe.name,
           equipment: pe.equipment ?? 'Barbell',
@@ -94,14 +221,12 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
         )).toList();
         _sets = _exercises.map((e) => List<WorkoutSet>.from(e.sets)).toList();
       } else {
-        // Fallback to sample data
         final sampleExercises = SampleData.todayExercises;
         _exercises = sampleExercises;
         _sets = sampleExercises.map((e) => List<WorkoutSet>.from(e.sets)).toList();
       }
       _expanded = {0};
 
-      // Start a new session in the provider (deferred to avoid modifying during build)
       Future(() {
         ref.read(activeWorkoutSessionProvider.notifier).startSession(
           dayId: widget.dayId,
@@ -112,8 +237,41 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       });
     }
 
+    _rebuildAllControllers();
+
     _durationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() => _elapsedSeconds++);
+      if (mounted) setState(() => _elapsedSeconds++);
+    });
+
+    // Check for recoverable workout state from a previous session
+    _checkForRecovery().then((hasRecovery) {
+      if (hasRecovery && mounted && existingSession == null) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Resume Workout?'),
+            content: const Text(
+              'A previous workout session was interrupted. Would you like to resume where you left off?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  clearWorkoutCache();
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Discard'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _restoreWorkoutFromCache();
+                },
+                child: const Text('Resume'),
+              ),
+            ],
+          ),
+        );
+      }
     });
   }
 
@@ -148,6 +306,10 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   void dispose() {
     _timer?.cancel();
     _durationTimer?.cancel();
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
+    _controllers.clear();
     super.dispose();
   }
 
@@ -174,25 +336,223 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     });
   }
 
-  void _completeSet(int exIdx, int setIdx) {
+  void _toggleSet(int exIdx, int setIdx) {
     PlatformAdapter.hapticHeavy();
+    final current = _sets[exIdx][setIdx];
+    final wasCompleted = current.completed;
+
     setState(() {
-      _sets[exIdx][setIdx] = _sets[exIdx][setIdx].copyWith(completed: true);
+      _sets[exIdx][setIdx] = current.copyWith(completed: !wasCompleted);
     });
-    _showRestTimer();
-    _beginCountdown();
-    _checkCompletion();
-    _syncToProvider();
+
+    if (!wasCompleted) {
+      // Completing a set — start rest timer
+      _showRestTimer();
+      _beginCountdown();
+      _syncToProvider();
+    } else {
+      // Uncompleting — just sync
+      _syncToProvider();
+    }
   }
 
-  void _checkCompletion() {
-    final allDone = _sets.every((ex) => ex.every((s) => s.completed));
-    if (allDone) {
-      _timer?.cancel();
-      _durationTimer?.cancel();
-      ref.read(activeWorkoutSessionProvider.notifier).endSession();
-      setState(() => _completed = true);
+  List<WorkoutExercise> _buildExercisesWithSets() {
+    return List.generate(_exercises.length, (i) {
+      return _exercises[i].copyWith(sets: List<WorkoutSet>.from(_sets[i]));
+    });
+  }
+
+  Future<void> _finishWorkout() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+
+    _timer?.cancel();
+    _durationTimer?.cancel();
+
+    final uid = ref.read(currentUidProvider);
+    final profile = ref.read(userProfileProvider).valueOrNull;
+    final unit = profile?.unit ?? 'lbs';
+
+    final exercises = _buildExercisesWithSets();
+    final workout = Workout(
+      id: const Uuid().v4(),
+      programId: ref.read(activeProgramProvider).valueOrNull?.id,
+      workoutDayId: widget.dayId,
+      date: _startTime,
+      status: WorkoutStatus.completed,
+      exercises: exercises,
+      completedAt: DateTime.now(),
+      notes: _notes.isNotEmpty ? _notes : null,
+    );
+
+    ref.read(activeWorkoutSessionProvider.notifier).endSession();
+    await clearWorkoutCache();
+
+    if (uid != null) {
+      try {
+        final summary = await ref.read(workoutServiceProvider).completeWorkout(uid, workout, unit);
+        if (mounted) {
+          setState(() {
+            _workoutSummary = summary;
+            _completed = true;
+            _saving = false;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _completed = true;
+            _saving = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Workout saved locally. Sync failed: $e')),
+          );
+        }
+      }
+    } else {
+      // Not authenticated — still show completion
+      setState(() {
+        _completed = true;
+        _saving = false;
+      });
     }
+  }
+
+  Future<void> _confirmFinish() async {
+    final incompleteSets = _sets.fold<int>(0, (sum, ex) => sum + ex.where((s) => !s.completed).length);
+
+    if (incompleteSets == 0) {
+      await _finishWorkout();
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Finish Workout?'),
+        content: Text('You have $incompleteSets incomplete ${incompleteSets == 1 ? 'set' : 'sets'}. Are you sure you want to finish?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Finish'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _finishWorkout();
+    }
+  }
+
+  void _showAddExerciseSheet() {
+    final allExercises = ref.read(exerciseLibraryProvider);
+    String searchQuery = '';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.isDark ? AppColors.darkCard : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            final filtered = searchQuery.isEmpty
+                ? allExercises
+                : allExercises.where((e) => e.name.toLowerCase().contains(searchQuery.toLowerCase())).toList();
+
+            return DraggableScrollableSheet(
+              initialChildSize: 0.7,
+              minChildSize: 0.4,
+              maxChildSize: 0.9,
+              expand: false,
+              builder: (ctx, scrollController) {
+                return Column(
+                  children: [
+                    SizedBox(height: 12.h),
+                    Container(
+                      width: 40.w,
+                      height: 4.h,
+                      decoration: BoxDecoration(
+                        color: context.mutedForeground.withValues(alpha: 0.3),
+                        borderRadius: AppRadius.borderFull,
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(16.r),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Add Exercise', style: AppTextStyles.h3.copyWith(color: context.foreground)),
+                          SizedBox(height: 12.h),
+                          CustomInput(
+                            hint: 'Search exercises...',
+                            prefixIcon: Icon(AppIcons.search, size: 20.r, color: context.mutedForeground),
+                            onChanged: (v) => setSheetState(() => searchQuery = v),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollController,
+                        itemCount: filtered.length,
+                        itemBuilder: (ctx, i) {
+                          final exercise = filtered[i];
+                          return ListTile(
+                            title: Text(exercise.name, style: AppTextStyles.bodySmall.copyWith(color: context.foreground)),
+                            subtitle: Text('${exercise.equipment} • ${exercise.muscle}',
+                                style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                            trailing: Icon(AppIcons.plus, size: 20.r, color: context.primaryColor),
+                            onTap: () {
+                              _addExercise(exercise);
+                              Navigator.pop(ctx);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _addExercise(Exercise exercise) {
+    final newExercise = WorkoutExercise(
+      name: exercise.name,
+      equipment: exercise.equipment,
+      equipmentType: exercise.equipmentType,
+      repRange: '8-12',
+      targetRir: 2,
+      sets: List.generate(3, (_) => const WorkoutSet()),
+    );
+
+    setState(() {
+      _exercises.add(newExercise);
+      _sets.add(List<WorkoutSet>.from(newExercise.sets));
+      final newIdx = _exercises.length - 1;
+      _expanded.clear();
+      _expanded.add(newIdx);
+
+      // Create controllers for the new sets
+      for (int setIdx = 0; setIdx < 3; setIdx++) {
+        _getController(newIdx, setIdx, 'reps', '');
+        _getController(newIdx, setIdx, 'weight', '');
+        _getController(newIdx, setIdx, 'rir', '');
+      }
+    });
+    _syncToProvider();
   }
 
   @override
@@ -229,7 +589,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                         children: [
                           Row(
                             children: [
-                              Text('\ud83d\udcdd', style: TextStyle(fontSize: 18.sp)),
+                              Icon(AppIcons.fileText, size: 18.r, color: context.primaryColor),
                               SizedBox(width: 8.w),
                               Text('Workout Notes', style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
                             ],
@@ -244,8 +604,13 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                       ),
                     ),
                     SizedBox(height: 12.h),
-                    CustomButton(text: '+ Add Exercise', variant: ButtonVariant.dashed, icon: AppIcons.plus, onPressed: () {}),
-                    SizedBox(height: 80.h),
+                    CustomButton(
+                      text: '+ Add Exercise',
+                      variant: ButtonVariant.dashed,
+                      icon: AppIcons.plus,
+                      onPressed: _showAddExerciseSheet,
+                    ),
+                    SizedBox(height: 60.h),
                   ],
                 ),
                 if (_restActive && !_restMinimized)
@@ -321,16 +686,16 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                 button: true,
                 label: 'Finish workout',
                 child: GestureDetector(
-                  onTap: () {
+                  onTap: _saving ? null : () {
                     PlatformAdapter.hapticMedium();
-                    _durationTimer?.cancel();
-                    ref.read(activeWorkoutSessionProvider.notifier).endSession();
-                    setState(() => _completed = true);
+                    _confirmFinish();
                   },
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                     decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: AppRadius.borderLg),
-                    child: Text('Finish', style: AppTextStyles.bodySmall.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
+                    child: _saving
+                        ? SizedBox(width: 20.r, height: 20.r, child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : Text('Finish', style: AppTextStyles.bodySmall.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ),
@@ -353,13 +718,11 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       ),
       child: Row(
         children: [
-          // Time display
           Text(
             Formatters.timer(_restSeconds),
             style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.w700, color: Colors.white, fontFeatures: const [FontFeature.tabularFigures()]),
           ),
           SizedBox(width: 12.w),
-          // +/- buttons (only when not running)
           if (!_timerRunning) ...[
             GestureDetector(
               onTap: () => setState(() => _restSeconds = (_restSeconds - 10).clamp(0, 999)),
@@ -372,7 +735,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
             ),
           ],
           const Spacer(),
-          // Start button or action buttons
           if (!_timerRunning)
             GestureDetector(
               onTap: _beginCountdown,
@@ -438,7 +800,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     );
   }
 
-  Widget _buildExerciseCard(BuildContext context, bool isDark, int exIdx, dynamic exercise) {
+  Widget _buildExerciseCard(BuildContext context, bool isDark, int exIdx, WorkoutExercise exercise) {
     final isExpanded = _expanded.contains(exIdx);
     final sets = _sets[exIdx];
     final completedCount = sets.where((s) => s.completed).length;
@@ -497,14 +859,15 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                   ],
                 ),
               ),
+              // Grid header
               Padding(
                 padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
                 child: Row(
                   children: [
-                    _gridHeader('SET', 40.w),
-                    _gridHeader('REPS', 60.w),
-                    _gridHeader('WEIGHT', 70.w),
-                    _gridHeader('RIR', 50.w),
+                    SizedBox(width: 32.w, child: _gridHeaderText(context, 'SET')),
+                    Expanded(flex: 2, child: _gridHeaderText(context, 'REPS')),
+                    Expanded(flex: 3, child: _gridHeaderText(context, 'WEIGHT')),
+                    Expanded(flex: 2, child: _gridHeaderText(context, 'RIR')),
                     SizedBox(width: 36.w),
                   ],
                 ),
@@ -516,7 +879,11 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                   text: '+ Add Set',
                   variant: ButtonVariant.dashed,
                   onPressed: () {
+                    final newSetIdx = _sets[exIdx].length;
                     setState(() => _sets[exIdx].add(const WorkoutSet()));
+                    _getController(exIdx, newSetIdx, 'reps', '');
+                    _getController(exIdx, newSetIdx, 'weight', '');
+                    _getController(exIdx, newSetIdx, 'rir', '');
                     _syncToProvider();
                   },
                 ),
@@ -528,11 +895,8 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     );
   }
 
-  Widget _gridHeader(String text, double width) {
-    return SizedBox(
-      width: width,
-      child: Text(text, style: AppTextStyles.caption.copyWith(color: context.mutedForeground, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
-    );
+  Widget _gridHeaderText(BuildContext context, String text) {
+    return Text(text, style: AppTextStyles.caption.copyWith(color: context.mutedForeground, fontWeight: FontWeight.w600), textAlign: TextAlign.center);
   }
 
   Widget _buildSetRow(BuildContext context, int exIdx, int sIdx, WorkoutSet set) {
@@ -540,46 +904,77 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 6.h),
       child: Row(
         children: [
-          SizedBox(width: 40.w, child: Center(child: Text('${sIdx + 1}', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)))),
-          _numField(context, 60.w, set.reps > 0 ? '${set.reps}' : '', 'Reps'),
-          _numField(context, 70.w, set.weight > 0 ? '${set.weight.toInt()}' : '', 'lbs'),
-          _numField(context, 50.w, set.rir > 0 ? '${set.rir}' : '', 'RIR', textInputAction: TextInputAction.done),
+          SizedBox(
+            width: 32.w,
+            child: Center(
+              child: Text(
+                '${sIdx + 1}',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: set.completed ? context.primaryColor : context.mutedForeground,
+                  fontWeight: set.completed ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: _numField(context, exIdx, sIdx, 'reps', 'Reps'),
+          ),
+          Expanded(
+            flex: 3,
+            child: _numField(context, exIdx, sIdx, 'weight', 'lbs'),
+          ),
+          Expanded(
+            flex: 2,
+            child: _numField(context, exIdx, sIdx, 'rir', 'RIR', textInputAction: TextInputAction.done),
+          ),
           SizedBox(
             width: 36.w,
             child: Semantics(
               button: true,
-              label: 'Complete set ${sIdx + 1}',
+              label: set.completed ? 'Undo set ${sIdx + 1}' : 'Complete set ${sIdx + 1}',
               child: GestureDetector(
-              onTap: () => _completeSet(exIdx, sIdx),
-              child: Container(
-                width: 28.r, height: 28.r,
-                decoration: BoxDecoration(
-                  color: set.completed ? context.primaryColor : Colors.transparent,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: set.completed ? context.primaryColor : context.borderColor, width: 2),
+                onTap: () => _toggleSet(exIdx, sIdx),
+                child: Container(
+                  width: 28.r, height: 28.r,
+                  decoration: BoxDecoration(
+                    color: set.completed ? context.primaryColor : Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: set.completed ? context.primaryColor : context.borderColor, width: 2),
+                  ),
+                  child: set.completed ? Icon(AppIcons.check, size: 16.r, color: Colors.white) : null,
                 ),
-                child: set.completed ? Icon(AppIcons.check, size: 16.r, color: Colors.white) : null,
               ),
             ),
-          ),
           ),
         ],
       ),
     );
   }
 
-  Widget _numField(BuildContext context, double width, String value, String hint, {TextInputAction? textInputAction}) {
+  Widget _numField(BuildContext context, int exIdx, int setIdx, String field, String hint, {TextInputAction? textInputAction}) {
+    final controller = _getController(
+      exIdx,
+      setIdx,
+      field,
+      field == 'reps'
+          ? (_sets[exIdx][setIdx].reps > 0 ? '${_sets[exIdx][setIdx].reps}' : '')
+          : field == 'weight'
+              ? (_sets[exIdx][setIdx].weight > 0 ? '${_sets[exIdx][setIdx].weight.toInt()}' : '')
+              : (_sets[exIdx][setIdx].rir > 0 ? '${_sets[exIdx][setIdx].rir}' : ''),
+    );
+
     return SizedBox(
-      width: width,
       height: 36.h,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 2.w),
         child: TextField(
-          controller: TextEditingController(text: value),
+          controller: controller,
           textAlign: TextAlign.center,
           keyboardType: TextInputType.number,
           textInputAction: textInputAction ?? TextInputAction.next,
           style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
+          onChanged: (value) => _updateSet(exIdx, setIdx, field, value),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: AppTextStyles.caption.copyWith(color: context.mutedForeground),
@@ -599,11 +994,12 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     final isDark = context.isDark;
     final completedSets = _sets.fold<int>(0, (sum, ex) => sum + ex.where((s) => s.completed).length);
     final totalSets = _sets.fold<int>(0, (sum, ex) => sum + ex.length);
-    final totalReps = _sets.fold<int>(0, (sum, ex) => sum + ex.fold<int>(0, (s, set) => s + set.reps));
-    final totalVolume = _sets.fold<double>(0, (sum, ex) => sum + ex.fold<double>(0, (s, set) => s + (set.weight * set.reps)));
+    final totalReps = _workoutSummary?.totalReps ?? _sets.fold<int>(0, (sum, ex) => sum + ex.fold<int>(0, (s, set) => s + set.reps));
+    final totalVolume = _workoutSummary?.totalVolume ?? _sets.fold<double>(0, (sum, ex) => sum + ex.fold<double>(0, (s, set) => s + (set.weight * set.reps)));
     final duration = DateTime.now().difference(_startTime);
     final durationStr = '${duration.inMinutes}m ${(duration.inSeconds % 60).toString().padLeft(2, '0')}s';
     final completionPct = totalSets > 0 ? ((completedSets / totalSets) * 100).round() : 0;
+    final newPRs = _workoutSummary?.newPRs ?? [];
 
     return Scaffold(
       body: Container(
@@ -658,8 +1054,40 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                     style: AppTextStyles.bodySmall.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600),
                   ),
                 ),
+                // New PRs
+                if (newPRs.isNotEmpty) ...[
+                  SizedBox(height: 16.h),
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(16.r),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.amber.withValues(alpha: 0.15), Colors.orange.withValues(alpha: 0.1)],
+                      ),
+                      borderRadius: AppRadius.borderXl,
+                      border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(AppIcons.trophy, size: 18.r, color: Colors.amber),
+                            SizedBox(width: 8.w),
+                            Text('New Personal Records!', style: AppTextStyles.h4.copyWith(color: Colors.amber.shade800, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                        SizedBox(height: 8.h),
+                        ...newPRs.map((pr) => Padding(
+                          padding: EdgeInsets.only(bottom: 4.h),
+                          child: Text(pr, style: AppTextStyles.bodySmall.copyWith(color: context.foreground)),
+                        )),
+                      ],
+                    ),
+                  ),
+                ],
                 SizedBox(height: 28.h),
-                // Stats grid — 2x2
+                // Stats grid — 2x3
                 Row(
                   children: [
                     Expanded(child: _completionStatCard(context, isDark, AppIcons.clock, 'Duration', durationStr)),
@@ -696,7 +1124,13 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                   text: 'Share Workout',
                   variant: ButtonVariant.outline,
                   icon: AppIcons.share2,
-                  onPressed: () {},
+                  onPressed: () {
+                    final summary = '$_workoutName\n$durationStr | $completedSets sets | ${totalVolume.toInt()} lbs volume';
+                    Clipboard.setData(ClipboardData(text: summary));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Workout summary copied to clipboard')),
+                    );
+                  },
                 ),
                 SizedBox(height: 32.h),
               ],
@@ -728,5 +1162,4 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       ),
     );
   }
-
 }

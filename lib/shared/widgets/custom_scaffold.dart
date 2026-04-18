@@ -9,6 +9,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_shadows.dart';
 import '../utils/platform_adapter.dart';
 import 'active_workout_banner.dart';
+import 'offline_banner.dart';
 
 class CustomScaffold extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
@@ -24,7 +25,12 @@ class CustomScaffold extends ConsumerWidget {
     return Scaffold(
       body: Stack(
         children: [
-          navigationShell,
+          Column(
+            children: [
+              const OfflineBanner(),
+              Expanded(child: navigationShell),
+            ],
+          ),
           // Theme toggle button
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
@@ -126,21 +132,15 @@ class _ThemeToggle extends StatelessWidget {
         PlatformAdapter.hapticMedium();
         ref.read(themeProvider.notifier).toggleTheme();
       },
-      child: Container(
+      child: SizedBox(
         width: 44,
         height: 44,
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCard : AppColors.lightCard,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+        child: Center(
+          child: Icon(
+            isDark ? AppIcons.sun : AppIcons.moon,
+            size: 20,
+            color: isDark ? AppColors.darkForeground : AppColors.lightForeground,
           ),
-          boxShadow: AppShadows.lg,
-        ),
-        child: Icon(
-          isDark ? AppIcons.sun : AppIcons.moon,
-          size: 20,
-          color: isDark ? AppColors.darkForeground : AppColors.lightForeground,
         ),
       ),
     ),
@@ -181,10 +181,6 @@ class _NavItem extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive ? activeColor.withValues(alpha: 0.1) : null,
-          borderRadius: BorderRadius.circular(10),
-        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
