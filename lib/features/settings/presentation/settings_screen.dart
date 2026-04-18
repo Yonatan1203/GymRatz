@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
+import '../../../core/notification_service.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
@@ -66,9 +67,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: Column(
                       children: [
-                        _toggleRow('Push Notifications', _pushNotifications, (v) => setState(() => _pushNotifications = v)),
+                        _toggleRow('Push Notifications', _pushNotifications, (v) {
+                          setState(() => _pushNotifications = v);
+                          if (v) {
+                            NotificationService().requestPermission();
+                          }
+                        }),
                         Divider(color: context.borderColor, height: 1),
-                        _toggleRow('Workout Reminders', _workoutReminders, (v) => setState(() => _workoutReminders = v)),
+                        _toggleRow('Workout Reminders', _workoutReminders, (v) {
+                          setState(() => _workoutReminders = v);
+                          if (v) {
+                            NotificationService().requestPermission();
+                            NotificationService().scheduleWorkoutReminder(
+                              hour: 18,
+                              minute: 0,
+                              weekdays: [1, 2, 3, 4, 5],
+                            );
+                          } else {
+                            NotificationService().cancelWorkoutReminders();
+                          }
+                        }),
                         Divider(color: context.borderColor, height: 1),
                         _toggleRow('Rest Timer Sound', _restTimerSound, (v) => setState(() => _restTimerSound = v)),
                       ],

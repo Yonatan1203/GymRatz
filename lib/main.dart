@@ -10,6 +10,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'app/app.dart';
 import 'core/env.dart';
+import 'core/notification_service.dart';
 import 'features/subscription/data/entitlement_repository.dart';
 import 'firebase_options.dart';
 
@@ -58,6 +59,13 @@ Future<void> main() async {
     await EntitlementRepository().initialize();
   } catch (e) {
     debugPrint('RevenueCat init skipped: $e');
+  }
+
+  // Initialize local notifications service.
+  try {
+    await NotificationService().initialize();
+  } catch (e) {
+    debugPrint('Notification init skipped: $e');
   }
 
   runApp(const ProviderScope(child: GymRatzApp()));
