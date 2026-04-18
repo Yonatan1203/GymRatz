@@ -7,9 +7,11 @@ import '../../../theme/app_icons.dart';
 import '../../../shared/utils/extensions.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_input.dart';
+import '../../../shared/widgets/gym_ratz_background.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../app/providers/auth_providers.dart';
+import 'widgets/social_auth_buttons.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -58,11 +60,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final authService = ref.read(authServiceProvider);
+      await authService.signInWithGoogle();
+      if (mounted) context.go('/home');
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final authService = ref.read(authServiceProvider);
+      await authService.signInWithApple();
+      if (mounted) context.go('/home');
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
+      body: GymRatzBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,6 +188,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 isLoading: _isLoading,
                 onPressed: _isValid ? _signIn : null,
               ),
+              SizedBox(height: 16.h),
+              SocialAuthButtons(
+                onGooglePressed: _signInWithGoogle,
+                onApplePressed: _signInWithApple,
+                isLoading: _isLoading,
+              ),
               SizedBox(height: 24.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -177,6 +220,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
