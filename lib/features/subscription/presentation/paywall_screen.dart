@@ -205,44 +205,145 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       );
     }
 
+    // Sort: weekly → monthly → yearly
+    final sortOrder = {
+      PackageType.weekly: 0,
+      PackageType.monthly: 1,
+      PackageType.annual: 2,
+    };
+    packages.sort((a, b) =>
+        (sortOrder[a.packageType] ?? 99)
+            .compareTo(sortOrder[b.packageType] ?? 99));
+
     return Column(
       children: packages.map((pkg) {
         final product = pkg.storeProduct;
+        final isYearly = pkg.packageType == PackageType.annual;
+        final perWeek = _perWeekPrice(pkg);
+
         return Padding(
           padding: EdgeInsets.only(bottom: 12.h),
           child: GestureDetector(
             onTap: _purchasing ? null : () => _purchase(pkg),
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(20.r),
-              decoration: BoxDecoration(
-                gradient: AppGradients.primary(isDark: isDark),
-                borderRadius: AppRadius.borderXl,
-                boxShadow: AppShadows.lg,
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    product.title,
-                    style: AppTextStyles.h3.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(20.r),
+                  decoration: BoxDecoration(
+                    gradient: isYearly
+                        ? AppGradients.primary(isDark: isDark)
+                        : null,
+                    color: isYearly ? null : context.cardColor,
+                    borderRadius: AppRadius.borderXl,
+                    border: isYearly
+                        ? null
+                        : Border.all(color: context.borderColor),
+                    boxShadow: isYearly ? AppShadows.lg : AppShadows.md,
                   ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    product.priceString,
-                    style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.w700, color: Colors.white),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _packageLabel(pkg),
+                              style: AppTextStyles.h3.copyWith(
+                                color: isYearly
+                                    ? Colors.white
+                                    : context.foreground,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (perWeek != null) ...[
+                              SizedBox(height: 2.h),
+                              Text(
+                                '$perWeek / week',
+                                style: AppTextStyles.caption.copyWith(
+                                  color: isYearly
+                                      ? Colors.white70
+                                      : context.mutedForeground,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Text(
+                        product.priceString,
+                        style: TextStyle(
+                          fontSize: 22.sp,
+                          fontWeight: FontWeight.w700,
+                          color:
+                              isYearly ? Colors.white : context.primaryColor,
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    product.description,
-                    style: AppTextStyles.caption.copyWith(color: Colors.white70),
-                    textAlign: TextAlign.center,
+                ),
+                if (isYearly)
+                  Positioned(
+                    top: -10.h,
+                    right: 16.w,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 12.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: Colors.amber,
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Text(
+                        'Best Value',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
                   ),
-                ],
-              ),
+              ],
             ),
           ),
         );
       }).toList(),
     );
+  }
+
+  String _packageLabel(Package pkg) {
+    switch (pkg.packageType) {
+      case PackageType.weekly:
+        return 'Weekly';
+      case PackageType.monthly:
+        return 'Monthly';
+      case PackageType.annual:
+        return 'Yearly';
+      default:
+        return pkg.storeProduct.title;
+    }
+  }
+
+  String? _perWeekPrice(Package pkg) {
+    final price = pkg.storeProduct.price;
+    if (price <= 0) return null;
+
+    final String currencyCode = pkg.storeProduct.currencyCode;
+    String symbol = currencyCode;
+    // Common currency symbols
+    if (currencyCode == 'USD') symbol = '\$';
+    if (currencyCode == 'EUR') symbol = '€';
+    if (currencyCode == 'GBP') symbol = '£';
+    if (currencyCode == 'ILS') symbol = '₪';
+
+    switch (pkg.packageType) {
+      case PackageType.monthly:
+        return '$symbol${(price / 4.33).toStringAsFixed(2)}';
+      case PackageType.annual:
+        return '$symbol${(price / 52).toStringAsFixed(2)}';
+      default:
+        return null; // No per-week for weekly
+    }
   }
 }
