@@ -28,15 +28,22 @@ class ProgressBarWidget extends StatelessWidget {
         color: trackColor ?? (isDark ? AppColors.darkMuted : AppColors.lightMuted),
         borderRadius: AppRadius.borderFull,
       ),
-      child: FractionallySizedBox(
-        alignment: Alignment.centerLeft,
-        widthFactor: progress.clamp(0.0, 1.0),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: fillGradient ?? AppGradients.primary(isDark: isDark),
-            borderRadius: AppRadius.borderFull,
-          ),
-        ),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: progress.clamp(0.0, 1.0)),
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+        builder: (context, animatedValue, _) {
+          return FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: animatedValue,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: fillGradient ?? AppGradients.primary(isDark: isDark),
+                borderRadius: AppRadius.borderFull,
+              ),
+            ),
+          );
+        },
       ),
     );
   }

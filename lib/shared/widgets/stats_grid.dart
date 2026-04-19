@@ -59,17 +59,40 @@ class StatsGrid extends StatelessWidget {
                 children: [
                   Icon(item.icon, size: 20.r, color: item.iconColor),
                   SizedBox(height: 8.h),
-                  Text(
-                    item.value,
-                    style: AppTextStyles.h2.copyWith(
-                      color: useTransparentBg
-                          ? Colors.white
-                          : (isDark
-                              ? AppColors.darkForeground
-                              : AppColors.lightForeground),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  Builder(builder: (context) {
+                    final numericValue = double.tryParse(item.value);
+                    if (numericValue != null) {
+                      return TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: numericValue),
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOut,
+                        builder: (context, value, _) {
+                          return Text(
+                            value.toStringAsFixed(0),
+                            style: AppTextStyles.h2.copyWith(
+                              color: useTransparentBg
+                                  ? Colors.white
+                                  : (isDark
+                                      ? AppColors.darkForeground
+                                      : AppColors.lightForeground),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          );
+                        },
+                      );
+                    }
+                    return Text(
+                      item.value,
+                      style: AppTextStyles.h2.copyWith(
+                        color: useTransparentBg
+                            ? Colors.white
+                            : (isDark
+                                ? AppColors.darkForeground
+                                : AppColors.lightForeground),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    );
+                  }),
                   SizedBox(height: 2.h),
                   Text(
                     item.label,
