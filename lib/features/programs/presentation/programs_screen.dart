@@ -4,17 +4,16 @@ import 'package:go_router/go_router.dart';
 import '../../../theme/app_icons.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
 
-import '../../../theme/app_gradients.dart';
-import '../../../theme/app_radius.dart';
-import '../../../theme/app_shadows.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
 import '../../../shared/widgets/custom_badge.dart';
 import '../../../shared/widgets/custom_card.dart';
-import '../../../shared/widgets/gym_ratz_background.dart';
+import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/progress_bar_widget.dart';
+import '../../../shared/widgets/scale_tap.dart';
 import '../../../shared/widgets/section_header.dart';
+import '../../../shared/widgets/staggered_list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
 import '../../../shared/data/sample_data.dart';
@@ -25,91 +24,72 @@ class ProgramsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = context.isDark;
-
     return Scaffold(
-      body: GymRatzBackground(
-        child: SingleChildScrollView(
+      body: SingleChildScrollView(
           child: Column(
             children: [
-              _buildHeader(context, isDark),
+              _buildHeader(context),
               Padding(
                 padding: EdgeInsets.all(AppSpacing.screenPadding),
-                child: Column(
+                child: StaggeredList(
                   children: [
-                    _buildCreateCard(context, isDark),
+                    _buildCreateCard(context),
                   SizedBox(height: AppSpacing.sectionGap),
                   _buildMyPrograms(context, ref),
                   SizedBox(height: AppSpacing.sectionGap),
                   _buildExplorePrograms(context),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: AppSpacing.xl),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return GradientHeader(
+      child: Text(
+        'Programs',
+        style: AppTextStyles.h1.copyWith(color: context.foreground),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isDark) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: AppGradients.primary(isDark: isDark),
-        boxShadow: AppShadows.lg,
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.screenPadding, 12.h, AppSpacing.screenPadding, AppSpacing.xxl,
-          ),
-          child: Text('Programs', style: AppTextStyles.h1.copyWith(color: Colors.white)),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCreateCard(BuildContext context, bool isDark) {
-    return Semantics(
-      button: true,
-      label: 'Create program',
-      child: GestureDetector(
-        onTap: () => context.push('/programs/create'),
-        child: Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(20.r),
-          decoration: BoxDecoration(
-            gradient: AppGradients.primary(isDark: isDark),
-            borderRadius: AppRadius.borderXl,
-            boxShadow: AppShadows.lg,
-          ),
+  Widget _buildCreateCard(BuildContext context) {
+    return ScaleTap(
+      onTap: () => context.push('/programs/create'),
+      child: Semantics(
+        button: true,
+        label: 'Create program',
+        child: CustomCard(
+          variant: CardVariant.actionCta,
+          padding: EdgeInsets.all(AppSpacing.xl),
           child: Row(
             children: [
               SizedBox(
                 width: 48.r,
                 height: 48.r,
-                child: Center(child: Icon(AppIcons.plus, size: 24.r, color: Colors.white)),
+                child: Center(child: Icon(AppIcons.plus, size: 24.r, color: context.coralColor)),
               ),
-              SizedBox(width: 16.w),
+              SizedBox(width: AppSpacing.xl),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Create New Program',
-                      style: AppTextStyles.h3.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+                      style: AppTextStyles.h3.copyWith(color: context.foreground, fontWeight: FontWeight.w600),
                     ),
                     Text(
                       'Build your custom workout plan',
-                      style: AppTextStyles.bodySmall.copyWith(color: Colors.white70),
+                      style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
                     ),
                   ],
                 ),
               ),
-              Icon(AppIcons.chevronRight, size: 20.r, color: Colors.white70),
+              Icon(AppIcons.chevronRight, size: 20.r, color: context.mutedForeground),
             ],
           ),
         ),
@@ -135,7 +115,7 @@ class ProgramsScreen extends ConsumerWidget {
             return Column(
               children: programs
                   .map((p) => Padding(
-                        padding: EdgeInsets.only(bottom: 12.h),
+                        padding: EdgeInsets.only(bottom: AppSpacing.itemGap),
                         child: _buildProgramCard(context, p),
                       ))
                   .toList(),
@@ -147,69 +127,72 @@ class ProgramsScreen extends ConsumerWidget {
   }
 
   Widget _buildProgramCard(BuildContext context, Program p) {
-    return CustomCard(
+    return ScaleTap(
       onTap: () => context.push('/programs/detail/${p.id}'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  p.name,
-                  style: AppTextStyles.h4.copyWith(
-                    color: context.foreground,
+      child: CustomCard(
+        variant: CardVariant.program,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    p.name,
+                    style: AppTextStyles.h4.copyWith(
+                      color: context.foreground,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (p.isActive)
+                  Padding(
+                    padding: EdgeInsets.only(right: AppSpacing.md),
+                    child: CustomBadge(
+                      text: 'Active',
+                      backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.15),
+                      textColor: const Color(0xFF10B981),
+                    ),
+                  ),
+                Icon(AppIcons.chevronRight, size: 20.r, color: context.mutedForeground),
+              ],
+            ),
+            SizedBox(height: AppSpacing.sm),
+            Row(
+              children: [
+                Text(
+                  '${p.workouts} workouts/week \u2022 ${p.weeks} weeks',
+                  style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
+                ),
+                if (p.difficulty != null) ...[
+                  SizedBox(width: AppSpacing.md),
+                  CustomBadge(text: p.difficulty!),
+                ],
+              ],
+            ),
+            SizedBox(height: AppSpacing.lg),
+            Row(
+              children: [
+                Expanded(child: ProgressBarWidget(progress: p.progress / 100)),
+                SizedBox(width: AppSpacing.lg),
+                Text(
+                  '${p.progress}%',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: context.primaryColor,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
-              if (p.isActive)
-                Padding(
-                  padding: EdgeInsets.only(right: 8.w),
-                  child: CustomBadge(
-                    text: 'Active',
-                    backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.15),
-                    textColor: const Color(0xFF10B981),
-                  ),
-                ),
-              Icon(AppIcons.chevronRight, size: 20.r, color: context.mutedForeground),
-            ],
-          ),
-          SizedBox(height: 4.h),
-          Row(
-            children: [
-              Text(
-                '${p.workouts} workouts/week \u2022 ${p.weeks} weeks',
-                style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
-              ),
-              if (p.difficulty != null) ...[
-                SizedBox(width: 8.w),
-                CustomBadge(text: p.difficulty!),
               ],
-            ],
-          ),
-          SizedBox(height: 12.h),
-          Row(
-            children: [
-              Expanded(child: ProgressBarWidget(progress: p.progress / 100)),
-              SizedBox(width: 12.w),
-              Text(
-                '${p.progress}%',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: context.primaryColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildLoadingState(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 32.h),
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.xxxl),
       child: Center(
         child: SizedBox(
           width: 24.r,
@@ -226,16 +209,16 @@ class ProgramsScreen extends ConsumerWidget {
   Widget _buildErrorState(BuildContext context, WidgetRef ref) {
     return CustomCard(
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 16.h),
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
         child: Column(
           children: [
             Icon(AppIcons.info, size: 32.r, color: context.destructiveColor),
-            SizedBox(height: 8.h),
+            SizedBox(height: AppSpacing.md),
             Text(
               'Failed to load programs',
               style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: AppSpacing.lg),
             GestureDetector(
               onTap: () => ref.invalidate(userProgramsProvider),
               child: Text(
@@ -269,38 +252,41 @@ class ProgramsScreen extends ConsumerWidget {
         SectionHeader(title: 'Explore Programs'),
         SizedBox(height: AppSpacing.lg),
         ...SampleData.explorePrograms.map((p) => Padding(
-              padding: EdgeInsets.only(bottom: 12.h),
-              child: CustomCard(
+              padding: EdgeInsets.only(bottom: AppSpacing.itemGap),
+              child: ScaleTap(
                 onTap: () => context.push('/programs/detail/${p.id}'),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 48.r,
-                      height: 48.r,
-                      child: Center(child: Icon(AppIcons.dumbbell, size: 24.r, color: context.primaryColor)),
-                    ),
-                    SizedBox(width: 16.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            p.name,
-                            style: AppTextStyles.h4.copyWith(
-                              color: context.foreground,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(height: 2.h),
-                          Text(
-                            '${p.workouts}x/week \u2022 ${p.weeks} weeks',
-                            style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
-                          ),
-                        ],
+                child: CustomCard(
+                  variant: CardVariant.standard,
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 48.r,
+                        height: 48.r,
+                        child: Center(child: Icon(AppIcons.dumbbell, size: 24.r, color: context.primaryColor)),
                       ),
-                    ),
-                    if (p.difficulty != null) CustomBadge(text: p.difficulty!),
-                  ],
+                      SizedBox(width: AppSpacing.xl),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              p.name,
+                              style: AppTextStyles.h4.copyWith(
+                                color: context.foreground,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(height: AppSpacing.xs),
+                            Text(
+                              '${p.workouts}x/week \u2022 ${p.weeks} weeks',
+                              style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (p.difficulty != null) CustomBadge(text: p.difficulty!),
+                    ],
+                  ),
                 ),
               ),
             )),
