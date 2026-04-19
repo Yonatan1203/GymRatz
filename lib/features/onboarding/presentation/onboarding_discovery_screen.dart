@@ -39,7 +39,7 @@ class _OnboardingDiscoveryScreenState
     return Scaffold(
       body: Column(
         children: [
-          const OnboardingProgressBar(currentStep: 13, totalSteps: 14),
+          const OnboardingProgressBar(currentStep: 8),
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),

@@ -71,7 +71,7 @@ class _OnboardingGoalScreenState extends ConsumerState<OnboardingGoalScreen> {
     return Scaffold(
       body: Column(
         children: [
-          const OnboardingProgressBar(currentStep: 1, totalSteps: 14),
+          const OnboardingProgressBar(currentStep: 2),
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),

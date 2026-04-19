@@ -6,15 +6,10 @@ import '../features/auth/presentation/forgot_password_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/onboarding/presentation/onboarding_welcome_screen.dart';
 import '../features/onboarding/presentation/onboarding_goal_screen.dart';
-import '../features/onboarding/presentation/onboarding_experience_screen.dart';
 import '../features/onboarding/presentation/onboarding_style_screen.dart';
-import '../features/onboarding/presentation/onboarding_injury_screen.dart';
-import '../features/onboarding/presentation/onboarding_units_screen.dart';
 import '../features/onboarding/presentation/onboarding_height_screen.dart';
-import '../features/onboarding/presentation/onboarding_weight_screen.dart';
 import '../features/onboarding/presentation/onboarding_summary_screen.dart';
 import '../features/onboarding/presentation/onboarding_email_screen.dart';
-import '../features/onboarding/presentation/onboarding_notifications_screen.dart';
 import '../features/onboarding/presentation/onboarding_health_screen.dart';
 import '../features/onboarding/presentation/onboarding_showcase_screen.dart';
 import '../features/onboarding/presentation/onboarding_discovery_screen.dart';
@@ -42,18 +37,13 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 /// Routes that don't require authentication.
 const _publicPaths = {
   '/onboarding',
-  '/onboarding/goal',
-  '/onboarding/experience',
-  '/onboarding/style',
-  '/onboarding/injury',
-  '/onboarding/units',
-  '/onboarding/height',
-  '/onboarding/weight',
-  '/onboarding/summary',
-  '/onboarding/email',
-  '/onboarding/notifications',
-  '/onboarding/health',
   '/onboarding/showcase',
+  '/onboarding/goal',
+  '/onboarding/style',
+  '/onboarding/height',
+  '/onboarding/health',
+  '/onboarding/email',
+  '/onboarding/summary',
   '/onboarding/discovery',
   '/login',
   '/forgot-password',
@@ -119,14 +109,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: '/onboarding/experience',
-        name: 'onboarding-experience',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
-          state: state,
-          child: const OnboardingExperienceScreen(),
-        ),
-      ),
-      GoRoute(
         path: '/onboarding/style',
         name: 'onboarding-style',
         pageBuilder: (context, state) => PlatformAdapter.buildPage(
@@ -135,35 +117,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: '/onboarding/injury',
-        name: 'onboarding-injury',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
-          state: state,
-          child: const OnboardingInjuryScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/onboarding/units',
-        name: 'onboarding-units',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
-          state: state,
-          child: const OnboardingUnitsScreen(),
-        ),
-      ),
-      GoRoute(
         path: '/onboarding/height',
         name: 'onboarding-height',
         pageBuilder: (context, state) => PlatformAdapter.buildPage(
           state: state,
           child: const OnboardingHeightScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/onboarding/weight',
-        name: 'onboarding-weight',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
-          state: state,
-          child: const OnboardingWeightScreen(),
         ),
       ),
       GoRoute(
@@ -180,14 +138,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => PlatformAdapter.buildPage(
           state: state,
           child: const OnboardingEmailScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/onboarding/notifications',
-        name: 'onboarding-notifications',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
-          state: state,
-          child: const OnboardingNotificationsScreen(),
         ),
       ),
       GoRoute(

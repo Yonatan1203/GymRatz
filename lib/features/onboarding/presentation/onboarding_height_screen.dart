@@ -164,7 +164,7 @@ class _OnboardingHeightScreenState
     return Scaffold(
       body: Column(
         children: [
-          const OnboardingProgressBar(currentStep: 6, totalSteps: 14),
+          const OnboardingProgressBar(currentStep: 4),
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),

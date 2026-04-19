@@ -47,7 +47,7 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
     return Scaffold(
       body: Column(
         children: [
-          const OnboardingProgressBar(currentStep: 9, totalSteps: 14),
+          const OnboardingProgressBar(currentStep: 6),
           Expanded(
             child: SingleChildScrollView(
               padding:

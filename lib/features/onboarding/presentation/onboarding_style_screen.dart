@@ -89,7 +89,7 @@ class _OnboardingStyleScreenState
     return Scaffold(
       body: Column(
         children: [
-          const OnboardingProgressBar(currentStep: 3, totalSteps: 14),
+          const OnboardingProgressBar(currentStep: 3),
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
@@ -160,7 +160,7 @@ class _OnboardingStyleScreenState
                     notifier.toggleInjury(injury);
                   }
                 }
-                context.push('/onboarding/units');
+                context.push('/onboarding/height');
               }
             },
           ),

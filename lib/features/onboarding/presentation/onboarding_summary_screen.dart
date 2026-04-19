@@ -39,7 +39,7 @@ class OnboardingSummaryScreen extends ConsumerWidget {
     return Scaffold(
       body: Column(
         children: [
-          const OnboardingProgressBar(currentStep: 8, totalSteps: 14),
+          const OnboardingProgressBar(currentStep: 7),
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
@@ -115,7 +115,7 @@ class OnboardingSummaryScreen extends ConsumerWidget {
           ),
           OnboardingBottomButton(
             text: 'Create Account',
-            onPressed: () => context.push('/onboarding/email'),
+            onPressed: () => context.push('/onboarding/discovery'),
           ),
         ],
       ),

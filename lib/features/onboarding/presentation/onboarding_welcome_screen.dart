@@ -104,7 +104,7 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: () => context.go('/onboarding/goal'),
+                        onTap: () => context.go('/onboarding/showcase'),
                         borderRadius: AppRadius.borderXxl,
                         child: Container(
                           decoration: BoxDecoration(

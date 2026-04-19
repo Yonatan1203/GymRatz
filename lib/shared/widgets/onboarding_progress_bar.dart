@@ -14,7 +14,7 @@ class OnboardingProgressBar extends StatelessWidget {
   const OnboardingProgressBar({
     super.key,
     required this.currentStep,
-    this.totalSteps = 14,
+    this.totalSteps = 9,
   });
 
   @override
@@ -56,13 +56,18 @@ class OnboardingProgressBar extends StatelessWidget {
           Expanded(
             child: Row(
               children: List.generate(totalSteps, (index) {
+                final isCurrent = index == currentStep;
                 final isCompleted = index < currentStep;
+                final coral = isDark ? AppColors.darkCoral : AppColors.lightCoral;
+
                 return Expanded(
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOut,
                     height: 4.h,
                     margin: EdgeInsets.symmetric(horizontal: 1.5.w),
                     decoration: BoxDecoration(
-                      color: isCompleted ? primary : muted,
+                      color: isCompleted ? primary : isCurrent ? coral : muted,
                       borderRadius: AppRadius.borderFull,
                     ),
                   ),
