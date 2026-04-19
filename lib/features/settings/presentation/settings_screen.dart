@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants.dart';
 import '../../../theme/app_icons.dart';
@@ -129,9 +130,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: Column(
                       children: [
-                        MenuItemWidget(icon: AppIcons.crown, label: 'Manage Subscription', onTap: () => context.push('/paywall')),
+                        MenuItemWidget(
+                          icon: AppIcons.crown,
+                          label: 'Manage Subscription',
+                          onTap: () async {
+                            try {
+                              await RevenueCatUI.presentCustomerCenter();
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Could not open subscription manager: $e')),
+                                );
+                              }
+                            }
+                          },
+                        ),
                         Divider(color: context.borderColor, height: 1),
-                        MenuItemWidget(icon: AppIcons.refreshCw, label: 'Restore Purchases', onTap: _restorePurchases),
+                        ref.watch(isProProvider).when(
+                          data: (isPro) => isPro
+                              ? const SizedBox.shrink()
+                              : MenuItemWidget(
+                                  icon: AppIcons.zap,
+                                  label: 'Upgrade to Pro',
+                                  onTap: () => context.push('/paywall'),
+                                ),
+                          loading: () => const SizedBox.shrink(),
+                          error: (_, __) => MenuItemWidget(
+                            icon: AppIcons.zap,
+                            label: 'Upgrade to Pro',
+                            onTap: () => context.push('/paywall'),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -221,23 +250,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  Future<void> _restorePurchases() async {
-    try {
-      final service = ref.read(entitlementServiceProvider);
-      await service.restorePurchases();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Purchases restored successfully')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Restore failed: $e')),
-        );
-      }
-    }
-  }
 
   Widget _sectionTitle(BuildContext context, String title) {
     return Padding(
