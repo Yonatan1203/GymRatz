@@ -7,9 +7,14 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import '../../../core/constants.dart';
 
 class EntitlementRepository {
+  static final EntitlementRepository _instance =
+      EntitlementRepository._internal();
+  factory EntitlementRepository() => _instance;
+  EntitlementRepository._internal();
+
   bool _initialized = false;
 
-  /// Initialize RevenueCat SDK (call once at app startup or after first auth).
+  /// Initialize RevenueCat SDK (call once at app startup).
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
@@ -19,8 +24,13 @@ class EntitlementRepository {
         : AppConstants.revenueCatGoogleApiKey;
 
     if (apiKey.contains('REPLACE_ME')) {
-      debugPrint('RevenueCat: placeholder API key detected — subscription features disabled');
+      debugPrint(
+          'RevenueCat: placeholder API key detected — subscription features disabled');
       return;
+    }
+
+    if (kDebugMode) {
+      await Purchases.setLogLevel(LogLevel.debug);
     }
 
     await Purchases.configure(PurchasesConfiguration(apiKey));
@@ -36,7 +46,7 @@ class EntitlementRepository {
     await Purchases.logOut();
   }
 
-  /// Check if the user has the "pro" entitlement.
+  /// Check if the user has the active entitlement.
   Future<bool> isPro() async {
     try {
       final info = await Purchases.getCustomerInfo();
@@ -65,6 +75,11 @@ class EntitlementRepository {
     });
 
     return controller.stream;
+  }
+
+  /// Get current customer info.
+  Future<CustomerInfo> getCustomerInfo() async {
+    return await Purchases.getCustomerInfo();
   }
 
   /// Get available offerings.
