@@ -1,16 +1,21 @@
-/// App-wide constants and RevenueCat configuration placeholders.
+/// App-wide constants and RevenueCat configuration.
 class AppConstants {
   AppConstants._();
 
-  // RevenueCat API Keys — pass via: --dart-define=RC_APPLE_KEY=appl_xxx
+  // RevenueCat API Keys — pass via: --dart-define=RC_GOOGLE_KEY=goog_xxx
   static const String revenueCatAppleApiKey =
       String.fromEnvironment('RC_APPLE_KEY', defaultValue: 'appl_REPLACE_ME');
   static const String revenueCatGoogleApiKey =
-      String.fromEnvironment('RC_GOOGLE_KEY', defaultValue: 'goog_REPLACE_ME');
+      String.fromEnvironment('RC_GOOGLE_KEY',
+          defaultValue: 'test_QPrCcBDWPprQOPWibhFNchqaTPB');
 
   // RevenueCat identifiers
-  static const String entitlementId = 'pro';
-  static const String defaultOfferingId = 'default';
+  static const String entitlementId = 'GymRatz';
+
+  // Product identifiers (must match RevenueCat dashboard)
+  static const String productWeekly = 'weekly';
+  static const String productMonthly = 'monthly';
+  static const String productYearly = 'yearly';
 
   // Free tier limits
   static const int freeMaxActivePrograms = 1;
