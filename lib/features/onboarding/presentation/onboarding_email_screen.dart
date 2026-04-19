@@ -103,7 +103,7 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
                       child: Text(
                         'Password must be at least 6 characters',
                         style: AppTextStyles.bodySmall.copyWith(
-                          color: Colors.redAccent,
+                          color: context.destructiveColor,
                         ),
                       ),
                     ),

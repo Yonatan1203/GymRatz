@@ -109,7 +109,7 @@ class ProfileScreen extends ConsumerWidget {
             useTransparentBg: true,
             items: [
               StatsGridItem(icon: AppIcons.flame, iconColor: context.primaryColor, value: '$totalWorkouts', label: 'Workouts'),
-              StatsGridItem(icon: AppIcons.flame, iconColor: Colors.orange, value: '$streak', label: 'Streak'),
+              StatsGridItem(icon: AppIcons.flame, iconColor: context.coralColor, value: '$streak', label: 'Streak'),
               StatsGridItem(icon: AppIcons.award, iconColor: context.primaryColor, value: '$badgeCount', label: 'Badges'),
             ],
           ),
