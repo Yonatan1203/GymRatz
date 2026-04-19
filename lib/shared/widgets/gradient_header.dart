@@ -84,7 +84,9 @@ class GradientHeader extends StatelessWidget {
                             child: Center(
                               child: Icon(
                                 AppIcons.arrowLeft,
-                                color: Colors.white,
+                                color: variant == HeaderVariant.hero
+                                    ? Colors.white
+                                    : context.foreground,
                                 size: 20.r,
                               ),
                             ),
