@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:gymratz/shared/widgets/skeleton_loader.dart';
+import 'package:gymratz/shared/widgets/fade_in.dart';
+import 'package:gymratz/shared/widgets/slide_up.dart';
+import 'package:gymratz/shared/utils/extensions.dart';
+import 'package:gymratz/theme/app_spacing.dart';
+import 'package:gymratz/theme/app_radius.dart';
+import 'package:gymratz/theme/app_icons.dart';
+
 class AsyncValueWidget<T> extends StatelessWidget {
   final AsyncValue<T> value;
   final Widget Function(T data) data;
@@ -26,10 +34,18 @@ class AsyncValueWidget<T> extends StatelessWidget {
   }
 
   Widget _defaultLoading() {
-    return Center(
+    return SkeletonLoader(
       child: Padding(
-        padding: EdgeInsets.all(32.w),
-        child: const CircularProgressIndicator(),
+        padding: EdgeInsets.all(AppSpacing.screenPadding),
+        child: Column(
+          children: [
+            SkeletonCard(height: 80),
+            SizedBox(height: AppSpacing.itemGap),
+            SkeletonCard(height: 80),
+            SizedBox(height: AppSpacing.itemGap),
+            SkeletonCard(height: 60),
+          ],
+        ),
       ),
     );
   }
@@ -42,17 +58,49 @@ class AsyncValueWidget<T> extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48.sp, color: theme.colorScheme.error),
+            // Error icon container
+            FadeIn(
+              delay: Duration.zero,
+              child: Container(
+                width: 64.r,
+                height: 64.r,
+                decoration: BoxDecoration(
+                  color: context.destructiveColor.withOpacity(0.1),
+                  borderRadius: AppRadius.borderXl,
+                  border: Border.all(
+                    color: context.destructiveColor.withOpacity(0.15),
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    AppIcons.alertCircle,
+                    size: 28.sp,
+                    color: context.destructiveColor,
+                  ),
+                ),
+              ),
+            ),
             SizedBox(height: 16.h),
-            Text(
-              'Something went wrong',
-              style: theme.textTheme.titleMedium,
+            // Title
+            SlideUp(
+              delay: const Duration(milliseconds: 100),
+              child: Text(
+                'Something went wrong',
+                style: theme.textTheme.titleMedium,
+              ),
             ),
             SizedBox(height: 8.h),
-            Text(
-              error.toString(),
-              style: theme.textTheme.bodySmall,
-              textAlign: TextAlign.center,
+            // Error message
+            FadeIn(
+              delay: const Duration(milliseconds: 200),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 260.w),
+                child: Text(
+                  error.toString(),
+                  style: theme.textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ),
           ],
         ),
