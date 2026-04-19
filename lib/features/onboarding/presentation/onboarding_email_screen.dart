@@ -4,25 +4,31 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../../theme/app_icons.dart';
 
+import '../../../theme/app_radius.dart';
+import '../../../theme/app_shadows.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
 import '../../../shared/widgets/custom_input.dart';
+import '../../../shared/widgets/custom_toggle.dart';
 import '../../../shared/widgets/onboarding_progress_bar.dart';
 import '../../../shared/widgets/onboarding_bottom_button.dart';
+import '../../../shared/widgets/staggered_list.dart';
 import '../providers/onboarding_provider.dart';
 
 class OnboardingEmailScreen extends ConsumerStatefulWidget {
   const OnboardingEmailScreen({super.key});
 
   @override
-  ConsumerState<OnboardingEmailScreen> createState() => _OnboardingEmailScreenState();
+  ConsumerState<OnboardingEmailScreen> createState() =>
+      _OnboardingEmailScreenState();
 }
 
 class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _notificationsEnabled = true;
 
   @override
   void dispose() {
@@ -44,13 +50,14 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
           const OnboardingProgressBar(currentStep: 9, totalSteps: 14),
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
-              child: Column(
+              padding:
+                  EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
+              child: StaggeredList(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: AppSpacing.xxl),
                   Text(
-                    'Almost there!',
+                    'Create your account',
                     style: AppTextStyles.h1.copyWith(
                       color: context.foreground,
                       fontWeight: FontWeight.w700,
@@ -58,10 +65,11 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    'Create your account to save your progress',
-                    style: AppTextStyles.body.copyWith(color: context.mutedForeground),
+                    'Save your progress and unlock all features.',
+                    style: AppTextStyles.body
+                        .copyWith(color: context.mutedForeground),
                   ),
-                  SizedBox(height: 32.h),
+                  SizedBox(height: AppSpacing.xxl),
                   CustomInput(
                     controller: _emailController,
                     label: 'Email Address',
@@ -80,12 +88,10 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
                     textInputAction: TextInputAction.done,
                     prefixIcon: Icon(AppIcons.lock, size: 20.r),
                     suffixIcon: GestureDetector(
-                      onTap: () =>
-                          setState(() => _obscurePassword = !_obscurePassword),
+                      onTap: () => setState(
+                          () => _obscurePassword = !_obscurePassword),
                       child: Icon(
-                        _obscurePassword
-                            ? AppIcons.eyeOff
-                            : AppIcons.eye,
+                        _obscurePassword ? AppIcons.eyeOff : AppIcons.eye,
                         size: 20.r,
                       ),
                     ),
@@ -101,17 +107,75 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
                         ),
                       ),
                     ),
+                  SizedBox(height: AppSpacing.sectionGap),
+
+                  // Notifications toggle card
+                  Container(
+                    padding: EdgeInsets.all(20.r),
+                    decoration: BoxDecoration(
+                      color: context.cardColor,
+                      borderRadius: AppRadius.borderXl,
+                      border: Border.all(color: context.borderColor),
+                      boxShadow: AppShadows.md,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40.r,
+                          height: 40.r,
+                          decoration: BoxDecoration(
+                            color: context.primaryColor.withOpacity(0.1),
+                            borderRadius: AppRadius.borderLg,
+                          ),
+                          child: Icon(
+                            AppIcons.bell,
+                            size: 20.r,
+                            color: context.primaryColor,
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Push Notifications',
+                                style: AppTextStyles.h4.copyWith(
+                                  color: context.foreground,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(height: 4.h),
+                              Text(
+                                'Workout reminders & streak alerts',
+                                style: AppTextStyles.bodySmall
+                                    .copyWith(color: context.mutedForeground),
+                              ),
+                            ],
+                          ),
+                        ),
+                        CustomToggle(
+                          value: _notificationsEnabled,
+                          onChanged: (val) =>
+                              setState(() => _notificationsEnabled = val),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.lg),
                 ],
               ),
             ),
           ),
           OnboardingBottomButton(
-            text: 'Continue',
+            text: 'Create Account',
             enabled: _isValid,
             onPressed: () {
-              ref.read(onboardingProvider.notifier).setEmail(_emailController.text.trim());
-              ref.read(onboardingProvider.notifier).setPassword(_passwordController.text);
-              context.push('/onboarding/notifications');
+              final notifier = ref.read(onboardingProvider.notifier);
+              notifier.setEmail(_emailController.text.trim());
+              notifier.setPassword(_passwordController.text);
+              notifier.setNotificationsEnabled(_notificationsEnabled);
+              context.push('/onboarding/summary');
             },
           ),
         ],
