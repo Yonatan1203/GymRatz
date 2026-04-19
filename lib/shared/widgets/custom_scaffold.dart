@@ -269,7 +269,7 @@ class _NavItemState extends State<_NavItem>
             Text(
               widget.label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 color: widget.isActive ? activeColor : inactiveColor,
                 fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w400,
               ),
