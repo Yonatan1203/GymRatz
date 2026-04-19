@@ -76,8 +76,15 @@ class AuthService {
       debugPrint('AUTH: Failed to init achievements client-side: $e');
     }
 
-    // Link with RevenueCat
-    await _entitlementService?.loginUser(user.uid);
+    // Link with RevenueCat (non-fatal — don't block signup if it fails/hangs)
+    try {
+      await _entitlementService?.loginUser(user.uid).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => debugPrint('AUTH: RevenueCat login timed out'),
+      );
+    } catch (e) {
+      debugPrint('AUTH: RevenueCat login failed: $e');
+    }
 
     return user;
   }
@@ -90,8 +97,15 @@ class AuthService {
     final credential = await _authRepo.signInWithEmail(email, password);
     final user = credential.user!;
 
-    // Link with RevenueCat
-    await _entitlementService?.loginUser(user.uid);
+    // Link with RevenueCat (non-fatal)
+    try {
+      await _entitlementService?.loginUser(user.uid).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => debugPrint('AUTH: RevenueCat login timed out'),
+      );
+    } catch (e) {
+      debugPrint('AUTH: RevenueCat login failed: $e');
+    }
 
     return user;
   }
@@ -101,8 +115,15 @@ class AuthService {
     final credential = await _authRepo.signInWithGoogle();
     final uid = credential.user!.uid;
 
-    // Link with RevenueCat
-    await _entitlementService?.loginUser(uid);
+    // Link with RevenueCat (non-fatal)
+    try {
+      await _entitlementService?.loginUser(uid).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => debugPrint('AUTH: RevenueCat login timed out'),
+      );
+    } catch (e) {
+      debugPrint('AUTH: RevenueCat login failed: $e');
+    }
 
     // Create profile if first time
     final hasExistingProfile = await hasProfile(uid);
@@ -139,8 +160,15 @@ class AuthService {
     final credential = await _authRepo.signInWithApple();
     final uid = credential.user!.uid;
 
-    // Link with RevenueCat
-    await _entitlementService?.loginUser(uid);
+    // Link with RevenueCat (non-fatal)
+    try {
+      await _entitlementService?.loginUser(uid).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => debugPrint('AUTH: RevenueCat login timed out'),
+      );
+    } catch (e) {
+      debugPrint('AUTH: RevenueCat login failed: $e');
+    }
 
     // Create profile if first time
     final hasExistingProfile = await hasProfile(uid);
@@ -181,7 +209,11 @@ class AuthService {
 
   /// Sign out.
   Future<void> signOut() async {
-    await _entitlementService?.logoutUser();
+    try {
+      await _entitlementService?.logoutUser();
+    } catch (e) {
+      debugPrint('AUTH: RevenueCat logout failed: $e');
+    }
     await _authRepo.signOut();
   }
 

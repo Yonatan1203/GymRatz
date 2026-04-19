@@ -17,6 +17,7 @@ import 'firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+
   // Initialize Firebase with generated options.
   try {
     await Firebase.initializeApp(
@@ -54,19 +55,10 @@ Future<void> main() async {
     debugPrint('Firebase init skipped: $e');
   }
 
-  // Initialize RevenueCat SDK (guarded — no-op if API keys are placeholders).
-  try {
-    await EntitlementRepository().initialize();
-  } catch (e) {
-    debugPrint('RevenueCat init skipped: $e');
-  }
-
-  // Initialize local notifications service.
-  try {
-    await NotificationService().initialize();
-  } catch (e) {
-    debugPrint('Notification init skipped: $e');
-  }
+  // Defer non-critical init to after first frame to avoid ANR.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    _initDeferredServices();
+  });
 
   // Replace red error screen in release mode
   if (!kDebugMode) {
@@ -102,4 +94,28 @@ Future<void> main() async {
   }
 
   runApp(const ProviderScope(child: GymRatzApp()));
+}
+
+/// Initialize RevenueCat and notifications after the first frame.
+Future<void> _initDeferredServices() async {
+  await Future.wait([
+    _initRevenueCat(),
+    _initNotifications(),
+  ]);
+}
+
+Future<void> _initRevenueCat() async {
+  try {
+    await EntitlementRepository().initialize();
+  } catch (e) {
+    debugPrint('RevenueCat init skipped: $e');
+  }
+}
+
+Future<void> _initNotifications() async {
+  try {
+    await NotificationService().initialize();
+  } catch (e) {
+    debugPrint('Notification init skipped: $e');
+  }
 }

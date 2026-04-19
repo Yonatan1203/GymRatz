@@ -297,12 +297,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             textColor = context.primaryColor;
             break;
           case 2: // Scheduled
-            bgColor = context.secondaryColor;
-            textColor = Colors.white;
+            bgColor = context.mutedColor;
+            textColor = context.mutedForeground;
             break;
           case 3: // Missed — orange
-            bgColor = const Color(0xFFF59E0B).withValues(alpha: 0.15);
-            textColor = isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706);
+            bgColor = const Color(0xFFF97316).withValues(alpha: 0.15);
+            textColor = const Color(0xFFF97316);
             break;
           default: // Rest
             bgColor = context.cardColor;
@@ -319,6 +319,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           }
         } else if (isSelected) {
           border = Border.all(color: context.primaryColor, width: 2);
+        } else if (statusCode == 2) {
+          border = Border.all(color: context.borderColor);
         } else if (statusCode == 0) {
           border = Border.all(color: context.borderColor);
         }
@@ -355,8 +357,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget _buildLegend(BuildContext context) {
     final items = [
       ('Completed', context.primaryColor),
-      ('Scheduled', context.secondaryColor),
-      ('Missed', const Color(0xFFF59E0B).withValues(alpha: 0.5)),
+      ('Scheduled', context.mutedForeground),
+      ('Missed', const Color(0xFFF97316)),
       ('Rest', context.cardColor),
     ];
 
@@ -533,7 +535,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   ],
                 ),
               SizedBox(height: AppSpacing.xl),
-              Divider(color: context.borderColor),
+              Divider(color: context.mutedForeground.withOpacity(0.15)),
               SizedBox(height: AppSpacing.lg),
               Text('Recent Entries', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
               SizedBox(height: AppSpacing.md),

@@ -93,7 +93,7 @@ class ProfileScreen extends ConsumerWidget {
             width: 96.r,
             height: 96.r,
             decoration: BoxDecoration(
-              color: context.primaryColor.withOpacity(0.2),
+              color: context.primaryColor.withOpacity(0.15),
               shape: BoxShape.circle,
             ),
             child: Center(

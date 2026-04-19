@@ -282,7 +282,7 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(AppIcons.trophy, size: 48.r, color: context.mutedForeground.withValues(alpha: 0.5)),
+          Icon(AppIcons.trophy, size: 48.r, color: context.mutedForeground.withOpacity(0.6)),
           SizedBox(height: 12.h),
           Text('No achievements in this category', style: AppTextStyles.body.copyWith(color: context.mutedForeground)),
         ],

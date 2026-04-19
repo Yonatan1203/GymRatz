@@ -94,7 +94,7 @@ class _OnboardingExperienceScreenState
             onPressed: () {
               if (_selected != null) {
                 ref.read(onboardingProvider.notifier).setExperience(_selected!);
-                context.go('/onboarding/style');
+                context.push('/onboarding/style');
               }
             },
           ),

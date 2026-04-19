@@ -92,7 +92,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                   width: 200.w,
                   height: 24.h,
                   decoration: BoxDecoration(
-                    color: context.mutedForeground.withOpacity(0.2),
+                    color: context.mutedColor,
                     borderRadius: AppRadius.borderSm,
                   ),
                 ),
@@ -101,7 +101,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                   width: 140.w,
                   height: 16.h,
                   decoration: BoxDecoration(
-                    color: context.mutedForeground.withOpacity(0.15),
+                    color: context.mutedColor,
                     borderRadius: AppRadius.borderSm,
                   ),
                 ),
@@ -268,18 +268,18 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                       Container(
                         padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                          color: context.coralColor.withOpacity(0.12),
                           borderRadius: AppRadius.borderFull,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(AppIcons.check, size: 12.r, color: const Color(0xFF10B981)),
+                            Icon(AppIcons.check, size: 12.r, color: context.coralColor),
                             SizedBox(width: AppSpacing.sm),
                             Text(
                               'Active',
                               style: AppTextStyles.caption.copyWith(
-                                color: const Color(0xFF10B981),
+                                color: context.coralColor,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -627,7 +627,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                   ),
                 ),
                 if (isExpanded) ...[
-                  Divider(color: context.borderColor, height: 1),
+                  Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
                   ...day.exercises.asMap().entries.map((exEntry) {
                     final exIdx = exEntry.key;
                     final ex = exEntry.value;
@@ -700,7 +700,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
           Icon(
             AppIcons.calendar,
             size: 40.r,
-            color: context.mutedForeground.withValues(alpha: 0.4),
+            color: context.mutedForeground.withOpacity(0.6),
           ),
           SizedBox(height: AppSpacing.md),
           Text(

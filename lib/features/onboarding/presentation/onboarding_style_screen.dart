@@ -94,7 +94,7 @@ class _OnboardingStyleScreenState
             onPressed: () {
               if (_selected != null) {
                 ref.read(onboardingProvider.notifier).setStyle(_selected!);
-                context.go('/onboarding/injury');
+                context.push('/onboarding/injury');
               }
             },
           ),

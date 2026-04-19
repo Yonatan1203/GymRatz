@@ -144,7 +144,7 @@ class OnboardingShowcaseScreen extends StatelessWidget {
           ),
           OnboardingBottomButton(
             text: 'Continue',
-            onPressed: () => context.go('/onboarding/discovery'),
+            onPressed: () => context.push('/onboarding/discovery'),
           ),
         ],
       ),

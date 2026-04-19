@@ -1,0 +1,78 @@
+<h2>GymRatz UI/UX Polish — Priority Map</h2>
+<p class="subtitle">Based on your feedback, here's how I'd tier the work</p>
+
+<div class="section">
+  <h3>🔴 Tier 1 — High Impact (Most work needed)</h3>
+  <div style="display: grid; gap: 12px;">
+    <div style="background: rgba(220, 60, 60, 0.08); border: 1px solid rgba(220, 60, 60, 0.2); border-radius: 12px; padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>A — Transitions & Animations</strong>
+        <span style="background: rgba(220, 60, 60, 0.15); padding: 2px 10px; border-radius: 20px; font-size: 13px;">Critical</span>
+      </div>
+      <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Currently: No page transitions, no micro-interactions, static state changes. Only 2 animations exist (pulsing dot + toggle).<br>
+      <strong>Plan:</strong> Add page transitions, list item staggers, state change animations, button feedback, scroll-driven effects. Make the app feel alive.</p>
+    </div>
+    <div style="background: rgba(220, 60, 60, 0.08); border: 1px solid rgba(220, 60, 60, 0.2); border-radius: 12px; padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>D — Onboarding Flow</strong>
+        <span style="background: rgba(220, 60, 60, 0.15); padding: 2px 10px; border-radius: 20px; font-size: 13px;">Critical</span>
+      </div>
+      <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Currently: 14 screens with basic layout, no transition between steps, progress bar is functional but not delightful.<br>
+      <strong>Plan:</strong> Smooth slide transitions between steps, animated progress bar, staggered content entry, polished selection cards, cohesive visual story.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🟡 Tier 2 — Medium Impact</h3>
+  <div style="display: grid; gap: 12px;">
+    <div style="background: rgba(200, 170, 40, 0.08); border: 1px solid rgba(200, 170, 40, 0.2); border-radius: 12px; padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>B — Cards & Containers</strong>
+        <span style="background: rgba(200, 170, 40, 0.15); padding: 2px 10px; border-radius: 20px; font-size: 13px;">Medium</span>
+      </div>
+      <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Currently: Generic CustomCard used everywhere with same styling. No visual variety between workout cards, stat cards, menu cards, program cards.<br>
+      <strong>Plan:</strong> Create card variants with distinct visual identities while keeping the same base. Workout cards feel different from stat cards feel different from program cards.</p>
+    </div>
+    <div style="background: rgba(200, 170, 40, 0.08); border: 1px solid rgba(200, 170, 40, 0.2); border-radius: 12px; padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>F — Spacing & Hierarchy</strong>
+        <span style="background: rgba(200, 170, 40, 0.15); padding: 2px 10px; border-radius: 20px; font-size: 13px;">Medium</span>
+      </div>
+      <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Currently: Spacing tokens exist but aren't always applied consistently. Some screens feel tighter than others. Visual hierarchy varies between screens.<br>
+      <strong>Plan:</strong> Audit every screen for consistent spacing rhythm, enforce section gaps, standardize header-to-content flow.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🟢 Tier 3 — Polish & Refinement</h3>
+  <div style="display: grid; gap: 12px;">
+    <div style="background: rgba(60, 180, 120, 0.08); border: 1px solid rgba(60, 180, 120, 0.2); border-radius: 12px; padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>E — Empty/Loading States</strong>
+        <span style="background: rgba(60, 180, 120, 0.15); padding: 2px 10px; border-radius: 20px; font-size: 13px;">Polish</span>
+      </div>
+      <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Add skeleton loaders instead of spinners, animate empty states in, make error states feel friendlier.</p>
+    </div>
+    <div style="background: rgba(60, 180, 120, 0.08); border: 1px solid rgba(60, 180, 120, 0.2); border-radius: 12px; padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>G — Color Usage</strong>
+        <span style="background: rgba(60, 180, 120, 0.15); padding: 2px 10px; border-radius: 20px; font-size: 13px;">Polish</span>
+      </div>
+      <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Better use of accent colors for status differentiation, subtle color cues for completed/active/upcoming states.</p>
+    </div>
+    <div style="background: rgba(60, 180, 120, 0.08); border: 1px solid rgba(60, 180, 120, 0.2); border-radius: 12px; padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>C — Bottom Navigation</strong>
+        <span style="background: rgba(60, 180, 120, 0.15); padding: 2px 10px; border-radius: 20px; font-size: 13px;">Polish</span>
+      </div>
+      <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Minor tweaks — active indicator animation, subtle scale feedback on tap.</p>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 24px; padding: 16px; background: rgba(100, 160, 160, 0.08); border: 1px solid rgba(100, 160, 160, 0.2); border-radius: 12px;">
+  <strong>Does this priority breakdown match your expectations?</strong>
+  <p style="margin: 4px 0 0; opacity: 0.7; font-size: 14px;">Respond in the terminal — we'll refine before moving on.</p>
+</div>

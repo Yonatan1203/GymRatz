@@ -7,10 +7,10 @@ import '../../../theme/app_icons.dart';
 import '../../../shared/utils/extensions.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_input.dart';
-import '../../../shared/widgets/gym_ratz_background.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../app/providers/auth_providers.dart';
+import '../domain/auth_service.dart';
 import 'widgets/social_auth_buttons.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -39,15 +39,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _emailController.text.contains('.') &&
       _passwordController.text.length >= 6;
 
+  AuthService? get _authService {
+    try {
+      return ref.read(authServiceProvider);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _error = 'Firebase is not available. Please restart the app.');
+      }
+      return null;
+    }
+  }
+
   Future<void> _signIn() async {
     if (!_isValid) return;
+    final authService = _authService;
+    if (authService == null) return;
+
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
-      final authService = ref.read(authServiceProvider);
       await authService.signIn(
         email: _emailController.text.trim(),
         password: _passwordController.text,
@@ -61,13 +74,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _signInWithGoogle() async {
+    final authService = _authService;
+    if (authService == null) return;
+
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
-      final authService = ref.read(authServiceProvider);
       await authService.signInWithGoogle();
       if (mounted) context.go('/home');
     } catch (e) {
@@ -78,13 +93,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _signInWithApple() async {
+    final authService = _authService;
+    if (authService == null) return;
+
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
-      final authService = ref.read(authServiceProvider);
       await authService.signInWithApple();
       if (mounted) context.go('/home');
     } catch (e) {
@@ -97,8 +114,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GymRatzBackground(
-        child: SafeArea(
+      body: SafeArea(
           child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
           child: Column(
@@ -220,7 +236,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ],
           ),
         ),
-      ),
       ),
     );
   }

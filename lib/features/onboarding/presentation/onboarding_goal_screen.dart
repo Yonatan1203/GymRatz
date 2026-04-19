@@ -77,7 +77,7 @@ class _OnboardingGoalScreenState extends ConsumerState<OnboardingGoalScreen> {
             onPressed: () {
               if (_selected != null) {
                 ref.read(onboardingProvider.notifier).setGoal(_selected!);
-                context.go('/onboarding/experience');
+                context.push('/onboarding/experience');
               }
             },
           ),

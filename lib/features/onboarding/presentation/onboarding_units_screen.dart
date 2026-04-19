@@ -85,7 +85,7 @@ class _OnboardingUnitsScreenState
             onPressed: () {
               if (_selected != null) {
                 ref.read(onboardingProvider.notifier).setUnits(_selected!);
-                context.go('/onboarding/height');
+                context.push('/onboarding/height');
               }
             },
           ),

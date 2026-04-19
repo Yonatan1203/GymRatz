@@ -101,7 +101,7 @@ class OnboardingSummaryScreen extends ConsumerWidget {
           ),
           OnboardingBottomButton(
             text: 'Create Account',
-            onPressed: () => context.go('/onboarding/email'),
+            onPressed: () => context.push('/onboarding/email'),
           ),
         ],
       ),

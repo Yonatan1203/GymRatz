@@ -111,7 +111,7 @@ class _OnboardingInjuryScreenState
                 for (final injury in _selected) {
                   notifier.toggleInjury(injury);
                 }
-                context.go('/onboarding/units');
+                context.push('/onboarding/units');
               }
             },
           ),

@@ -162,7 +162,7 @@ class _OnboardingHeightScreenState
                                   style: AppTextStyles.h2.copyWith(
                                     color: isSelected
                                         ? context.foreground
-                                        : context.mutedForeground.withValues(alpha: 0.5),
+                                        : context.mutedForeground.withOpacity(0.6),
                                     fontWeight: isSelected
                                         ? FontWeight.w700
                                         : FontWeight.w400,
@@ -187,7 +187,7 @@ class _OnboardingHeightScreenState
               ref
                   .read(onboardingProvider.notifier)
                   .setHeight(_heightCmForIndex(_selectedIndex));
-              context.go('/onboarding/weight');
+              context.push('/onboarding/weight');
             },
           ),
         ],

@@ -87,7 +87,7 @@ class _OnboardingWeightScreenState extends ConsumerState<OnboardingWeightScreen>
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                               color: isSelected
                                   ? context.foreground
-                                  : context.mutedForeground.withValues(alpha: 0.5),
+                                  : context.mutedForeground.withOpacity(0.6),
                             ),
                           ),
                         );
@@ -102,7 +102,7 @@ class _OnboardingWeightScreenState extends ConsumerState<OnboardingWeightScreen>
             text: 'Continue',
             onPressed: () {
               ref.read(onboardingProvider.notifier).setWeight(_selectedWeight);
-              context.go('/onboarding/summary');
+              context.push('/onboarding/summary');
             },
           ),
         ],

@@ -1,0 +1,122 @@
+<h2>Design Section 8 — Final Polish Layer</h2>
+<p class="subtitle">Bottom nav, color usage, and small details that add up to premium</p>
+
+<div class="section">
+  <h3>Bottom Navigation Polish</h3>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">Current</div>
+      <div class="mockup-body" style="background: #0D0F11; padding: 0;">
+        <div style="padding: 60px 24px 0; color: #B0B2B5; font-size: 11px; text-align: center; opacity: 0.5;">Screen content above...</div>
+        <div style="margin-top: 20px; border-top: 1px solid #2A2D32; padding: 10px 0 20px; display: flex; justify-content: space-around;">
+          <div style="text-align: center;">
+            <div style="font-size: 16px; opacity: 0.4;">🏋️</div>
+            <div style="font-size: 9px; color: #B0B2B5; margin-top: 2px; opacity: 0.4;">Workout</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 16px; opacity: 0.4;">📅</div>
+            <div style="font-size: 9px; color: #B0B2B5; margin-top: 2px; opacity: 0.4;">Calendar</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 16px;">🏠</div>
+            <div style="font-size: 9px; color: #8FC4C4; margin-top: 2px; font-weight: 500;">Home</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 16px; opacity: 0.4;">📚</div>
+            <div style="font-size: 9px; color: #B0B2B5; margin-top: 2px; opacity: 0.4;">Programs</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 16px; opacity: 0.4;">👤</div>
+            <div style="font-size: 9px; color: #B0B2B5; margin-top: 2px; opacity: 0.4;">Profile</div>
+          </div>
+        </div>
+        <div style="text-align: center; font-size: 10px; color: #B0B2B5; opacity: 0.4; padding-bottom: 8px;">Just color change. No animation. No indicator.</div>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">Proposed</div>
+      <div class="mockup-body" style="background: #0D0F11; padding: 0;">
+        <div style="padding: 60px 24px 0; color: #B0B2B5; font-size: 11px; text-align: center; opacity: 0.5;">Screen content above...</div>
+        <div style="margin-top: 20px; border-top: 1px solid #2A2D32; padding: 10px 0 20px; display: flex; justify-content: space-around;">
+          <div style="text-align: center;">
+            <div style="font-size: 16px; opacity: 0.4;">🏋️</div>
+            <div style="font-size: 9px; color: #B0B2B5; margin-top: 2px; opacity: 0.4;">Workout</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 16px; opacity: 0.4;">📅</div>
+            <div style="font-size: 9px; color: #B0B2B5; margin-top: 2px; opacity: 0.4;">Calendar</div>
+          </div>
+          <div style="text-align: center; position: relative;">
+            <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 20px; height: 3px; background: #8FC4C4; border-radius: 0 0 3px 3px;"></div>
+            <div style="font-size: 16px; transform: scale(1.1);">🏠</div>
+            <div style="font-size: 9px; color: #8FC4C4; margin-top: 2px; font-weight: 600;">Home</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 16px; opacity: 0.4;">📚</div>
+            <div style="font-size: 9px; color: #B0B2B5; margin-top: 2px; opacity: 0.4;">Programs</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 16px; opacity: 0.4;">👤</div>
+            <div style="font-size: 9px; color: #B0B2B5; margin-top: 2px; opacity: 0.4;">Profile</div>
+          </div>
+        </div>
+        <div style="text-align: center; font-size: 10px; color: #8FC4C4; opacity: 0.6; padding-bottom: 8px;">Top pill indicator (animated slide) + icon scale 1.1 + w600 label</div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top: 10px; font-size: 13px; opacity: 0.8;">
+    <strong>Changes:</strong> Teal pill indicator above active tab (3px, animated slide between tabs 200ms). Active icon scales to 1.1. Active label weight bumps to w600. Icon does a quick scale pulse (1.0→1.15→1.0, 150ms) on tap. Minimal but noticeable.
+  </div>
+</div>
+
+<div class="section">
+  <h3>Color Usage Improvements</h3>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <strong>Status Colors</strong>
+      <p style="font-size: 12px; margin: 4px 0 0; opacity: 0.8;">Completed workouts → teal tint. Scheduled → muted/border. Missed → orange (keep existing). Active/in-progress → coral tint. Consistent across calendar, workout cards, program badges.</p>
+    </div>
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <strong>Icon Backgrounds</strong>
+      <p style="font-size: 12px; margin: 4px 0 0; opacity: 0.8;">All icon containers use the same pattern: 10% opacity tint of the icon's semantic color + matching border. Teal for informational, coral for action/energy, destructive for errors.</p>
+    </div>
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <strong>Text Hierarchy</strong>
+      <p style="font-size: 12px; margin: 4px 0 0; opacity: 0.8;">Enforce 3 levels only: foreground (primary text), mutedForeground (secondary/supporting), mutedForeground at 60% opacity (tertiary/captions). No more random opacity values.</p>
+    </div>
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <strong>Interactive States</strong>
+      <p style="font-size: 12px; margin: 4px 0 0; opacity: 0.8;">Pressed: ScaleTap (0.97) + slight opacity reduction (0.9). Disabled: 40% opacity, no tap response. Focused inputs: teal border (existing, keep). Selected option: teal fill at 10% + teal border.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Small Details That Add Up</h3>
+  <div style="display: grid; gap: 8px; font-size: 13px;">
+    <div style="display: flex; gap: 10px; align-items: start; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="color: #8FC4C4; font-size: 14px;">•</span>
+      <div><strong>Dividers:</strong> Replace hard 1px dividers with 8px vertical spacing where possible. Where dividers are needed, use muted color at 30% opacity — barely there.</div>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: start; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="color: #8FC4C4; font-size: 14px;">•</span>
+      <div><strong>Scroll behavior:</strong> Header tint fades to full background on scroll. Subtle — makes content feel like it's sliding under the header.</div>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: start; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="color: #8FC4C4; font-size: 14px;">•</span>
+      <div><strong>Number animations:</strong> Stats and counters count up from 0 on first appearance (200ms). Workout volume, streak count, PR values. Creates a sense of achievement.</div>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: start; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="color: #8FC4C4; font-size: 14px;">•</span>
+      <div><strong>Theme toggle:</strong> Keep sun/moon icon swap but add a 200ms rotation transition. Small delight.</div>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: start; padding: 8px 0;">
+      <span style="color: #8FC4C4; font-size: 14px;">•</span>
+      <div><strong>Safe areas & bottom padding:</strong> Audit all screens for consistent bottom padding (account for bottom nav height + safe area). No content cut off.</div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 20px; padding: 14px; background: rgba(239, 107, 74, 0.06); border: 1px solid rgba(239, 107, 74, 0.12); border-radius: 10px; font-size: 13px;">
+  <strong>That covers all 8 design sections.</strong> If this looks good, I'll write the full design doc and we can move to implementation planning. Respond in terminal.
+</div>

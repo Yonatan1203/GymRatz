@@ -111,7 +111,7 @@ class _OnboardingNotificationsScreenState
             text: 'Continue',
             onPressed: () {
               ref.read(onboardingProvider.notifier).setNotificationsEnabled(_enabled);
-              context.go('/onboarding/health');
+              context.push('/onboarding/health');
             },
           ),
         ],

@@ -1,0 +1,89 @@
+<h2>Design Section 2 — Header System Redesign</h2>
+<p class="subtitle">From heavy gradients to subtle, modern headers</p>
+
+<div class="section">
+  <h3>Current vs Proposed</h3>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">Current — Heavy Gradient</div>
+      <div class="mockup-body" style="background: #0D0F11; padding: 0; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #2A5A5A, #3A6A6A); padding: 48px 24px 24px; border-radius: 0 0 20px 20px; box-shadow: 0 6px 12px rgba(0,0,0,0.3);">
+          <div style="color: white; font-size: 22px; font-weight: 600;">Home</div>
+          <div style="color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 4px;">Hi, Yonatan 👋</div>
+          <div style="display: flex; gap: 6px; margin-top: 12px;">
+            <div style="background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 8px; color: white; font-size: 12px;">🔥 5 day streak</div>
+          </div>
+        </div>
+        <div style="padding: 16px 24px; color: #B0B2B5; font-size: 12px;">
+          Content starts here...<br><br>
+          <span style="opacity: 0.5;">Heavy gradient dominates the screen. Rounded bottom corners create visual separation but feel dated.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mockup">
+      <div class="mockup-header">Proposed — Subtle Tint</div>
+      <div class="mockup-body" style="background: #0D0F11; padding: 0; overflow: hidden;">
+        <div style="background: rgba(42, 90, 90, 0.12); padding: 48px 24px 20px; border-bottom: 1px solid rgba(42, 90, 90, 0.15);">
+          <div style="color: #E5E7E9; font-size: 22px; font-weight: 600;">Home</div>
+          <div style="color: #B0B2B5; font-size: 13px; margin-top: 4px;">Hi, Yonatan 👋</div>
+          <div style="display: flex; gap: 6px; margin-top: 12px;">
+            <div style="background: rgba(239, 107, 74, 0.12); border: 1px solid rgba(239, 107, 74, 0.2); padding: 6px 12px; border-radius: 8px; color: #EF6B4A; font-size: 12px; font-weight: 500;">🔥 5 day streak</div>
+          </div>
+        </div>
+        <div style="padding: 16px 24px; color: #B0B2B5; font-size: 12px;">
+          Content starts here...<br><br>
+          <span style="opacity: 0.5;">Subtle tint blends with background. Content feels continuous. Streak badge uses coral accent.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Light Mode Comparison</h3>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">Current Light</div>
+      <div class="mockup-body" style="background: #F5F5F7; padding: 0; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #8FC4C4, #B8D8D8); padding: 48px 24px 24px; border-radius: 0 0 20px 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+          <div style="color: white; font-size: 22px; font-weight: 600;">Home</div>
+          <div style="color: rgba(255,255,255,0.8); font-size: 13px; margin-top: 4px;">Hi, Yonatan 👋</div>
+        </div>
+        <div style="padding: 16px 24px; color: #6E6E73; font-size: 12px;">Content starts here...</div>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">Proposed Light</div>
+      <div class="mockup-body" style="background: #F5F5F7; padding: 0; overflow: hidden;">
+        <div style="background: rgba(143, 196, 196, 0.08); padding: 48px 24px 20px; border-bottom: 1px solid rgba(143, 196, 196, 0.12);">
+          <div style="color: #2C2C2E; font-size: 22px; font-weight: 600;">Home</div>
+          <div style="color: #6E6E73; font-size: 13px; margin-top: 4px;">Hi, Yonatan 👋</div>
+        </div>
+        <div style="padding: 16px 24px; color: #6E6E73; font-size: 12px;">Content starts here...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Header Rules</h3>
+  <div style="display: grid; gap: 10px;">
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <strong>Main tab screens</strong> (Home, Workout, Calendar, Programs, Profile)
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Subtle tint background + thin bottom border. No rounded corners. No shadow. Content scrolls under it naturally.</p>
+    </div>
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <strong>Detail/push screens</strong> (Program Detail, Edit Profile, Settings)
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Same subtle tint + back arrow. Consistent with tab screens.</p>
+    </div>
+    <div style="background: rgba(239, 107, 74, 0.06); border: 1px solid rgba(239, 107, 74, 0.12); border-radius: 10px; padding: 14px;">
+      <strong>Hero screens</strong> (Onboarding Welcome, Paywall)
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Full gradient preserved here — these are special moments that deserve visual drama.</p>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 20px; padding: 14px; background: rgba(100, 160, 160, 0.08); border: 1px solid rgba(100, 160, 160, 0.15); border-radius: 10px; font-size: 13px;">
+  <strong>Does this header direction look right?</strong> Respond in terminal.
+</div>

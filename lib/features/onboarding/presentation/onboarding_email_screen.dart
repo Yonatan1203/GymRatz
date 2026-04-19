@@ -111,7 +111,7 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
             onPressed: () {
               ref.read(onboardingProvider.notifier).setEmail(_emailController.text.trim());
               ref.read(onboardingProvider.notifier).setPassword(_passwordController.text);
-              context.go('/onboarding/notifications');
+              context.push('/onboarding/notifications');
             },
           ),
         ],

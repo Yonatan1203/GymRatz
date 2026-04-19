@@ -211,9 +211,9 @@ class WorkoutScreen extends ConsumerWidget {
                       CustomBadge(
                         text: isReady ? 'Start Now' : 'Scheduled',
                         backgroundColor: isReady
-                            ? context.primaryColor.withValues(alpha: 0.2)
-                            : context.secondaryColor.withValues(alpha: 0.2),
-                        textColor: isReady ? context.primaryColor : context.secondaryColor,
+                            ? context.coralColor.withOpacity(0.12)
+                            : context.mutedColor,
+                        textColor: isReady ? context.coralColor : context.mutedForeground,
                       ),
                     ],
                   ),

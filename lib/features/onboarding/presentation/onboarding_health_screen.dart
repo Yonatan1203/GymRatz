@@ -114,7 +114,7 @@ class _OnboardingHealthScreenState extends ConsumerState<OnboardingHealthScreen>
             text: 'Continue',
             onPressed: () {
               ref.read(onboardingProvider.notifier).setHealthEnabled(_enabled);
-              context.go('/onboarding/showcase');
+              context.push('/onboarding/showcase');
             },
           ),
         ],

@@ -37,19 +37,17 @@ class OnboardingProgressBar extends StatelessWidget {
               PlatformAdapter.hapticLight();
               context.pop();
             },
-            child: Container(
+            child: SizedBox(
               width: 40.r,
               height: 40.r,
-              decoration: BoxDecoration(
-                color: muted,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                AppIcons.arrowLeft,
-                size: 20.r,
-                color: isDark
-                    ? AppColors.darkForeground
-                    : AppColors.lightForeground,
+              child: Center(
+                child: Icon(
+                  AppIcons.arrowLeft,
+                  size: 20.r,
+                  color: isDark
+                      ? AppColors.darkForeground
+                      : AppColors.lightForeground,
+                ),
               ),
             ),
           ),

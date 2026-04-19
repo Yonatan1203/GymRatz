@@ -169,7 +169,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
             ],
           ),
           SizedBox(height: AppSpacing.lg),
-          Divider(color: context.borderColor, height: 1),
+          Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
           ...features.map((f) => Padding(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
             child: Row(

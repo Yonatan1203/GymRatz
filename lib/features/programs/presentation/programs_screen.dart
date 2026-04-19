@@ -150,8 +150,8 @@ class ProgramsScreen extends ConsumerWidget {
                     padding: EdgeInsets.only(right: AppSpacing.md),
                     child: CustomBadge(
                       text: 'Active',
-                      backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.15),
-                      textColor: const Color(0xFF10B981),
+                      backgroundColor: context.coralColor.withOpacity(0.12),
+                      textColor: context.coralColor,
                     ),
                   ),
                 Icon(AppIcons.chevronRight, size: 20.r, color: context.mutedForeground),
