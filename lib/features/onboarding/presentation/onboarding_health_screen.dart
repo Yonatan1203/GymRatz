@@ -32,7 +32,7 @@ class _OnboardingHealthScreenState extends ConsumerState<OnboardingHealthScreen>
     return Scaffold(
       body: Column(
         children: [
-          const OnboardingProgressBar(currentStep: 11, totalSteps: 14),
+          const OnboardingProgressBar(currentStep: 5),
           Expanded(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
@@ -114,7 +114,7 @@ class _OnboardingHealthScreenState extends ConsumerState<OnboardingHealthScreen>
             text: 'Continue',
             onPressed: () {
               ref.read(onboardingProvider.notifier).setHealthEnabled(_enabled);
-              context.go('/onboarding/showcase');
+              context.push('/onboarding/email');
             },
           ),
         ],

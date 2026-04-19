@@ -1,14 +1,20 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../../../core/constants.dart';
 
 class EntitlementRepository {
+  static final EntitlementRepository _instance =
+      EntitlementRepository._internal();
+  factory EntitlementRepository() => _instance;
+  EntitlementRepository._internal();
+
   bool _initialized = false;
 
-  /// Initialize RevenueCat SDK (call once at app startup or after first auth).
+  /// Initialize RevenueCat SDK (call once at app startup).
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
@@ -17,8 +23,17 @@ class EntitlementRepository {
         ? AppConstants.revenueCatAppleApiKey
         : AppConstants.revenueCatGoogleApiKey;
 
-    final configuration = PurchasesConfiguration(apiKey);
-    await Purchases.configure(configuration);
+    if (apiKey.contains('REPLACE_ME')) {
+      debugPrint(
+          'RevenueCat: placeholder API key detected — subscription features disabled');
+      return;
+    }
+
+    if (kDebugMode) {
+      await Purchases.setLogLevel(LogLevel.debug);
+    }
+
+    await Purchases.configure(PurchasesConfiguration(apiKey));
   }
 
   /// Associate a Firebase UID with RevenueCat.
@@ -31,7 +46,7 @@ class EntitlementRepository {
     await Purchases.logOut();
   }
 
-  /// Check if the user has the "pro" entitlement.
+  /// Check if the user has the active entitlement.
   Future<bool> isPro() async {
     try {
       final info = await Purchases.getCustomerInfo();
@@ -60,6 +75,11 @@ class EntitlementRepository {
     });
 
     return controller.stream;
+  }
+
+  /// Get current customer info.
+  Future<CustomerInfo> getCustomerInfo() async {
+    return await Purchases.getCustomerInfo();
   }
 
   /// Get available offerings.

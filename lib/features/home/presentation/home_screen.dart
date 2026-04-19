@@ -14,7 +14,11 @@ import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
 import '../../../shared/widgets/custom_card.dart';
+import '../../../shared/widgets/empty_state_widget.dart';
+import '../../../shared/widgets/gradient_header.dart';
+import '../../../shared/widgets/scale_tap.dart';
 import '../../../shared/widgets/section_header.dart';
+import '../../../shared/widgets/staggered_list.dart';
 import '../../../shared/widgets/stats_grid.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -26,26 +30,26 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(context, isDark, ref),
-            Padding(
-              padding: EdgeInsets.all(AppSpacing.screenPadding),
-              child: Column(
-                children: [
-                  _buildStatsGrid(context, isDark, ref),
-                  SizedBox(height: AppSpacing.sectionGap),
-                  _buildTodaysWorkout(context, isDark),
-                  SizedBox(height: AppSpacing.sectionGap),
-                  _buildQuickActions(context, isDark),
-                  SizedBox(height: AppSpacing.sectionGap),
-                  _buildRecentActivity(context, isDark, ref),
-                  SizedBox(height: 100.h),
-                ],
+          child: Column(
+            children: [
+              _buildHeader(context, isDark, ref),
+              Padding(
+                padding: EdgeInsets.all(AppSpacing.screenPadding),
+                child: StaggeredList(
+                  children: [
+                    _buildStatsGrid(context, isDark, ref),
+                    SizedBox(height: AppSpacing.sectionGap),
+                    _buildTodaysWorkout(context, isDark),
+                    SizedBox(height: AppSpacing.sectionGap),
+                    _buildQuickActions(context, isDark),
+                    SizedBox(height: AppSpacing.sectionGap),
+                    _buildRecentActivity(context, isDark, ref),
+                    SizedBox(height: AppSpacing.xxl),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
       ),
     );
   }
@@ -61,128 +65,133 @@ class HomeScreen extends ConsumerWidget {
     final initials = userProfile?.initials ?? '--';
     final streak = stats?['streak'] as int? ?? 0;
 
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        gradient: AppGradients.primary(isDark: isDark),
-        borderRadius: AppRadius.headerBottom,
-        boxShadow: AppShadows.lg,
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(AppSpacing.screenPadding, 12.h, AppSpacing.screenPadding, AppSpacing.xxl),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return GradientHeader(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Container(
+              Container(
+                width: 40.r,
+                height: 40.r,
+                decoration: BoxDecoration(
+                  color: context.primaryColor.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(initials, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: context.foreground)),
+                ),
+              ),
+              const Spacer(),
+              Text('GymRatz', style: AppTextStyles.h2.copyWith(color: context.foreground, fontWeight: FontWeight.w700)),
+              const Spacer(),
+              Semantics(
+                button: true,
+                label: 'Go to profile',
+                child: GestureDetector(
+                  onTap: () => context.go('/profile'),
+                  child: Container(
                     width: 40.r,
                     height: 40.r,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: context.primaryColor.withOpacity(0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: Center(
-                      child: Text(initials, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.white)),
-                    ),
+                    child: Icon(AppIcons.user, size: 18.r, color: context.foreground),
                   ),
-                  const Spacer(),
-                  Text('GymRatz', style: AppTextStyles.h2.copyWith(color: Colors.white, fontWeight: FontWeight.w700)),
-                  const Spacer(),
-                  Semantics(
-                    button: true,
-                    label: 'Go to profile',
-                    child: GestureDetector(
-                      onTap: () => context.go('/profile'),
-                      child: Container(
-                        width: 40.r,
-                        height: 40.r,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(AppIcons.user, size: 18.r, color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: AppSpacing.xxl),
-              Text(
-                'Hi, $firstName \u{1F44B}',
-                style: AppTextStyles.h2.copyWith(color: Colors.white),
-              ),
-              SizedBox(height: 4.h),
-              Row(
-                children: [
-                  Icon(AppIcons.flame, size: 16.r, color: Colors.white.withValues(alpha: 0.9)),
-                  SizedBox(width: 6.w),
-                  Text(
-                    '$streak day streak',
-                    style: AppTextStyles.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.9)),
-                  ),
-                ],
-              ),
-              SizedBox(height: AppSpacing.xxl),
-              SizedBox(
-                height: 80.h,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: weekDays.length,
-                  separatorBuilder: (_, __) => SizedBox(width: 8.w),
-                  itemBuilder: (context, index) {
-                    final isToday = index == today;
-                    return Container(
-                      width: 56.w,
-                      decoration: BoxDecoration(
-                        color: isToday ? Colors.white : Colors.white.withValues(alpha: 0.2),
-                        borderRadius: AppRadius.borderLg,
-                        boxShadow: AppShadows.sm,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            weekDays[index],
-                            style: AppTextStyles.caption.copyWith(
-                              color: isToday
-                                  ? (isDark ? AppColors.darkPrimary : AppColors.lightPrimary)
-                                  : Colors.white,
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            '${index + 10}',
-                            style: TextStyle(
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.w600,
-                              color: isToday
-                                  ? (isDark ? AppColors.darkPrimary : AppColors.lightPrimary)
-                                  : Colors.white,
-                            ),
-                          ),
-                          if (index < today) ...[
-                            SizedBox(height: 4.h),
-                            Container(
-                              width: 6.r,
-                              height: 6.r,
-                              decoration: BoxDecoration(
-                                color: isDark ? AppColors.darkPrimary : AppColors.lightPrimary,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    );
-                  },
                 ),
               ),
             ],
           ),
-        ),
+          SizedBox(height: AppSpacing.xxl),
+          Text(
+            'Hi, $firstName \u{1F44B}',
+            style: AppTextStyles.h2.copyWith(color: context.foreground),
+          ),
+          SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: context.coralColor.withOpacity(0.12),
+                  borderRadius: AppRadius.borderLg,
+                  border: Border.all(color: context.coralColor.withOpacity(0.2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(AppIcons.flame, size: 16.r, color: context.coralColor),
+                    SizedBox(width: AppSpacing.sm),
+                    Text(
+                      '$streak day streak',
+                      style: AppTextStyles.bodySmall.copyWith(color: context.coralColor, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppSpacing.xxl),
+          SizedBox(
+            height: 80.h,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: weekDays.length,
+              separatorBuilder: (_, __) => SizedBox(width: AppSpacing.md),
+              itemBuilder: (context, index) {
+                final isToday = index == today;
+                return Container(
+                  width: 56.w,
+                  decoration: BoxDecoration(
+                    color: isToday
+                        ? context.primaryColor.withOpacity(0.15)
+                        : context.primaryColor.withOpacity(0.06),
+                    borderRadius: AppRadius.borderLg,
+                    border: isToday
+                        ? Border.all(color: context.primaryColor.withOpacity(0.3))
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        weekDays[index],
+                        style: AppTextStyles.caption.copyWith(
+                          color: isToday
+                              ? context.primaryColor
+                              : context.mutedForeground,
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.sm),
+                      Text(
+                        '${index + 10}',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                          color: isToday
+                              ? context.primaryColor
+                              : context.foreground,
+                        ),
+                      ),
+                      if (index < today) ...[
+                        SizedBox(height: AppSpacing.sm),
+                        Container(
+                          width: 6.r,
+                          height: 6.r,
+                          decoration: BoxDecoration(
+                            color: context.primaryColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -240,19 +249,12 @@ class HomeScreen extends ConsumerWidget {
           onAction: () => context.go('/today'),
         ),
         SizedBox(height: AppSpacing.lg),
-        Semantics(
-          button: true,
-          label: 'Start Push Day workout',
-          child: GestureDetector(
+        ScaleTap(
           onTap: () => context.push('/workout/1'),
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(20.r),
-            decoration: BoxDecoration(
-              gradient: AppGradients.primary(isDark: isDark),
-              borderRadius: AppRadius.borderXl,
-              boxShadow: AppShadows.lg,
-            ),
+          child: CustomCard(
+            variant: CardVariant.workout,
+            gradient: AppGradients.primary(isDark: isDark),
+            boxShadow: AppShadows.lg,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -264,39 +266,35 @@ class HomeScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Push Day', style: AppTextStyles.h3.copyWith(color: Colors.white)),
-                          SizedBox(height: 4.h),
+                          SizedBox(height: AppSpacing.sm),
                           Text('Upper Body Strength', style: AppTextStyles.bodySmall.copyWith(color: Colors.white70)),
                         ],
                       ),
                     ),
-                    Container(
+                    SizedBox(
                       width: 48.r,
                       height: 48.r,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(AppIcons.play, size: 24.r, color: Colors.white),
+                      child: Center(child: Icon(AppIcons.play, size: 24.r, color: Colors.white)),
                     ),
                   ],
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: AppSpacing.xl),
                 Row(
                   children: [
                     Text('6 Exercises', style: AppTextStyles.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.9))),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w),
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
                       child: Text('\u2022', style: TextStyle(color: Colors.white.withValues(alpha: 0.9))),
                     ),
                     Text('45-60 min', style: AppTextStyles.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.9))),
                   ],
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: AppSpacing.xl),
                 Row(
                   children: [
                     Expanded(
                       child: Container(
-                        padding: EdgeInsets.all(8.r),
+                        padding: EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: AppRadius.borderLg,
@@ -309,10 +307,10 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    SizedBox(width: 8.w),
+                    SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Container(
-                        padding: EdgeInsets.all(8.r),
+                        padding: EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: AppRadius.borderLg,
@@ -331,7 +329,6 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
         ),
-        ),
       ],
     );
   }
@@ -345,31 +342,37 @@ class HomeScreen extends ConsumerWidget {
         Row(
           children: [
             Expanded(
-              child: CustomCard(
+              child: ScaleTap(
                 onTap: () => context.push('/progress'),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(AppIcons.trendingUp, size: 24.r, color: context.primaryColor),
-                    SizedBox(height: 8.h),
-                    Text('Progress', style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
-                    Text('View stats', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
-                  ],
+                child: CustomCard(
+                  variant: CardVariant.standard,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(AppIcons.trendingUp, size: 24.r, color: context.primaryColor),
+                      SizedBox(height: AppSpacing.md),
+                      Text('Progress', style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
+                      Text('View stats', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                    ],
+                  ),
                 ),
               ),
             ),
-            SizedBox(width: 12.w),
+            SizedBox(width: AppSpacing.lg),
             Expanded(
-              child: CustomCard(
+              child: ScaleTap(
                 onTap: () => context.go('/programs'),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(AppIcons.award, size: 24.r, color: context.secondaryColor),
-                    SizedBox(height: 8.h),
-                    Text('Programs', style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
-                    Text('Browse all', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
-                  ],
+                child: CustomCard(
+                  variant: CardVariant.standard,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(AppIcons.award, size: 24.r, color: context.secondaryColor),
+                      SizedBox(height: AppSpacing.md),
+                      Text('Programs', style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
+                      Text('Browse all', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -389,12 +392,10 @@ class HomeScreen extends ConsumerWidget {
         recentWorkouts.when(
           data: (workouts) {
             if (workouts.isEmpty) {
-              return Padding(
-                padding: EdgeInsets.symmetric(vertical: 24.h),
-                child: Text(
-                  'No recent workouts yet',
-                  style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
-                ),
+              return EmptyStateWidget(
+                icon: AppIcons.dumbbell,
+                title: 'No recent activity',
+                subtitle: 'Your completed workouts will appear here',
               );
             }
             return Column(
@@ -412,21 +413,18 @@ class HomeScreen extends ConsumerWidget {
                     : 'Workout';
 
                 return Padding(
-                  padding: EdgeInsets.only(bottom: 8.h),
+                  padding: EdgeInsets.only(bottom: AppSpacing.md),
                   child: CustomCard(
-                    padding: EdgeInsets.all(12.r),
+                    variant: CardVariant.standard,
+                    padding: EdgeInsets.all(AppSpacing.lg),
                     child: Row(
                       children: [
-                        Container(
+                        SizedBox(
                           width: 40.r,
                           height: 40.r,
-                          decoration: BoxDecoration(
-                            color: context.mutedColor,
-                            borderRadius: AppRadius.borderLg,
-                          ),
-                          child: Icon(AppIcons.flame, size: 20.r, color: context.primaryColor),
+                          child: Center(child: Icon(AppIcons.flame, size: 20.r, color: context.primaryColor)),
                         ),
-                        SizedBox(width: 12.w),
+                        SizedBox(width: AppSpacing.lg),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -445,11 +443,11 @@ class HomeScreen extends ConsumerWidget {
             );
           },
           loading: () => Padding(
-            padding: EdgeInsets.symmetric(vertical: 24.h),
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.sectionGap),
             child: const Center(child: CircularProgressIndicator()),
           ),
           error: (error, _) => Padding(
-            padding: EdgeInsets.symmetric(vertical: 24.h),
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.sectionGap),
             child: Text(
               'Could not load recent activity',
               style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),

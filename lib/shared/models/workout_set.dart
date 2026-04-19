@@ -6,6 +6,8 @@ class WorkoutSet {
   final int rir;
   final bool completed;
   final bool isWarmup;
+  final bool isTopSet;
+  final int restSeconds;
   final EquipmentType equipmentType;
 
   const WorkoutSet({
@@ -14,6 +16,8 @@ class WorkoutSet {
     this.rir = 0,
     this.completed = false,
     this.isWarmup = false,
+    this.isTopSet = false,
+    this.restSeconds = 0,
     this.equipmentType = EquipmentType.barbell,
   });
 
@@ -23,6 +27,8 @@ class WorkoutSet {
         'rir': rir,
         'completed': completed,
         'isWarmup': isWarmup,
+        'isTopSet': isTopSet,
+        'restSeconds': restSeconds,
         'equipmentType': equipmentType.name,
       };
 
@@ -32,6 +38,8 @@ class WorkoutSet {
         rir: json['rir'] as int? ?? 0,
         completed: json['completed'] as bool? ?? false,
         isWarmup: json['isWarmup'] as bool? ?? false,
+        isTopSet: json['isTopSet'] as bool? ?? false,
+        restSeconds: json['restSeconds'] as int? ?? 0,
         equipmentType: EquipmentType.values.firstWhere(
           (e) => e.name == json['equipmentType'],
           orElse: () => EquipmentType.barbell,
@@ -44,6 +52,8 @@ class WorkoutSet {
     int? rir,
     bool? completed,
     bool? isWarmup,
+    bool? isTopSet,
+    int? restSeconds,
     EquipmentType? equipmentType,
   }) =>
       WorkoutSet(
@@ -52,6 +62,8 @@ class WorkoutSet {
         rir: rir ?? this.rir,
         completed: completed ?? this.completed,
         isWarmup: isWarmup ?? this.isWarmup,
+        isTopSet: isTopSet ?? this.isTopSet,
+        restSeconds: restSeconds ?? this.restSeconds,
         equipmentType: equipmentType ?? this.equipmentType,
       );
 }

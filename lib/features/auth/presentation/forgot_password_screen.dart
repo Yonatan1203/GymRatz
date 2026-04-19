@@ -65,7 +65,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         elevation: 0,
       ),
       body: SafeArea(
-        child: Padding(
+          child: Padding(
           padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

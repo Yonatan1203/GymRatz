@@ -31,8 +31,6 @@ class MenuItemWidget extends StatelessWidget {
     final mutedFg = isDark
         ? AppColors.darkMutedForeground
         : AppColors.lightMutedForeground;
-    final muted = isDark ? AppColors.darkMuted : AppColors.lightMuted;
-
     return Semantics(
       label: label,
       child: InkWell(
@@ -41,14 +39,10 @@ class MenuItemWidget extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: 14.h),
         child: Row(
           children: [
-            Container(
+            SizedBox(
               width: 40.r,
               height: 40.r,
-              decoration: BoxDecoration(
-                color: muted,
-                borderRadius: AppRadius.borderLg,
-              ),
-              child: Icon(icon, size: 20.r, color: iconColor ?? mutedFg),
+              child: Center(child: Icon(icon, size: 20.r, color: iconColor ?? mutedFg)),
             ),
             SizedBox(width: 12.w),
             Expanded(

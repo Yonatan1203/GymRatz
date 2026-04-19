@@ -3,143 +3,116 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../../theme/app_icons.dart';
 
-import '../../../theme/app_gradients.dart';
-import '../../../theme/app_radius.dart';
-import '../../../theme/app_shadows.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
 import '../../../shared/widgets/custom_card.dart';
+import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/menu_item_widget.dart';
+import '../../../shared/widgets/scale_tap.dart';
 import '../../../shared/widgets/section_header.dart';
+import '../../../shared/widgets/staggered_list.dart';
 import '../../../shared/widgets/stats_grid.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
 import '../../../shared/data/sample_data.dart';
+import 'package:intl/intl.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = context.isDark;
-
     return Scaffold(
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(context, isDark, ref),
-            Padding(
-              padding: EdgeInsets.all(AppSpacing.screenPadding),
-              child: Column(
-                children: [
-                  _buildInviteCard(context, isDark),
-                  SizedBox(height: AppSpacing.sectionGap),
-                  _buildPersonalRecords(context, ref),
-                  SizedBox(height: AppSpacing.sectionGap),
-                  _buildMenuSection(context, 'WORKOUTS & TRAINING', [
-                    MenuItemWidget(icon: AppIcons.dumbbell, label: 'Exercises', onTap: () => context.push('/exercises')),
-                    MenuItemWidget(icon: AppIcons.heart, label: 'Favorites', onTap: () => context.push('/favorites')),
-                    MenuItemWidget(icon: AppIcons.trendingUp, label: 'Progress', onTap: () => context.push('/progress')),
-                    MenuItemWidget(icon: AppIcons.trophy, label: 'Achievements', badge: '4', onTap: () => context.push('/achievements')),
-                    MenuItemWidget(icon: AppIcons.calendar, label: 'Calendar', onTap: () => context.go('/calendar')),
-                  ]),
-                  SizedBox(height: AppSpacing.sectionGap),
-                  _buildMenuSection(context, 'ACCOUNT', [
-                    MenuItemWidget(icon: AppIcons.settings, label: 'Settings', onTap: () => context.push('/settings')),
-                    MenuItemWidget(icon: AppIcons.helpCircle, label: 'Help & FAQ', onTap: () {}),
-                  ]),
-                  SizedBox(height: 100.h),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, bool isDark, WidgetRef ref) {
-    final user = ref.watch(userProfileProvider).valueOrNull ?? SampleData.user;
-    final stats = ref.watch(workoutStatsProvider).valueOrNull ?? {};
-    final totalWorkouts = stats['totalWorkouts'] ?? 24;
-    final streak = stats['streak'] ?? 12;
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: context.cardColor,
-        borderRadius: AppRadius.headerBottom,
-        boxShadow: AppShadows.md,
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(AppSpacing.screenPadding, 12.h, AppSpacing.screenPadding, AppSpacing.xxl),
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Profile', style: AppTextStyles.h1.copyWith(color: context.foreground)),
-                  GestureDetector(
-                    onTap: () => context.push('/profile/edit'),
-                    child: Icon(AppIcons.edit, size: 22.r, color: context.primaryColor),
-                  ),
-                ],
-              ),
-              SizedBox(height: 24.h),
-              Container(
-                width: 96.r,
-                height: 96.r,
-                decoration: BoxDecoration(
-                  gradient: AppGradients.primary(isDark: isDark),
-                  shape: BoxShape.circle,
-                  boxShadow: AppShadows.lg,
+              _buildHeader(context, ref),
+              Padding(
+                padding: EdgeInsets.all(AppSpacing.screenPadding),
+                child: StaggeredList(
+                  children: [
+                    _buildPersonalRecords(context, ref),
+                    SizedBox(height: AppSpacing.sectionGap),
+                    _buildMenuSection(context, 'WORKOUTS & TRAINING', [
+                      MenuItemWidget(icon: AppIcons.dumbbell, label: 'Exercises', onTap: () => context.push('/exercises')),
+                      MenuItemWidget(icon: AppIcons.heart, label: 'Favorites', onTap: () => context.push('/favorites')),
+                      MenuItemWidget(icon: AppIcons.trendingUp, label: 'Progress', onTap: () => context.push('/progress')),
+                      MenuItemWidget(
+                        icon: AppIcons.trophy,
+                        label: 'Achievements',
+                        badge: '${(ref.watch(achievementsProvider).valueOrNull ?? []).length}',
+                        onTap: () => context.push('/achievements'),
+                      ),
+                      MenuItemWidget(icon: AppIcons.calendar, label: 'Calendar', onTap: () => context.go('/calendar')),
+                    ]),
+                    SizedBox(height: AppSpacing.sectionGap),
+                    _buildSubscriptionItem(context, ref),
+                    SizedBox(height: AppSpacing.sectionGap),
+                    _buildMenuSection(context, 'ACCOUNT', [
+                      MenuItemWidget(icon: AppIcons.settings, label: 'Settings', onTap: () => context.push('/settings')),
+                    ]),
+                    SizedBox(height: AppSpacing.sectionGap),
+                    _buildSignOut(context, ref),
+                    SizedBox(height: AppSpacing.xxl),
+                    Center(
+                      child: Text('GymRatz v1.0.0', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                    ),
+                    SizedBox(height: AppSpacing.xxl),
+                  ],
                 ),
-                child: Center(
-                  child: Text(user.initials, style: TextStyle(fontSize: 32.sp, fontWeight: FontWeight.w700, color: Colors.white)),
-                ),
               ),
-              SizedBox(height: 12.h),
-              Text(user.name, style: AppTextStyles.h2.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
-              SizedBox(height: 4.h),
-              Text('Fitness Enthusiast', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
-              SizedBox(height: 20.h),
-              StatsGrid(items: [
-                StatsGridItem(icon: AppIcons.flame, iconColor: context.primaryColor, value: '$totalWorkouts', label: 'Workouts'),
-                StatsGridItem(icon: AppIcons.flame, iconColor: Colors.orange, value: '$streak', label: 'Streak'),
-                StatsGridItem(icon: AppIcons.award, iconColor: context.secondaryColor, value: '4', label: 'Badges'),
-              ]),
             ],
           ),
-        ),
       ),
     );
   }
 
-  Widget _buildInviteCard(BuildContext context, bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(20.r),
-      decoration: BoxDecoration(
-        gradient: AppGradients.primary(isDark: isDark),
-        borderRadius: AppRadius.borderXl,
-        boxShadow: AppShadows.lg,
-      ),
-      child: Row(
+  Widget _buildHeader(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(userProfileProvider).valueOrNull ?? SampleData.user;
+    final stats = ref.watch(workoutStatsProvider).valueOrNull ?? {};
+    final achievements = ref.watch(achievementsProvider).valueOrNull ?? [];
+    final totalWorkouts = stats['totalWorkouts'] ?? 0;
+    final streak = stats['streak'] ?? 0;
+    final badgeCount = achievements.length;
+
+    final subtitle = user.createdAt != null
+        ? 'Member since ${DateFormat.yMMMM().format(user.createdAt!)}'
+        : user.experienceLevel;
+
+    return GradientHeader(
+      actions: [
+        GestureDetector(
+          onTap: () => context.push('/profile/edit'),
+          child: Icon(AppIcons.edit, size: 22.r, color: context.foreground),
+        ),
+      ],
+      child: Column(
         children: [
-          Icon(AppIcons.users, size: 24.r, color: Colors.white),
-          SizedBox(width: 16.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Invite Your Friends', style: AppTextStyles.h4.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
-                Text('Earn rewards together', style: AppTextStyles.caption.copyWith(color: Colors.white70)),
-              ],
+          Container(
+            width: 96.r,
+            height: 96.r,
+            decoration: BoxDecoration(
+              color: context.primaryColor.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(user.initials, style: TextStyle(fontSize: 32.sp, fontWeight: FontWeight.w700, color: context.foreground)),
             ),
           ),
-          Icon(AppIcons.chevronRight, size: 20.r, color: Colors.white70),
+          SizedBox(height: AppSpacing.lg),
+          Text(user.name, style: AppTextStyles.h2.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
+          SizedBox(height: AppSpacing.sm),
+          Text(subtitle, style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+          SizedBox(height: AppSpacing.xl),
+          StatsGrid(
+            useTransparentBg: true,
+            items: [
+              StatsGridItem(icon: AppIcons.flame, iconColor: context.primaryColor, value: '$totalWorkouts', label: 'Workouts'),
+              StatsGridItem(icon: AppIcons.flame, iconColor: context.coralColor, value: '$streak', label: 'Streak'),
+              StatsGridItem(icon: AppIcons.award, iconColor: context.primaryColor, value: '$badgeCount', label: 'Badges'),
+            ],
+          ),
         ],
       ),
     );
@@ -163,44 +136,93 @@ class ProfileScreen extends ConsumerWidget {
 
     return Column(
       children: [
-        SectionHeader(title: 'PERSONAL RECORDS', actionText: 'View All', onAction: () {}),
+        SectionHeader(title: 'PERSONAL RECORDS', actionText: 'View All', onAction: () => context.push('/progress')),
         SizedBox(height: AppSpacing.lg),
         ...prList.map((pr) => Padding(
-          padding: EdgeInsets.only(bottom: 8.h),
-          child: CustomCard(
-            padding: EdgeInsets.all(12.r),
-            child: Row(
-              children: [
-                Container(
-                  width: 40.r,
-                  height: 40.r,
-                  decoration: BoxDecoration(
-                    color: context.primaryColor.withValues(alpha: 0.2),
-                    borderRadius: AppRadius.borderLg,
+          padding: EdgeInsets.only(bottom: AppSpacing.md),
+          child: ScaleTap(
+            onTap: () {},
+            child: CustomCard(
+              variant: CardVariant.standard,
+              padding: EdgeInsets.all(AppSpacing.lg),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 40.r,
+                    height: 40.r,
+                    child: Center(child: Icon(AppIcons.trophy, size: 20.r, color: context.primaryColor)),
                   ),
-                  child: Icon(AppIcons.trophy, size: 20.r, color: context.primaryColor),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('${pr['exercise']}', style: AppTextStyles.bodySmall.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
-                      Text('${pr['date']}', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
-                    ],
+                  SizedBox(width: AppSpacing.lg),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('${pr['exercise']}', style: AppTextStyles.bodySmall.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
+                        Text('${pr['date']}', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                      ],
+                    ),
                   ),
-                ),
-                Text(
-                  '${pr['weight']} ${pr['unit']}',
-                  style: AppTextStyles.h4.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600),
-                ),
-                SizedBox(width: 8.w),
-                Icon(AppIcons.share2, size: 16.r, color: context.mutedForeground),
-              ],
+                  Text(
+                    '${pr['weight']} ${pr['unit']}',
+                    style: AppTextStyles.h4.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600),
+                  ),
+                  SizedBox(width: AppSpacing.md),
+                  Icon(AppIcons.share2, size: 16.r, color: context.mutedForeground),
+                ],
+              ),
             ),
           ),
         )),
       ],
+    );
+  }
+
+  Widget _buildSubscriptionItem(BuildContext context, WidgetRef ref) {
+    final isPro = ref.watch(isProProvider).valueOrNull ?? false;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('SUBSCRIPTION', style: AppTextStyles.caption.copyWith(color: context.mutedForeground, fontWeight: FontWeight.w600, letterSpacing: 1)),
+        SizedBox(height: AppSpacing.md),
+        ScaleTap(
+          onTap: isPro ? null : () => context.push('/paywall'),
+          child: CustomCard(
+            variant: isPro ? CardVariant.standard : CardVariant.actionCta,
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+            child: MenuItemWidget(
+              icon: AppIcons.crown,
+              label: isPro ? 'GymRatz Pro' : 'Upgrade to Pro',
+              iconColor: isPro ? context.primaryColor : null,
+              onTap: isPro ? null : () => context.push('/paywall'),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSignOut(BuildContext context, WidgetRef ref) {
+    return ScaleTap(
+      onTap: () async {
+        final authService = ref.read(authServiceProvider);
+        await authService.signOut();
+        if (context.mounted) context.go('/onboarding');
+      },
+      child: CustomCard(
+        variant: CardVariant.standard,
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        child: MenuItemWidget(
+          icon: AppIcons.logOut,
+          label: 'Sign Out',
+          iconColor: context.destructiveColor,
+          onTap: () async {
+            final authService = ref.read(authServiceProvider);
+            await authService.signOut();
+            if (context.mounted) context.go('/onboarding');
+          },
+        ),
+      ),
     );
   }
 
@@ -209,10 +231,14 @@ class ProfileScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: AppTextStyles.caption.copyWith(color: context.mutedForeground, fontWeight: FontWeight.w600, letterSpacing: 1)),
-        SizedBox(height: 8.h),
-        CustomCard(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: Column(children: items),
+        SizedBox(height: AppSpacing.md),
+        ScaleTap(
+          onTap: () {},
+          child: CustomCard(
+            variant: CardVariant.standard,
+            padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+            child: Column(children: items),
+          ),
         ),
       ],
     );

@@ -1,1 +1,33 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"gymratz-b1a32","appId":"1:901059241616:android:85c4d3b55f3cfeba539a15","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"gymratz-b1a32","configurations":{"android":"1:901059241616:android:85c4d3b55f3cfeba539a15","ios":"1:901059241616:ios:3a073d3dfbd4cc64539a15"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "runtime": "nodejs20"
+    }
+  ],
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "gymratz-b1a32",
+          "appId": "1:901059241616:android:85c4d3b55f3cfeba539a15",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "gymratz-b1a32",
+          "configurations": {
+            "android": "1:901059241616:android:85c4d3b55f3cfeba539a15",
+            "ios": "1:901059241616:ios:3a073d3dfbd4cc64539a15"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,67 @@
+<h2>Three Approaches to the UI/UX Polish</h2>
+<p class="subtitle">Same destination, different paths. Click the one you prefer.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Foundation-Up (Recommended)</h3>
+      <p><strong>Approach:</strong> Start from the design system layer and work outward to screens.</p>
+      <div style="margin: 12px 0; font-size: 14px;">
+        <p style="margin: 4px 0;"><strong>Step 1:</strong> Harden the design system — add coral accent, define card variants, create animation primitives (shared fade/slide/stagger widgets), update header component from gradient to subtle tint</p>
+        <p style="margin: 4px 0;"><strong>Step 2:</strong> Define a unified screen template — every screen follows the same header → content → action rhythm</p>
+        <p style="margin: 4px 0;"><strong>Step 3:</strong> Apply to all screens systematically, one feature area at a time</p>
+        <p style="margin: 4px 0;"><strong>Step 4:</strong> Overhaul onboarding (condense steps, add transitions, fix units)</p>
+        <p style="margin: 4px 0;"><strong>Step 5:</strong> Polish pass — loading states, empty states, micro-interactions</p>
+      </div>
+      <div class="pros-cons" style="font-size: 13px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Changes cascade naturally — fix once, applied everywhere</li><li>No screen gets polished with old patterns then re-polished</li><li>Consistent results guaranteed</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Takes longer before you see visible screen changes</li><li>Early work is infrastructure, not visual</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Screen-by-Screen</h3>
+      <p><strong>Approach:</strong> Polish each screen to perfection, extract patterns as you go.</p>
+      <div style="margin: 12px 0; font-size: 14px;">
+        <p style="margin: 4px 0;"><strong>Step 1:</strong> Perfect the Home screen first — it becomes the reference design</p>
+        <p style="margin: 4px 0;"><strong>Step 2:</strong> Extract reusable patterns from Home into shared components</p>
+        <p style="margin: 4px 0;"><strong>Step 3:</strong> Apply those patterns to each subsequent screen</p>
+        <p style="margin: 4px 0;"><strong>Step 4:</strong> Tackle onboarding as its own mini-project</p>
+        <p style="margin: 4px 0;"><strong>Step 5:</strong> Final consistency pass</p>
+      </div>
+      <div class="pros-cons" style="font-size: 13px;">
+        <div class="pros"><h4>Pros</h4><ul><li>See results immediately on the first screen</li><li>Patterns emerge organically from real usage</li><li>Easier to show progress</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Risk of inconsistency between early and late screens</li><li>May need to revisit early screens after patterns solidify</li><li>Harder for parallel work</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Hybrid — Quick Foundation + Progressive Polish</h3>
+      <p><strong>Approach:</strong> Minimal design system updates first, then screen-by-screen with the new tools.</p>
+      <div style="margin: 12px 0; font-size: 14px;">
+        <p style="margin: 4px 0;"><strong>Step 1:</strong> Quick design system update — add coral, animation utils, update header (1-2 tasks)</p>
+        <p style="margin: 4px 0;"><strong>Step 2:</strong> Polish Home screen as the "north star" reference</p>
+        <p style="margin: 4px 0;"><strong>Step 3:</strong> Align remaining screens to match Home's standard</p>
+        <p style="margin: 4px 0;"><strong>Step 4:</strong> Onboarding overhaul</p>
+        <p style="margin: 4px 0;"><strong>Step 5:</strong> Loading/empty state + final polish pass</p>
+      </div>
+      <div class="pros-cons" style="font-size: 13px;">
+        <div class="pros"><h4>Pros</h4><ul><li>Fast foundation gives you the new tools (coral, animations, header)</li><li>Home screen validates the direction quickly</li><li>Balances consistency with visible progress</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Foundation might need expanding mid-project</li><li>Slightly less systematic than full foundation-first</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top: 20px; padding: 14px; background: rgba(100, 160, 160, 0.08); border: 1px solid rgba(100, 160, 160, 0.15); border-radius: 10px; font-size: 13px;">
+  <strong>My recommendation: A (Foundation-Up)</strong> — Since your main pain point is "screens don't feel like one app", fixing the shared foundation first is the most direct path. The upfront investment pays off on every screen after.
+</div>

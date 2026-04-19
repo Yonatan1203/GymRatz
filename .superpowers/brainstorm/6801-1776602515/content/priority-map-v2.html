@@ -1,0 +1,67 @@
+<h2>GymRatz UI/UX Polish — Priority Map (Updated)</h2>
+<p class="subtitle">Design system cohesion added as Tier 1 foundation</p>
+
+<div class="section">
+  <h3>🔴 Tier 1 — High Impact (Most work needed)</h3>
+  <div style="display: grid; gap: 12px;">
+    <div style="background: rgba(220, 60, 60, 0.08); border: 1px solid rgba(220, 60, 60, 0.2); border-radius: 12px; padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>★ Design System Cohesion</strong>
+        <span style="background: rgba(220, 60, 60, 0.15); padding: 2px 10px; border-radius: 20px; font-size: 13px;">Foundation</span>
+      </div>
+      <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Currently: Each screen feels like it was built independently. Card styles, header treatments, content layouts, and interaction patterns vary from screen to screen. No shared visual rhythm.<br>
+      <strong>Plan:</strong> Define and enforce a unified screen template — consistent header → content → action flow, standardized card variants, shared section patterns, uniform interaction feedback. Every screen should feel like it belongs to the same family.</p>
+    </div>
+    <div style="background: rgba(220, 60, 60, 0.08); border: 1px solid rgba(220, 60, 60, 0.2); border-radius: 12px; padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>A — Transitions & Animations</strong>
+        <span style="background: rgba(220, 60, 60, 0.15); padding: 2px 10px; border-radius: 20px; font-size: 13px;">Critical</span>
+      </div>
+      <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Currently: No page transitions, no micro-interactions, static state changes. Only 2 animations exist (pulsing dot + toggle).<br>
+      <strong>Plan:</strong> Add page transitions, list item staggers, state change animations, button feedback, scroll-driven effects. Make the app feel alive.</p>
+    </div>
+    <div style="background: rgba(220, 60, 60, 0.08); border: 1px solid rgba(220, 60, 60, 0.2); border-radius: 12px; padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>D — Onboarding Flow</strong>
+        <span style="background: rgba(220, 60, 60, 0.15); padding: 2px 10px; border-radius: 20px; font-size: 13px;">Critical</span>
+      </div>
+      <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Currently: 14 screens with basic layout, no transition between steps, progress bar is functional but not delightful.<br>
+      <strong>Plan:</strong> Smooth slide transitions between steps, animated progress bar, staggered content entry, polished selection cards, cohesive visual story.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🟡 Tier 2 — Medium Impact</h3>
+  <div style="display: grid; gap: 12px;">
+    <div style="background: rgba(200, 170, 40, 0.08); border: 1px solid rgba(200, 170, 40, 0.2); border-radius: 12px; padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>B — Cards & Containers</strong>
+        <span style="background: rgba(200, 170, 40, 0.15); padding: 2px 10px; border-radius: 20px; font-size: 13px;">Medium</span>
+      </div>
+      <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Create card variants with distinct visual identities while keeping the same base. Workout cards feel different from stat cards feel different from program cards.</p>
+    </div>
+    <div style="background: rgba(200, 170, 40, 0.08); border: 1px solid rgba(200, 170, 40, 0.2); border-radius: 12px; padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>F — Spacing & Hierarchy</strong>
+        <span style="background: rgba(200, 170, 40, 0.15); padding: 2px 10px; border-radius: 20px; font-size: 13px;">Medium</span>
+      </div>
+      <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Audit every screen for consistent spacing rhythm, enforce section gaps, standardize header-to-content flow.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>🟢 Tier 3 — Polish & Refinement</h3>
+  <div style="display: grid; gap: 12px;">
+    <div style="background: rgba(60, 180, 120, 0.08); border: 1px solid rgba(60, 180, 120, 0.2); border-radius: 12px; padding: 16px;">
+      <strong>E — Empty/Loading States</strong> · <strong>G — Color Usage</strong> · <strong>C — Bottom Nav</strong>
+      <p style="margin: 8px 0 0; opacity: 0.8; font-size: 14px;">Skeleton loaders, animated empty states, friendlier errors, better status color differentiation, nav active indicator animation.</p>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 24px; padding: 16px; background: rgba(100, 160, 160, 0.08); border: 1px solid rgba(100, 160, 160, 0.2); border-radius: 12px;">
+  <strong>Execution order: Design System first → then Animations → then Onboarding → then Tier 2 → Tier 3</strong>
+  <p style="margin: 4px 0 0; opacity: 0.7; font-size: 14px;">Design System is the foundation — animations and onboarding build on top of it. Does this look right?</p>
+</div>

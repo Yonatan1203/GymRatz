@@ -7,18 +7,23 @@ import '../../theme/app_gradients.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_shadows.dart';
 import '../../theme/app_spacing.dart';
+import '../utils/extensions.dart';
 import '../utils/platform_adapter.dart';
+
+enum HeaderVariant { subtle, hero }
 
 class GradientHeader extends StatelessWidget {
   final Widget child;
   final bool showBackButton;
   final List<Widget>? actions;
+  final HeaderVariant variant;
 
   const GradientHeader({
     super.key,
     required this.child,
     this.showBackButton = false,
     this.actions,
+    this.variant = HeaderVariant.subtle,
   });
 
   @override
@@ -28,11 +33,25 @@ class GradientHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        gradient: AppGradients.primary(isDark: isDark),
-        borderRadius: AppRadius.headerBottom,
-        boxShadow: AppShadows.lg,
-      ),
+      decoration: variant == HeaderVariant.hero
+          ? BoxDecoration(
+              gradient: AppGradients.primary(isDark: isDark),
+              borderRadius: AppRadius.headerBottom,
+              boxShadow: AppShadows.lg,
+            )
+          : BoxDecoration(
+              color: isDark
+                  ? context.primaryColor.withOpacity(0.12)
+                  : context.primaryColor.withOpacity(0.08),
+              border: Border(
+                bottom: BorderSide(
+                  color: isDark
+                      ? context.primaryColor.withOpacity(0.15)
+                      : context.primaryColor.withOpacity(0.12),
+                  width: 1,
+                ),
+              ),
+            ),
       child: SafeArea(
         bottom: false,
         child: Padding(
@@ -59,17 +78,17 @@ class GradientHeader extends StatelessWidget {
                             PlatformAdapter.hapticLight();
                             context.pop();
                           },
-                          child: Container(
+                          child: SizedBox(
                             width: 40.r,
                             height: 40.r,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(10.r),
-                            ),
-                            child: Icon(
-                              AppIcons.arrowLeft,
-                              color: Colors.white,
-                              size: 20.r,
+                            child: Center(
+                              child: Icon(
+                                AppIcons.arrowLeft,
+                                color: variant == HeaderVariant.hero
+                                    ? Colors.white
+                                    : context.foreground,
+                                size: 20.r,
+                              ),
                             ),
                           ),
                         ),

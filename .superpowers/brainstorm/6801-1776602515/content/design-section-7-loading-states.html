@@ -1,0 +1,95 @@
+<h2>Design Section 7 — Loading, Empty & Error States</h2>
+<p class="subtitle">Every state should feel intentional, not like a placeholder</p>
+
+<div class="section">
+  <h3>Loading States — Skeleton Loaders Replace Spinners</h3>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">Current — Generic Spinner</div>
+      <div class="mockup-body" style="background: #0D0F11; padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+        <div style="width: 24px; height: 24px; border: 2px solid #2A5A5A; border-top-color: transparent; border-radius: 50%;"></div>
+        <div style="color: #B0B2B5; font-size: 12px;">Loading workouts...</div>
+        <div style="color: #B0B2B5; font-size: 11px; opacity: 0.5; margin-top: 20px;">Same spinner everywhere.<br>No hint of what's coming.<br>Feels slow even when it's fast.</div>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">Proposed — Skeleton Shimmer</div>
+      <div class="mockup-body" style="background: #0D0F11; padding: 20px;">
+        <!-- Skeleton card 1 -->
+        <div style="background: #1A1D1F; border: 1px solid #2A2D32; border-radius: 14px; padding: 14px; margin-bottom: 12px; position: relative; overflow: hidden;">
+          <div style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: #252830;"></div>
+          <div style="padding-left: 8px;">
+            <div style="background: linear-gradient(90deg, #252830 25%, #2A2D32 50%, #252830 75%); height: 14px; width: 65%; border-radius: 4px; margin-bottom: 8px;"></div>
+            <div style="background: linear-gradient(90deg, #252830 25%, #2A2D32 50%, #252830 75%); height: 10px; width: 40%; border-radius: 4px; margin-bottom: 10px;"></div>
+            <div style="display: flex; gap: 12px;">
+              <div style="background: linear-gradient(90deg, #252830 25%, #2A2D32 50%, #252830 75%); height: 10px; width: 60px; border-radius: 4px;"></div>
+              <div style="background: linear-gradient(90deg, #252830 25%, #2A2D32 50%, #252830 75%); height: 10px; width: 60px; border-radius: 4px;"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Skeleton card 2 -->
+        <div style="background: #1A1D1F; border: 1px solid #2A2D32; border-radius: 14px; padding: 14px; position: relative; overflow: hidden; opacity: 0.6;">
+          <div style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: #252830;"></div>
+          <div style="padding-left: 8px;">
+            <div style="background: linear-gradient(90deg, #252830 25%, #2A2D32 50%, #252830 75%); height: 14px; width: 55%; border-radius: 4px; margin-bottom: 8px;"></div>
+            <div style="background: linear-gradient(90deg, #252830 25%, #2A2D32 50%, #252830 75%); height: 10px; width: 35%; border-radius: 4px;"></div>
+          </div>
+        </div>
+        <div style="color: #B0B2B5; font-size: 11px; opacity: 0.5; margin-top: 14px; text-align: center;">Shimmer animation on skeleton bars.<br>Matches the card layout that will appear.<br>Feels instant.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 12px; font-size: 13px; opacity: 0.8;">
+    <strong>Rule:</strong> Skeleton loaders mirror the shape of the content they replace. Workout screen shows workout card skeletons. Programs screen shows program card skeletons. Stats show stat card skeletons. A subtle shimmer animation (left→right gradient sweep, 1.5s loop) keeps it alive.
+  </div>
+</div>
+
+<div class="section">
+  <h3>Empty States — Friendly, Actionable, Animated</h3>
+  <div class="split">
+    <div class="mockup">
+      <div class="mockup-header">Current — Basic Placeholder</div>
+      <div class="mockup-body" style="background: #0D0F11; padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(42, 90, 90, 0.15); display: flex; align-items: center; justify-content: center; font-size: 22px;">📋</div>
+        <div style="color: #E5E7E9; font-size: 14px; font-weight: 500;">No programs yet</div>
+        <div style="color: #B0B2B5; font-size: 12px;">Create your first program</div>
+        <div style="margin-top: 8px; background: #2A5A5A; padding: 8px 20px; border-radius: 8px; color: white; font-size: 12px;">Create Program</div>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">Proposed — Warmer & Animated</div>
+      <div class="mockup-body" style="background: #0D0F11; padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;">
+        <div style="width: 64px; height: 64px; border-radius: 16px; background: rgba(42, 90, 90, 0.1); border: 1px solid rgba(42, 90, 90, 0.15); display: flex; align-items: center; justify-content: center; font-size: 28px;">📋</div>
+        <div style="color: #E5E7E9; font-size: 15px; font-weight: 500; margin-top: 4px;">No programs yet</div>
+        <div style="color: #B0B2B5; font-size: 13px; max-width: 220px; line-height: 1.5;">Build a custom program to track your progress and stay consistent</div>
+        <div style="margin-top: 12px; background: rgba(239, 107, 74, 0.08); border: 1px solid rgba(239, 107, 74, 0.2); padding: 10px 24px; border-radius: 10px; color: #EF6B4A; font-size: 13px; font-weight: 500;">+ Create Program</div>
+        <div style="color: #B0B2B5; font-size: 10px; opacity: 0.5; margin-top: 14px;">Icon fades in (200ms) → title slides up (150ms) →<br>subtitle fades (100ms) → button slides up (100ms)</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 12px; font-size: 13px; opacity: 0.8;">
+    <strong>Improvements:</strong> Larger icon container (64px, rounded square). More descriptive copy that explains the value. CTA uses coral styling for action emphasis. Staggered entry animation. Consistent across all empty states.
+  </div>
+</div>
+
+<div class="section">
+  <h3>Error States — Helpful, Not Scary</h3>
+  <div class="mockup">
+    <div class="mockup-header">Proposed Error State</div>
+    <div class="mockup-body" style="background: #0D0F11; padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;">
+      <div style="width: 64px; height: 64px; border-radius: 16px; background: rgba(212, 24, 61, 0.08); border: 1px solid rgba(212, 24, 61, 0.15); display: flex; align-items: center; justify-content: center; font-size: 28px;">⚠️</div>
+      <div style="color: #E5E7E9; font-size: 15px; font-weight: 500;">Couldn't load workouts</div>
+      <div style="color: #B0B2B5; font-size: 13px; max-width: 220px; line-height: 1.5;">Check your connection and try again</div>
+      <div style="margin-top: 12px; background: rgba(42, 90, 90, 0.15); border: 1px solid rgba(42, 90, 90, 0.25); padding: 10px 24px; border-radius: 10px; color: #8FC4C4; font-size: 13px; font-weight: 500;">Try Again</div>
+    </div>
+  </div>
+  <div style="margin-top: 12px; font-size: 13px; opacity: 0.8;">
+    <strong>Rules:</strong> Destructive-tinted icon container. Specific error message (not generic "Something went wrong"). Actionable retry button in teal (not coral — errors shouldn't feel exciting). Same staggered animation as empty states.
+  </div>
+</div>
+
+<div style="margin-top: 20px; padding: 14px; background: rgba(100, 160, 160, 0.08); border: 1px solid rgba(100, 160, 160, 0.15); border-radius: 10px; font-size: 13px;">
+  <strong>Does this approach to loading/empty/error states look right?</strong> Respond in terminal.
+</div>

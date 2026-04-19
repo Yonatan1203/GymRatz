@@ -86,7 +86,7 @@ class FavoritesScreen extends ConsumerWidget {
       padding: EdgeInsets.all(32.r),
       child: Column(
         children: [
-          Icon(AppIcons.heart, size: 48.r, color: context.mutedForeground.withValues(alpha: 0.5)),
+          Icon(AppIcons.heart, size: 48.r, color: context.mutedForeground.withOpacity(0.6)),
           SizedBox(height: 12.h),
           Text(message, style: AppTextStyles.body.copyWith(color: context.mutedForeground)),
         ],

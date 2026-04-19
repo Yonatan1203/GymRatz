@@ -14,7 +14,7 @@ class OnboardingProgressBar extends StatelessWidget {
   const OnboardingProgressBar({
     super.key,
     required this.currentStep,
-    this.totalSteps = 14,
+    this.totalSteps = 9,
   });
 
   @override
@@ -37,19 +37,17 @@ class OnboardingProgressBar extends StatelessWidget {
               PlatformAdapter.hapticLight();
               context.pop();
             },
-            child: Container(
+            child: SizedBox(
               width: 40.r,
               height: 40.r,
-              decoration: BoxDecoration(
-                color: muted,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                AppIcons.arrowLeft,
-                size: 20.r,
-                color: isDark
-                    ? AppColors.darkForeground
-                    : AppColors.lightForeground,
+              child: Center(
+                child: Icon(
+                  AppIcons.arrowLeft,
+                  size: 20.r,
+                  color: isDark
+                      ? AppColors.darkForeground
+                      : AppColors.lightForeground,
+                ),
               ),
             ),
           ),
@@ -58,13 +56,18 @@ class OnboardingProgressBar extends StatelessWidget {
           Expanded(
             child: Row(
               children: List.generate(totalSteps, (index) {
+                final isCurrent = index == currentStep;
                 final isCompleted = index < currentStep;
+                final coral = isDark ? AppColors.darkCoral : AppColors.lightCoral;
+
                 return Expanded(
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOut,
                     height: 4.h,
                     margin: EdgeInsets.symmetric(horizontal: 1.5.w),
                     decoration: BoxDecoration(
-                      color: isCompleted ? primary : muted,
+                      color: isCompleted ? primary : isCurrent ? coral : muted,
                       borderRadius: AppRadius.borderFull,
                     ),
                   ),

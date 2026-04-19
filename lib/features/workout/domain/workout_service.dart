@@ -15,10 +15,9 @@ import 'workout_summary.dart';
 class WorkoutService {
   final WorkoutRepository _workoutRepo;
   final PrRepository _prRepo;
-  final ProgressionEngine _engine;
   static const _uuid = Uuid();
 
-  WorkoutService(this._workoutRepo, this._prRepo, this._engine);
+  WorkoutService(this._workoutRepo, this._prRepo);
 
   /// Create a new workout from a program day template.
   Workout startWorkout({
@@ -32,6 +31,7 @@ class WorkoutService {
         equipmentType: pe.equipmentType,
         repRange: '${pe.repMin}-${pe.repMax}',
         targetRir: pe.targetRir,
+        progressionMode: pe.progressionMode,
         sets: List.generate(
           pe.sets,
           (_) => WorkoutSet(
@@ -92,15 +92,15 @@ class WorkoutService {
 
       // Run PO engine
       if (completedSets.isNotEmpty) {
-        final suggestion = _engine.suggest(
+        final suggestion = ProgressionEngine.suggest(
           performedSets: exercise.sets,
           currentWeight: completedSets.last.weight,
-          currentSets: exercise.sets.length,
           repMin: repMin,
           repMax: repMax,
           targetRir: exercise.targetRir,
           equipment: exercise.equipmentType,
           unit: unit,
+          mode: exercise.progressionMode,
         );
         suggestions.add(suggestion);
       }

@@ -17,20 +17,7 @@ class OnboardingWelcomeScreen extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background image
-          Image.network(
-            'https://images.unsplash.com/photo-1741156229623-da94e6d7977d?w=1080',
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(
-              color: Colors.black,
-            ),
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return Container(color: Colors.black);
-            },
-          ),
-
-          // Gradient overlay
+          // Background gradient
           Container(
             decoration: const BoxDecoration(
               gradient: AppGradients.welcomeOverlay,
@@ -117,7 +104,7 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: () => context.go('/onboarding/goal'),
+                        onTap: () => context.go('/onboarding/showcase'),
                         borderRadius: AppRadius.borderXxl,
                         child: Container(
                           decoration: BoxDecoration(

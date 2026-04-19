@@ -1,0 +1,106 @@
+<h2>Design Section 3 — Animation System</h2>
+<p class="subtitle">Subtle, swift animations (150-250ms) that make the app feel alive</p>
+
+<div class="section">
+  <h3>Animation Primitives — Shared Widgets</h3>
+  <p style="font-size: 13px; opacity: 0.7;">These reusable animation widgets get built once and used everywhere. All use Curves.easeOut.</p>
+
+  <div style="display: grid; gap: 10px;">
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>FadeIn</strong>
+        <span style="font-size: 12px; opacity: 0.5;">200ms</span>
+      </div>
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Opacity 0→1. Used for: screen content appearing, cards loading in, empty states.</p>
+    </div>
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>SlideUp</strong>
+        <span style="font-size: 12px; opacity: 0.5;">200ms</span>
+      </div>
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Translate Y 16px→0 + fade. Used for: content sections appearing on screen load.</p>
+    </div>
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>StaggeredList</strong>
+        <span style="font-size: 12px; opacity: 0.5;">50ms delay between items</span>
+      </div>
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Each child slides up with a cascading delay. Used for: workout lists, program cards, menu items, stats grids.</p>
+    </div>
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>ScaleTap</strong>
+        <span style="font-size: 12px; opacity: 0.5;">150ms</span>
+      </div>
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Scale 1.0→0.97 on press, back to 1.0 on release. Used for: all tappable cards and buttons. Subtle press feedback.</p>
+    </div>
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>AnimatedProgress</strong>
+        <span style="font-size: 12px; opacity: 0.5;">250ms</span>
+      </div>
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Progress bar fills from 0→value with easing. Used for: program progress, onboarding progress bar, completion rings.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Page Transitions</h3>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <strong>Tab switching</strong>
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Cross-fade between tabs (200ms). No slide — tabs are siblings, not a stack.</p>
+    </div>
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <strong>Push navigation</strong>
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Shared axis slide-right (250ms). Standard iOS/Material feel. Back = reverse.</p>
+    </div>
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <strong>Modals & bottom sheets</strong>
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Slide up from bottom + backdrop fade (200ms). Standard pattern.</p>
+    </div>
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <strong>Onboarding steps</strong>
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Horizontal slide (next = left, back = right) with content fade. Progress bar animates between steps.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Micro-Interactions</h3>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+    <div style="background: rgba(239, 107, 74, 0.06); border: 1px solid rgba(239, 107, 74, 0.12); border-radius: 10px; padding: 14px;">
+      <strong>Set completion</strong>
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Checkmark animates in + row briefly highlights with coral tint. Haptic already exists.</p>
+    </div>
+    <div style="background: rgba(239, 107, 74, 0.06); border: 1px solid rgba(239, 107, 74, 0.12); border-radius: 10px; padding: 14px;">
+      <strong>Workout complete</strong>
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Stats count up from 0 (duration, volume, sets). Brief celebratory moment.</p>
+    </div>
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <strong>Bottom nav tap</strong>
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Icon scales 1.0→1.15→1.0 (150ms) on active. Subtle but noticeable.</p>
+    </div>
+    <div style="background: rgba(143, 196, 196, 0.06); border: 1px solid rgba(143, 196, 196, 0.12); border-radius: 10px; padding: 14px;">
+      <strong>Pull to refresh</strong>
+      <p style="font-size: 13px; margin: 4px 0 0; opacity: 0.8;">Custom refresh indicator with rotation animation instead of default spinner.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>What We're NOT Doing</h3>
+  <div style="background: rgba(200, 60, 60, 0.06); border: 1px solid rgba(200, 60, 60, 0.12); border-radius: 10px; padding: 14px; font-size: 13px;">
+    <ul style="margin: 0; padding-left: 18px;">
+      <li>No spring physics or bouncy overshoot — this isn't Duolingo</li>
+      <li>No parallax scrolling — adds complexity without value</li>
+      <li>No hero animations between screens — overkill for a fitness tracker</li>
+      <li>No animated backgrounds or particle effects</li>
+      <li>No animation on every single element — only where it serves UX</li>
+    </ul>
+  </div>
+</div>
+
+<div style="margin-top: 20px; padding: 14px; background: rgba(100, 160, 160, 0.08); border: 1px solid rgba(100, 160, 160, 0.15); border-radius: 10px; font-size: 13px;">
+  <strong>Does this animation approach feel right?</strong> Respond in terminal.
+</div>

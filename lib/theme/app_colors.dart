@@ -40,6 +40,12 @@ class AppColors {
   static const darkInput = Color(0xFF252830);
   static const darkRing = Color(0xFF2A5A5A);
 
+  // Warm accent — rose-red energy color
+  static const lightCoral = Color(0xFFE85D75);
+  static const darkCoral = Color(0xFFCF4E66);
+  static const lightCoralForeground = Colors.white;
+  static const darkCoralForeground = Colors.white;
+
   // ─── Chart Colors ───
   static const chart1Light = Color(0xFF8FC4C4);
   static const chart2Light = Color(0xFFA8B8C8);

@@ -64,7 +64,7 @@ class OnboardingShowcaseScreen extends StatelessWidget {
     return Scaffold(
       body: Column(
         children: [
-          const OnboardingProgressBar(currentStep: 12, totalSteps: 14),
+          const OnboardingProgressBar(currentStep: 1),
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
@@ -144,7 +144,7 @@ class OnboardingShowcaseScreen extends StatelessWidget {
           ),
           OnboardingBottomButton(
             text: 'Continue',
-            onPressed: () => context.go('/onboarding/discovery'),
+            onPressed: () => context.push('/onboarding/goal'),
           ),
         ],
       ),

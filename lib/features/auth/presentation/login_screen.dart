@@ -10,6 +10,8 @@ import '../../../shared/widgets/custom_input.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../app/providers/auth_providers.dart';
+import '../domain/auth_service.dart';
+import 'widgets/social_auth_buttons.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -37,15 +39,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _emailController.text.contains('.') &&
       _passwordController.text.length >= 6;
 
+  AuthService? get _authService {
+    try {
+      return ref.read(authServiceProvider);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _error = 'Firebase is not available. Please restart the app.');
+      }
+      return null;
+    }
+  }
+
   Future<void> _signIn() async {
     if (!_isValid) return;
+    final authService = _authService;
+    if (authService == null) return;
+
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
-      final authService = ref.read(authServiceProvider);
       await authService.signIn(
         email: _emailController.text.trim(),
         password: _passwordController.text,
@@ -58,11 +73,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    final authService = _authService;
+    if (authService == null) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      await authService.signInWithGoogle();
+      if (mounted) context.go('/home');
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    final authService = _authService;
+    if (authService == null) return;
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      await authService.signInWithApple();
+      if (mounted) context.go('/home');
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
+          child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,6 +203,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 variant: ButtonVariant.gradient,
                 isLoading: _isLoading,
                 onPressed: _isValid ? _signIn : null,
+              ),
+              SizedBox(height: 16.h),
+              SocialAuthButtons(
+                onGooglePressed: _signInWithGoogle,
+                onApplePressed: _signInWithApple,
+                isLoading: _isLoading,
               ),
               SizedBox(height: 24.h),
               Row(

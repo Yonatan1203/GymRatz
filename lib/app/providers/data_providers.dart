@@ -8,7 +8,7 @@ import '../../shared/models/program.dart';
 import '../../shared/models/user_profile.dart';
 import '../../shared/models/weight_entry.dart';
 import '../../shared/models/workout.dart';
-import '../../shared/data/sample_data.dart';
+import '../../features/exercises/data/exercise_repository.dart';
 import 'auth_providers.dart';
 import 'repository_providers.dart';
 import 'service_providers.dart';
@@ -71,8 +71,34 @@ final weightEntriesProvider = StreamProvider<List<WeightEntry>>((ref) {
 });
 
 // ─── Exercise Library ───
+final exerciseRepositoryProvider = Provider<ExerciseRepository>((ref) {
+  final firestore = ref.watch(firestoreProvider)!;
+  return ExerciseRepository(firestore);
+});
+
+final bundledExercisesProvider = FutureProvider<List<Exercise>>((ref) async {
+  final repo = ref.watch(exerciseRepositoryProvider);
+  return repo.loadBundledExercises();
+});
+
+final userExercisesProvider = StreamProvider<List<Exercise>>((ref) {
+  final uid = ref.watch(currentUidProvider);
+  if (uid == null) return Stream.value([]);
+  final repo = ref.watch(exerciseRepositoryProvider);
+  return repo.watchUserExercises(uid);
+});
+
+final allExercisesProvider = Provider<List<Exercise>>((ref) {
+  final bundled = ref.watch(bundledExercisesProvider).valueOrNull ?? [];
+  final userExercises = ref.watch(userExercisesProvider).valueOrNull ?? [];
+  final userNames = userExercises.map((e) => e.name.toLowerCase()).toSet();
+  final filtered =
+      bundled.where((e) => !userNames.contains(e.name.toLowerCase())).toList();
+  return [...filtered, ...userExercises];
+});
+
 final exerciseLibraryProvider = Provider<List<Exercise>>((ref) {
-  return SampleData.exercises;
+  return ref.watch(allExercisesProvider);
 });
 
 // ─── Favorite Exercise IDs ───
@@ -142,4 +168,12 @@ final weeklyVolumeProvider =
   }
 
   return results;
+});
+
+// ─── Exercise Filter List (derived from PRs) ───
+final exerciseFilterProvider = Provider<List<String>>((ref) {
+  final prs = ref.watch(personalRecordsProvider).valueOrNull;
+  if (prs == null || prs.isEmpty) return ['All'];
+  final names = prs.map((p) => p.exerciseName).toSet().toList()..sort();
+  return ['All', ...names];
 });

@@ -6,15 +6,10 @@ import '../features/auth/presentation/forgot_password_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/onboarding/presentation/onboarding_welcome_screen.dart';
 import '../features/onboarding/presentation/onboarding_goal_screen.dart';
-import '../features/onboarding/presentation/onboarding_experience_screen.dart';
 import '../features/onboarding/presentation/onboarding_style_screen.dart';
-import '../features/onboarding/presentation/onboarding_injury_screen.dart';
-import '../features/onboarding/presentation/onboarding_units_screen.dart';
 import '../features/onboarding/presentation/onboarding_height_screen.dart';
-import '../features/onboarding/presentation/onboarding_weight_screen.dart';
 import '../features/onboarding/presentation/onboarding_summary_screen.dart';
 import '../features/onboarding/presentation/onboarding_email_screen.dart';
-import '../features/onboarding/presentation/onboarding_notifications_screen.dart';
 import '../features/onboarding/presentation/onboarding_health_screen.dart';
 import '../features/onboarding/presentation/onboarding_showcase_screen.dart';
 import '../features/onboarding/presentation/onboarding_discovery_screen.dart';
@@ -37,23 +32,80 @@ import '../shared/utils/platform_adapter.dart';
 import '../shared/widgets/custom_scaffold.dart';
 import 'providers/auth_providers.dart';
 
+// ─── Transition Helpers ───
+
+CustomTransitionPage<void> fadeTransitionPage({
+  required Widget child,
+  required GoRouterState state,
+  Duration duration = const Duration(milliseconds: 200),
+}) {
+  return CustomTransitionPage(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: duration,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+        child: child,
+      );
+    },
+  );
+}
+
+CustomTransitionPage<void> slideTransitionPage({
+  required Widget child,
+  required GoRouterState state,
+  Duration duration = const Duration(milliseconds: 250),
+}) {
+  return CustomTransitionPage(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: duration,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final slide = Tween<Offset>(
+        begin: const Offset(1, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut));
+      return SlideTransition(position: slide, child: child);
+    },
+  );
+}
+
+CustomTransitionPage<void> horizontalSlideTransitionPage({
+  required Widget child,
+  required GoRouterState state,
+  Duration duration = const Duration(milliseconds: 250),
+}) {
+  return CustomTransitionPage(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: duration,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final slide = Tween<Offset>(
+        begin: const Offset(1, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut));
+      final fade = CurvedAnimation(parent: animation, curve: Curves.easeOut);
+      return SlideTransition(
+        position: slide,
+        child: FadeTransition(opacity: fade, child: child),
+      );
+    },
+  );
+}
+
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 /// Routes that don't require authentication.
 const _publicPaths = {
   '/onboarding',
-  '/onboarding/goal',
-  '/onboarding/experience',
-  '/onboarding/style',
-  '/onboarding/injury',
-  '/onboarding/units',
-  '/onboarding/height',
-  '/onboarding/weight',
-  '/onboarding/summary',
-  '/onboarding/email',
-  '/onboarding/notifications',
-  '/onboarding/health',
   '/onboarding/showcase',
+  '/onboarding/goal',
+  '/onboarding/style',
+  '/onboarding/height',
+  '/onboarding/health',
+  '/onboarding/email',
+  '/onboarding/summary',
   '/onboarding/discovery',
   '/login',
   '/forgot-password',
@@ -105,7 +157,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding',
         name: 'onboarding',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => horizontalSlideTransitionPage(
           state: state,
           child: const OnboardingWelcomeScreen(),
         ),
@@ -113,63 +165,31 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding/goal',
         name: 'onboarding-goal',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => horizontalSlideTransitionPage(
           state: state,
           child: const OnboardingGoalScreen(),
         ),
       ),
       GoRoute(
-        path: '/onboarding/experience',
-        name: 'onboarding-experience',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
-          state: state,
-          child: const OnboardingExperienceScreen(),
-        ),
-      ),
-      GoRoute(
         path: '/onboarding/style',
         name: 'onboarding-style',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => horizontalSlideTransitionPage(
           state: state,
           child: const OnboardingStyleScreen(),
         ),
       ),
       GoRoute(
-        path: '/onboarding/injury',
-        name: 'onboarding-injury',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
-          state: state,
-          child: const OnboardingInjuryScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/onboarding/units',
-        name: 'onboarding-units',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
-          state: state,
-          child: const OnboardingUnitsScreen(),
-        ),
-      ),
-      GoRoute(
         path: '/onboarding/height',
         name: 'onboarding-height',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => horizontalSlideTransitionPage(
           state: state,
           child: const OnboardingHeightScreen(),
         ),
       ),
       GoRoute(
-        path: '/onboarding/weight',
-        name: 'onboarding-weight',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
-          state: state,
-          child: const OnboardingWeightScreen(),
-        ),
-      ),
-      GoRoute(
         path: '/onboarding/summary',
         name: 'onboarding-summary',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => horizontalSlideTransitionPage(
           state: state,
           child: const OnboardingSummaryScreen(),
         ),
@@ -177,23 +197,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding/email',
         name: 'onboarding-email',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => horizontalSlideTransitionPage(
           state: state,
           child: const OnboardingEmailScreen(),
         ),
       ),
       GoRoute(
-        path: '/onboarding/notifications',
-        name: 'onboarding-notifications',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
-          state: state,
-          child: const OnboardingNotificationsScreen(),
-        ),
-      ),
-      GoRoute(
         path: '/onboarding/health',
         name: 'onboarding-health',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => horizontalSlideTransitionPage(
           state: state,
           child: const OnboardingHealthScreen(),
         ),
@@ -201,7 +213,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding/showcase',
         name: 'onboarding-showcase',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => horizontalSlideTransitionPage(
           state: state,
           child: const OnboardingShowcaseScreen(),
         ),
@@ -209,7 +221,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding/discovery',
         name: 'onboarding-discovery',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => horizontalSlideTransitionPage(
           state: state,
           child: const OnboardingDiscoveryScreen(),
         ),
@@ -226,7 +238,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/today',
                 name: 'today',
-                pageBuilder: (context, state) => PlatformAdapter.buildPage(
+                pageBuilder: (context, state) => fadeTransitionPage(
                   state: state,
                   child: const WorkoutScreen(),
                 ),
@@ -238,7 +250,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/calendar',
                 name: 'calendar',
-                pageBuilder: (context, state) => PlatformAdapter.buildPage(
+                pageBuilder: (context, state) => fadeTransitionPage(
                   state: state,
                   child: const CalendarScreen(),
                 ),
@@ -250,7 +262,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/home',
                 name: 'home',
-                pageBuilder: (context, state) => PlatformAdapter.buildPage(
+                pageBuilder: (context, state) => fadeTransitionPage(
                   state: state,
                   child: const HomeScreen(),
                 ),
@@ -262,7 +274,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/programs',
                 name: 'programs',
-                pageBuilder: (context, state) => PlatformAdapter.buildPage(
+                pageBuilder: (context, state) => fadeTransitionPage(
                   state: state,
                   child: const ProgramsScreen(),
                 ),
@@ -274,7 +286,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/profile',
                 name: 'profile',
-                pageBuilder: (context, state) => PlatformAdapter.buildPage(
+                pageBuilder: (context, state) => fadeTransitionPage(
                   state: state,
                   child: const ProfileScreen(),
                 ),
@@ -288,7 +300,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/workout/:dayId',
         name: 'workout-logging',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => slideTransitionPage(
           state: state,
           child: WorkoutLoggingScreen(
             dayId: state.pathParameters['dayId'] ?? '1',
@@ -298,7 +310,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/programs/detail/:id',
         name: 'program-detail',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => slideTransitionPage(
           state: state,
           child: ProgramDetailScreen(
             programId: state.pathParameters['id'] ?? '1',
@@ -308,7 +320,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/programs/create',
         name: 'create-program',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => slideTransitionPage(
           state: state,
           child: const CreateProgramScreen(),
         ),
@@ -316,7 +328,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/progress',
         name: 'progress',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => slideTransitionPage(
           state: state,
           child: const ProgressScreen(),
         ),
@@ -324,7 +336,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/edit',
         name: 'edit-profile',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => slideTransitionPage(
           state: state,
           child: const EditProfileScreen(),
         ),
@@ -332,7 +344,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/exercises',
         name: 'exercises',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => slideTransitionPage(
           state: state,
           child: const ExerciseLibraryScreen(),
         ),
@@ -340,7 +352,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         name: 'settings',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => slideTransitionPage(
           state: state,
           child: const SettingsScreen(),
         ),
@@ -348,7 +360,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/achievements',
         name: 'achievements',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => slideTransitionPage(
           state: state,
           child: const AchievementsScreen(),
         ),
@@ -356,7 +368,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/favorites',
         name: 'favorites',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => slideTransitionPage(
           state: state,
           child: const FavoritesScreen(),
         ),
@@ -364,7 +376,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/paywall',
         name: 'paywall',
-        pageBuilder: (context, state) => PlatformAdapter.buildPage(
+        pageBuilder: (context, state) => slideTransitionPage(
           state: state,
           child: const PaywallScreen(),
         ),

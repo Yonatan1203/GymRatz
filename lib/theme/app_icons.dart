@@ -59,6 +59,7 @@ class AppIcons {
   static const IconData heartPulse = LucideIcons.heartPulse;
 
   // ── UI / Misc ──────────────────────────────────────────────────────
+  static const IconData zap = LucideIcons.zap;
   static const IconData sparkles = LucideIcons.sparkles;
   static const IconData bell = LucideIcons.bell;
   static const IconData search = LucideIcons.search;
@@ -70,6 +71,7 @@ class AppIcons {
   static const IconData minimize2 = LucideIcons.minimize2;
 
   // ── Status ─────────────────────────────────────────────────────────
+  static const IconData alertCircle = LucideIcons.circleAlert;
   static const IconData checkCircle = LucideIcons.circleCheck;
   static const IconData minusCircle = LucideIcons.circleMinus;
   static const IconData plusCircle = LucideIcons.circlePlus;
@@ -83,6 +85,9 @@ class AppIcons {
   static const IconData eye = LucideIcons.eye;
   static const IconData eyeOff = LucideIcons.eyeOff;
   static const IconData shield = LucideIcons.shield;
+
+  // ── Documents ──────────────────────────────────────────────────────
+  static const IconData fileText = LucideIcons.fileText;
 
   // ── Media / Content ────────────────────────────────────────────────
   static const IconData headphones = LucideIcons.headphones;

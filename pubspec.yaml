@@ -19,18 +19,48 @@ dependencies:
   shared_preferences: ^2.5.3
   firebase_core: ^3.12.1
   firebase_auth: ^5.5.1
+  firebase_analytics: ^11.4.2
+  firebase_crashlytics: ^4.3.2
   cloud_firestore: ^5.6.5
   purchases_flutter: ^8.5.1
+  google_sign_in: ^6.2.2
   uuid: ^4.5.1
   intl: ^0.20.2
   connectivity_plus: ^6.1.4
+  sign_in_with_apple: ^6.1.4
+  crypto: ^3.0.6
+  flutter_local_notifications: ^18.0.1
+  permission_handler: ^11.3.1
+  timezone: ^0.9.4
+  url_launcher: ^6.3.1
+  purchases_ui_flutter: ^8.11.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.6
 
 flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/icon/
+    - assets/data/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#003A6B"
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
+
+flutter_native_splash:
+  color: "#003A6B"
+  image: "assets/icon/app_icon.png"
+  android: true
+  ios: true
+  android_12:
+    color: "#003A6B"
+    image: "assets/icon/app_icon.png"

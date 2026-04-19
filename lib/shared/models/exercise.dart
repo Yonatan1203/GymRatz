@@ -10,6 +10,9 @@ class Exercise {
   final EquipmentType equipmentType;
   final String difficulty;
   final bool isFavorite;
+  final List<String> muscleGroups;
+  final String? instructions;
+  final bool isDefault;
 
   const Exercise({
     required this.id,
@@ -21,6 +24,9 @@ class Exercise {
     this.equipmentType = EquipmentType.barbell,
     required this.difficulty,
     this.isFavorite = false,
+    this.muscleGroups = const [],
+    this.instructions,
+    this.isDefault = true,
   });
 
   Map<String, dynamic> toJson() => {
@@ -33,6 +39,9 @@ class Exercise {
         'equipmentType': equipmentType.name,
         'difficulty': difficulty,
         'isFavorite': isFavorite,
+        'muscleGroups': muscleGroups,
+        'instructions': instructions,
+        'isDefault': isDefault,
       };
 
   factory Exercise.fromJson(Map<String, dynamic> json) => Exercise(
@@ -48,6 +57,12 @@ class Exercise {
         ),
         difficulty: json['difficulty'] as String? ?? '',
         isFavorite: json['isFavorite'] as bool? ?? false,
+        muscleGroups: (json['muscleGroups'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            const [],
+        instructions: json['instructions'] as String?,
+        isDefault: json['isDefault'] as bool? ?? true,
       );
 
   Exercise copyWith({
@@ -60,6 +75,9 @@ class Exercise {
     EquipmentType? equipmentType,
     String? difficulty,
     bool? isFavorite,
+    List<String>? muscleGroups,
+    String? instructions,
+    bool? isDefault,
   }) =>
       Exercise(
         id: id ?? this.id,
@@ -71,5 +89,8 @@ class Exercise {
         equipmentType: equipmentType ?? this.equipmentType,
         difficulty: difficulty ?? this.difficulty,
         isFavorite: isFavorite ?? this.isFavorite,
+        muscleGroups: muscleGroups ?? this.muscleGroups,
+        instructions: instructions ?? this.instructions,
+        isDefault: isDefault ?? this.isDefault,
       );
 }

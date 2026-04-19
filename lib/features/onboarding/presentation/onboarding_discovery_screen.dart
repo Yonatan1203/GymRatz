@@ -12,6 +12,7 @@ import '../../../shared/utils/extensions.dart';
 import '../../../shared/utils/platform_adapter.dart';
 import '../../../shared/widgets/onboarding_progress_bar.dart';
 import '../../../shared/widgets/onboarding_bottom_button.dart';
+import '../../../shared/widgets/scale_tap.dart';
 import '../providers/onboarding_provider.dart';
 
 class OnboardingDiscoveryScreen extends ConsumerStatefulWidget {
@@ -39,7 +40,7 @@ class _OnboardingDiscoveryScreenState
     return Scaffold(
       body: Column(
         children: [
-          const OnboardingProgressBar(currentStep: 13, totalSteps: 14),
+          const OnboardingProgressBar(currentStep: 8),
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
@@ -66,7 +67,7 @@ class _OnboardingDiscoveryScreenState
                       button: true,
                       label: option,
                       selected: isSelected,
-                      child: GestureDetector(
+                      child: ScaleTap(
                       onTap: () {
                         PlatformAdapter.hapticSelection();
                         setState(() => _selected = option);
@@ -134,7 +135,7 @@ class _OnboardingDiscoveryScreenState
                       padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding, vertical: 8.h),
                       child: Text(
                         onboarding.error!,
-                        style: AppTextStyles.caption.copyWith(color: Colors.red),
+                        style: AppTextStyles.caption.copyWith(color: context.destructiveColor),
                         textAlign: TextAlign.center,
                       ),
                     ),

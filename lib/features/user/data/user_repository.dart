@@ -36,6 +36,21 @@ class UserRepository {
     await _userDoc(uid).delete();
   }
 
+  /// Deletes all user data including subcollections
+  Future<void> deleteAllUserData(String uid) async {
+    final userDoc = _firestore.collection('users').doc(uid);
+    final subcollections = ['workouts', 'programs', 'achievements', 'prs', 'weightEntries', 'exercises'];
+    for (final sub in subcollections) {
+      final snap = await userDoc.collection(sub).get();
+      final batch = _firestore.batch();
+      for (final doc in snap.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+    }
+    await userDoc.delete();
+  }
+
   Future<void> toggleFavoriteExercise(String uid, String exerciseId) async {
     final doc = await _userDoc(uid).get();
     final data = doc.data();

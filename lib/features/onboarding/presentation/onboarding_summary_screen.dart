@@ -17,15 +17,29 @@ import '../providers/onboarding_provider.dart';
 class OnboardingSummaryScreen extends ConsumerWidget {
   const OnboardingSummaryScreen({super.key});
 
+  static String _cmToFeetInches(double cm) {
+    final totalInches = (cm / 2.54).round();
+    final feet = totalInches ~/ 12;
+    final inches = totalInches % 12;
+    return "$feet'$inches\"";
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(onboardingProvider);
     final isDark = context.isDark;
+    final isMetric = state.selectedUnits != 'imperial';
+    final heightDisplay = isMetric
+        ? '${state.height.round()} cm'
+        : _cmToFeetInches(state.height);
+    final weightDisplay = isMetric
+        ? '${state.weight.round()} kg'
+        : '${(state.weight * 2.20462).round()} lbs';
 
     return Scaffold(
       body: Column(
         children: [
-          const OnboardingProgressBar(currentStep: 8, totalSteps: 14),
+          const OnboardingProgressBar(currentStep: 7),
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
@@ -67,7 +81,7 @@ class OnboardingSummaryScreen extends ConsumerWidget {
                     isDark: isDark,
                     icon: AppIcons.ruler,
                     title: 'Body Stats',
-                    value: '${state.height.round()} cm • ${state.weight.round()} kg',
+                    value: '$heightDisplay • $weightDisplay',
                   ),
                   SizedBox(height: AppSpacing.xxl),
                   Container(
@@ -101,7 +115,7 @@ class OnboardingSummaryScreen extends ConsumerWidget {
           ),
           OnboardingBottomButton(
             text: 'Create Account',
-            onPressed: () => context.go('/onboarding/email'),
+            onPressed: () => context.push('/onboarding/discovery'),
           ),
         ],
       ),

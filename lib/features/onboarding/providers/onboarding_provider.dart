@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../auth/domain/auth_service.dart';
 import '../../../app/providers/auth_providers.dart';
@@ -77,22 +80,64 @@ class OnboardingNotifier extends StateNotifier<OnboardingState> {
 
   OnboardingNotifier(this._authService) : super(const OnboardingState());
 
+  static const _cacheKey = 'onboarding_state_cache';
+
+  Future<void> _saveToCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = {
+      'goal': state.selectedGoal,
+      'experience': state.selectedExperience,
+      'style': state.selectedStyle,
+      'injuries': state.selectedInjuries.toList(),
+      'units': state.selectedUnits,
+      'height': state.height,
+      'weight': state.weight,
+    };
+    await prefs.setString(_cacheKey, json.encode(data));
+  }
+
+  Future<void> restoreFromCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getString(_cacheKey);
+    if (cached == null) return;
+
+    final data = json.decode(cached) as Map<String, dynamic>;
+    state = state.copyWith(
+      selectedGoal: data['goal'] as String?,
+      selectedExperience: data['experience'] as String?,
+      selectedStyle: data['style'] as String?,
+      selectedInjuries: Set<String>.from(data['injuries'] ?? []),
+      selectedUnits: data['units'] as String?,
+      height: (data['height'] as num?)?.toDouble(),
+      weight: (data['weight'] as num?)?.toDouble(),
+    );
+  }
+
+  static Future<void> clearCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_cacheKey);
+  }
+
   void setGoal(String goal) {
     state = state.copyWith(selectedGoal: goal);
+    _saveToCache();
   }
 
   void setExperience(String experience) {
     state = state.copyWith(selectedExperience: experience);
+    _saveToCache();
   }
 
   void setStyle(String style) {
     state = state.copyWith(selectedStyle: style);
+    _saveToCache();
   }
 
   void toggleInjury(String injury) {
     final injuries = Set<String>.from(state.selectedInjuries);
     if (injury == 'None') {
       state = state.copyWith(selectedInjuries: {'None'});
+      _saveToCache();
       return;
     }
     injuries.remove('None');
@@ -102,18 +147,22 @@ class OnboardingNotifier extends StateNotifier<OnboardingState> {
       injuries.add(injury);
     }
     state = state.copyWith(selectedInjuries: injuries);
+    _saveToCache();
   }
 
   void setUnits(String units) {
     state = state.copyWith(selectedUnits: units);
+    _saveToCache();
   }
 
   void setHeight(double height) {
     state = state.copyWith(height: height);
+    _saveToCache();
   }
 
   void setWeight(double weight) {
     state = state.copyWith(weight: weight);
+    _saveToCache();
   }
 
   void setEmail(String email) {
@@ -168,6 +217,7 @@ class OnboardingNotifier extends StateNotifier<OnboardingState> {
       );
 
       debugPrint('ONBOARDING: Signup SUCCESS');
+      await clearCache();
       state = state.copyWith(isSubmitting: false);
       return true;
     } catch (e, st) {

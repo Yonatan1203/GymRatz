@@ -4,7 +4,6 @@ import '../../theme/app_icons.dart';
 
 import '../../app/providers.dart';
 import '../../theme/app_colors.dart';
-import '../../theme/app_shadows.dart';
 import '../utils/platform_adapter.dart';
 
 class ThemeToggleButton extends ConsumerWidget {
@@ -22,21 +21,15 @@ class ThemeToggleButton extends ConsumerWidget {
         PlatformAdapter.hapticMedium();
         ref.read(themeProvider.notifier).toggleTheme();
       },
-      child: Container(
+      child: SizedBox(
         width: 44,
         height: 44,
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCard : AppColors.lightCard,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+        child: Center(
+          child: Icon(
+            isDark ? AppIcons.sun : AppIcons.moon,
+            size: 20,
+            color: isDark ? AppColors.darkForeground : AppColors.lightForeground,
           ),
-          boxShadow: AppShadows.lg,
-        ),
-        child: Icon(
-          isDark ? AppIcons.sun : AppIcons.moon,
-          size: 20,
-          color: isDark ? AppColors.darkForeground : AppColors.lightForeground,
         ),
       ),
     ),
