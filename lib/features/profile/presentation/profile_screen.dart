@@ -58,7 +58,7 @@ class ProfileScreen extends ConsumerWidget {
                     Center(
                       child: Text('GymRatz v1.0.0', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
                     ),
-                    SizedBox(height: AppSpacing.xl),
+                    SizedBox(height: MediaQuery.of(context).padding.bottom + 80),
                   ],
                 ),
               ),

@@ -99,13 +99,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               child: StaggeredList(
                 children: [
                   _buildCalendarGrid(context, isDark),
-                  SizedBox(height: AppSpacing.lg),
+                  SizedBox(height: AppSpacing.sectionGap),
                   _buildStreakCards(context, isDark),
-                  SizedBox(height: AppSpacing.lg),
+                  SizedBox(height: AppSpacing.sectionGap),
                   _buildWeightSection(context, isDark),
-                  SizedBox(height: AppSpacing.xxl),
+                  SizedBox(height: AppSpacing.sectionGap),
                   _buildLegend(context),
-                  SizedBox(height: AppSpacing.xl),
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 80),
                 ],
               ),
             ),
