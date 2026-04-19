@@ -100,43 +100,12 @@ class CustomScaffold extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _NavItem(
-                              icon: AppIcons.dumbbell,
-                              label: 'Workout',
-                              isActive: activeIndex == 0,
-                              onTap: () => navigationShell.goBranch(0),
-                              isDark: isDark,
-                            ),
-                            _NavItem(
-                              icon: AppIcons.calendar,
-                              label: 'Calendar',
-                              isActive: activeIndex == 1,
-                              onTap: () => navigationShell.goBranch(1),
-                              isDark: isDark,
-                            ),
-                            _NavItem(
-                              icon: AppIcons.home,
-                              label: 'Home',
-                              isActive: activeIndex == 2,
-                              onTap: () => navigationShell.goBranch(2),
-                              isDark: isDark,
-                            ),
-                            _NavItem(
-                              icon: AppIcons.library,
-                              label: 'Programs',
-                              isActive: activeIndex == 3,
-                              onTap: () => navigationShell.goBranch(3),
-                              isDark: isDark,
-                            ),
-                            _NavItem(
-                              icon: AppIcons.user,
-                              label: 'Profile',
-                              isActive: activeIndex == 4,
-                              onTap: () => navigationShell.goBranch(4),
-                              isDark: isDark,
-                            ),
+                            _expandedNavItem(AppIcons.dumbbell, 'Workout', activeIndex == 0, () => navigationShell.goBranch(0), isDark),
+                            _expandedNavItem(AppIcons.calendar, 'Calendar', activeIndex == 1, () => navigationShell.goBranch(1), isDark),
+                            _expandedNavItem(AppIcons.home, 'Home', activeIndex == 2, () => navigationShell.goBranch(2), isDark),
+                            _expandedNavItem(AppIcons.library, 'Programs', activeIndex == 3, () => navigationShell.goBranch(3), isDark),
+                            _expandedNavItem(AppIcons.user, 'Profile', activeIndex == 4, () => navigationShell.goBranch(4), isDark),
                           ],
                         ),
                       ],
@@ -150,6 +119,18 @@ class CustomScaffold extends ConsumerWidget {
       ),
     );
   }
+}
+
+Widget _expandedNavItem(IconData icon, String label, bool isActive, VoidCallback onTap, bool isDark) {
+  return Expanded(
+    child: _NavItem(
+      icon: icon,
+      label: label,
+      isActive: isActive,
+      onTap: onTap,
+      isDark: isDark,
+    ),
+  );
 }
 
 class _ThemeToggle extends StatelessWidget {

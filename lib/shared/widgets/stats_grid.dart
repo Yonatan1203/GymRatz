@@ -45,14 +45,14 @@ class StatsGrid extends StatelessWidget {
                 color: useTransparentBg
                     ? (isDark
                         ? Colors.white.withValues(alpha: 0.1)
-                        : AppColors.lightPrimary.withValues(alpha: 0.12))
+                        : AppColors.lightPrimary.withValues(alpha: 0.18))
                     : (isDark ? AppColors.darkCard : AppColors.lightCard),
                 borderRadius: AppRadius.borderXl,
                 border: useTransparentBg
                     ? Border.all(
                         color: isDark
                             ? Colors.white.withValues(alpha: 0.15)
-                            : AppColors.lightPrimary.withValues(alpha: 0.2),
+                            : AppColors.lightPrimary.withValues(alpha: 0.3),
                       )
                     : Border.all(
                         color: isDark
