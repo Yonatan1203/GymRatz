@@ -43,11 +43,17 @@ class StatsGrid extends StatelessWidget {
               padding: EdgeInsets.all(12.r),
               decoration: BoxDecoration(
                 color: useTransparentBg
-                    ? Colors.white.withValues(alpha: 0.1)
+                    ? (isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : AppColors.lightPrimary.withValues(alpha: 0.12))
                     : (isDark ? AppColors.darkCard : AppColors.lightCard),
                 borderRadius: AppRadius.borderXl,
                 border: useTransparentBg
-                    ? null
+                    ? Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : AppColors.lightPrimary.withValues(alpha: 0.2),
+                      )
                     : Border.all(
                         color: isDark
                             ? AppColors.darkBorder
@@ -71,7 +77,7 @@ class StatsGrid extends StatelessWidget {
                             value.toStringAsFixed(0),
                             style: AppTextStyles.h2.copyWith(
                               color: useTransparentBg
-                                  ? Colors.white
+                                  ? (isDark ? Colors.white : AppColors.lightForeground)
                                   : (isDark
                                       ? AppColors.darkForeground
                                       : AppColors.lightForeground),
@@ -98,7 +104,7 @@ class StatsGrid extends StatelessWidget {
                     item.label,
                     style: AppTextStyles.caption.copyWith(
                       color: useTransparentBg
-                          ? Colors.white70
+                          ? (isDark ? Colors.white70 : AppColors.lightMutedForeground)
                           : (isDark
                               ? AppColors.darkMutedForeground
                               : AppColors.lightMutedForeground),

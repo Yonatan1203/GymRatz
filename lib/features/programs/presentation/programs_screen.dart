@@ -38,7 +38,7 @@ class ProgramsScreen extends ConsumerWidget {
                   _buildMyPrograms(context, ref),
                   SizedBox(height: AppSpacing.sectionGap),
                   _buildExplorePrograms(context),
-                  SizedBox(height: MediaQuery.of(context).padding.bottom + 80),
+                  SizedBox(height: AppSpacing.xxl),
                 ],
               ),
             ),

@@ -105,7 +105,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   _buildWeightSection(context, isDark),
                   SizedBox(height: AppSpacing.sectionGap),
                   _buildLegend(context),
-                  SizedBox(height: MediaQuery.of(context).padding.bottom + 80),
+                  SizedBox(height: AppSpacing.xxl),
                 ],
               ),
             ),
@@ -292,21 +292,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         Color bgColor;
         Color textColor;
         switch (statusCode) {
-          case 1: // Completed — teal tint
-            bgColor = context.primaryColor.withOpacity(0.15);
+          case 1: // Completed — teal filled
+            bgColor = context.primaryColor.withOpacity(0.2);
             textColor = context.primaryColor;
             break;
-          case 2: // Scheduled
-            bgColor = context.mutedColor;
-            textColor = context.mutedForeground;
+          case 2: // Scheduled — subtle outline
+            bgColor = context.primaryColor.withOpacity(0.06);
+            textColor = context.foreground;
             break;
           case 3: // Missed — orange
             bgColor = const Color(0xFFF97316).withValues(alpha: 0.15);
             textColor = const Color(0xFFF97316);
             break;
-          default: // Rest
+          default: // Rest — clean
             bgColor = context.cardColor;
-            textColor = context.mutedForeground;
+            textColor = context.mutedForeground.withOpacity(0.7);
         }
 
         // Today highlight overrides
@@ -319,10 +319,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           }
         } else if (isSelected) {
           border = Border.all(color: context.primaryColor, width: 2);
+        } else if (statusCode == 1) {
+          border = Border.all(color: context.primaryColor.withOpacity(0.3));
         } else if (statusCode == 2) {
-          border = Border.all(color: context.borderColor);
-        } else if (statusCode == 0) {
-          border = Border.all(color: context.borderColor);
+          border = Border.all(color: context.primaryColor.withOpacity(0.2));
         }
 
         return ScaleTap(
@@ -336,7 +336,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               color: bgColor,
               borderRadius: AppRadius.borderLg,
               border: border,
-              boxShadow: AppShadows.sm,
             ),
             child: Center(
               child: Text(

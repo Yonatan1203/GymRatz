@@ -74,24 +74,31 @@ class CustomScaffold extends ConsumerWidget {
                     final tabWidth = constraints.maxWidth / tabCount;
                     final activeIndex = navigationShell.currentIndex;
 
-                    return Stack(
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         // Animated active indicator pill
-                        AnimatedPositioned(
-                          duration: const Duration(milliseconds: 200),
-                          curve: Curves.easeOut,
-                          top: 0,
-                          left: activeIndex * tabWidth +
-                              (tabWidth - 20) / 2,
-                          child: Container(
-                            width: 20,
-                            height: 3,
-                            decoration: BoxDecoration(
-                              color: context.primaryColor,
-                              borderRadius: BorderRadius.circular(1.5),
-                            ),
-                          ),
+                        Row(
+                          children: List.generate(tabCount, (index) {
+                            return Expanded(
+                              child: Center(
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  curve: Curves.easeOut,
+                                  width: 20,
+                                  height: 3,
+                                  decoration: BoxDecoration(
+                                    color: index == activeIndex
+                                        ? context.primaryColor
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(1.5),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
                         ),
+                        const SizedBox(height: 4),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [

@@ -44,7 +44,7 @@ class HomeScreen extends ConsumerWidget {
                     _buildQuickActions(context, isDark),
                     SizedBox(height: AppSpacing.sectionGap),
                     _buildRecentActivity(context, isDark, ref),
-                    SizedBox(height: MediaQuery.of(context).padding.bottom + 80),
+                    SizedBox(height: AppSpacing.xxl),
                   ],
                 ),
               ),

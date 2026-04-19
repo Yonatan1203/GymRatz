@@ -91,28 +91,25 @@ class CustomCard extends StatelessWidget {
             onTap: onTap,
             borderRadius: effectiveRadius,
             child: variant == CardVariant.workout
-                ? Stack(
-                    children: [
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        bottom: 0,
-                        child: Container(
-                          width: 3,
-                          decoration: BoxDecoration(
+                ? ClipRRect(
+                    borderRadius: effectiveRadius,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: 0,
+                          top: 0,
+                          bottom: 0,
+                          child: Container(
+                            width: 3,
                             color: context.primaryColor,
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(AppRadius.xl),
-                              bottomLeft: Radius.circular(AppRadius.xl),
-                            ),
                           ),
                         ),
-                      ),
-                      Padding(
-                        padding: contentPadding,
-                        child: child,
-                      ),
-                    ],
+                        Padding(
+                          padding: contentPadding,
+                          child: child,
+                        ),
+                      ],
+                    ),
                   )
                 : Padding(
                     padding: contentPadding,

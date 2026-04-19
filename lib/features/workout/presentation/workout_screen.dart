@@ -165,7 +165,7 @@ class WorkoutScreen extends ConsumerWidget {
           ...dayCards,
           SizedBox(height: AppSpacing.sectionGap),
           _buildWeeklyStats(context, isDark, weeklyWorkouts, remaining, pct),
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 80),
+          SizedBox(height: AppSpacing.xxl),
         ],
       ),
     );
