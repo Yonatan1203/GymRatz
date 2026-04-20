@@ -20,5 +20,4 @@ class AppConstants {
   static const String appVersion = '1.0.0';
   static const String privacyPolicyUrl = 'https://gymratz-app.github.io/privacy';
   static const String termsOfServiceUrl = 'https://gymratz-app.github.io/terms';
-  static const String faqUrl = 'https://gymratz-app.github.io/faq';
 }
