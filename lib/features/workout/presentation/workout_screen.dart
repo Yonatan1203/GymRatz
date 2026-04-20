@@ -6,34 +6,38 @@ import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
 import '../../../theme/app_gradients.dart';
-import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
+import '../../../shared/models/workout.dart';
+import '../../../shared/models/workout_day.dart';
+import '../../../shared/models/enums.dart';
 import '../../../shared/utils/extensions.dart';
-import '../../../shared/utils/formatters.dart';
 import '../../../shared/widgets/custom_badge.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_card.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/scale_tap.dart';
 import '../../../shared/widgets/staggered_list.dart';
-import '../../../shared/widgets/stats_grid.dart';
 
 class WorkoutScreen extends ConsumerWidget {
   const WorkoutScreen({super.key});
+
+  static const _weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  static const _weekDaysShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  static const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = context.isDark;
     final activeProgramAsync = ref.watch(activeProgramProvider);
-    final stats = ref.watch(workoutStatsProvider).valueOrNull;
+    final recentWorkoutsAsync = ref.watch(recentWorkoutsProvider);
 
     return Scaffold(
       body: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildHeader(context),
-              activeProgramAsync.when(
+        child: Column(
+          children: [
+            _buildHeader(context),
+            activeProgramAsync.when(
               loading: () => _buildLoadingBody(context),
               error: (e, _) => _buildErrorBody(context, ref, e),
               data: (activeProgram) {
@@ -41,7 +45,8 @@ class WorkoutScreen extends ConsumerWidget {
                 if (days.isEmpty) {
                   return _buildEmptyBody(context, isDark);
                 }
-                return _buildContentBody(context, isDark, days, stats);
+                final recentWorkouts = recentWorkoutsAsync.valueOrNull ?? [];
+                return _buildWeeklyBody(context, isDark, days, recentWorkouts);
               },
             ),
           ],
@@ -51,13 +56,20 @@ class WorkoutScreen extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final now = DateTime.now();
+    final mondayOffset = now.weekday - 1;
+    final monday = now.subtract(Duration(days: mondayOffset));
+    final sunday = monday.add(const Duration(days: 6));
+
+    final dateRange = '${_months[monday.month - 1]} ${monday.day} - ${_months[sunday.month - 1]} ${sunday.day}';
+
     return GradientHeader(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Today's Workouts", style: AppTextStyles.h1.copyWith(color: context.foreground)),
+          Text('This Week', style: AppTextStyles.h1.copyWith(color: context.foreground)),
           SizedBox(height: AppSpacing.sm),
-          Text(Formatters.dayDate(DateTime.now()), style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+          Text(dateRange, style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
         ],
       ),
     );
@@ -136,182 +148,214 @@ class WorkoutScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildContentBody(BuildContext context, bool isDark, List days, Map<String, dynamic>? stats) {
-    final weeklyWorkouts = stats?['weeklyWorkouts'] as int? ?? 0;
-    final totalDays = days.length;
-    final remaining = (totalDays - weeklyWorkouts).clamp(0, totalDays);
-    final pct = totalDays > 0 ? ((weeklyWorkouts / totalDays) * 100).round() : 0;
+  Widget _buildWeeklyBody(BuildContext context, bool isDark, List<WorkoutDay> days, List<Workout> recentWorkouts) {
+    final now = DateTime.now();
+    final mondayOffset = now.weekday - 1;
+    final monday = now.subtract(Duration(days: mondayOffset));
 
-    final dayCards = days.asMap().entries.map((entry) {
-      final i = entry.key;
-      final day = entry.value;
-      final exCount = day.exercises.length;
-      return Padding(
-        padding: EdgeInsets.only(bottom: AppSpacing.lg),
-        child: _buildWorkoutCard(
-          context, isDark,
-          day.name, day.dayOfWeek,
-          exCount, '${exCount * 8}-${exCount * 12} min',
-          exCount * 3, '--',
-          i == 0, day.id,
+    // Map dayOfWeek string to WorkoutDay
+    final dayMap = <String, WorkoutDay>{};
+    for (final day in days) {
+      dayMap[day.dayOfWeek] = day;
+    }
+
+    // Get completed workout day IDs for this week
+    final completedDayIds = <String>{};
+    for (final workout in recentWorkouts) {
+      if (workout.status == WorkoutStatus.completed && workout.workoutDayId != null) {
+        // Check if the workout date is within this week (Monday to Sunday)
+        final sunday = monday.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+        if (!workout.date.isBefore(monday) && !workout.date.isAfter(sunday)) {
+          completedDayIds.add(workout.workoutDayId!);
+        }
+      }
+    }
+
+    final dayRows = <Widget>[];
+    for (int i = 0; i < 7; i++) {
+      final date = monday.add(Duration(days: i));
+      final dayName = _weekDays[i];
+      final dayShort = _weekDaysShort[i];
+      final isToday = date.day == now.day && date.month == now.month && date.year == now.year;
+      final scheduledDay = dayMap[dayName];
+      final isCompleted = scheduledDay != null && completedDayIds.contains(scheduledDay.id);
+      final isPast = date.isBefore(DateTime(now.year, now.month, now.day)) && !isToday;
+
+      dayRows.add(
+        Padding(
+          padding: EdgeInsets.only(bottom: AppSpacing.md),
+          child: _buildDayRow(
+            context,
+            isDark,
+            dayShort: dayShort,
+            dayName: dayName,
+            dateNum: date.day,
+            isToday: isToday,
+            isPast: isPast,
+            workoutDay: scheduledDay,
+            isCompleted: isCompleted,
+          ),
         ),
       );
-    }).toList();
+    }
 
     return Padding(
       padding: EdgeInsets.all(AppSpacing.screenPadding),
       child: StaggeredList(
         children: [
-          ...dayCards,
-          SizedBox(height: AppSpacing.sectionGap),
-          _buildWeeklyStats(context, isDark, weeklyWorkouts, remaining, pct),
+          ...dayRows,
           SizedBox(height: AppSpacing.xxl),
         ],
       ),
     );
   }
 
-  Widget _buildWorkoutCard(
+  Widget _buildDayRow(
     BuildContext context,
-    bool isDark,
-    String name,
-    String subtitle,
-    int exercises,
-    String duration,
-    int sets,
-    String volume,
-    bool isReady,
-    String dayId,
-  ) {
+    bool isDark, {
+    required String dayShort,
+    required String dayName,
+    required int dateNum,
+    required bool isToday,
+    required bool isPast,
+    required WorkoutDay? workoutDay,
+    required bool isCompleted,
+  }) {
+    final isRestDay = workoutDay == null;
+    final isMissed = isPast && !isRestDay && !isCompleted;
+
     return ScaleTap(
-      onTap: () => context.push('/workout/$dayId'),
+      onTap: isRestDay
+          ? null
+          : () => _onDayTapped(context, dayName, isToday, workoutDay),
       child: CustomCard(
-        variant: CardVariant.workout,
-        padding: EdgeInsets.zero,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: EdgeInsets.all(AppSpacing.cardPadding),
+        child: Row(
           children: [
-            Padding(
-              padding: EdgeInsets.all(AppSpacing.cardPadding),
+            // Date circle
+            Container(
+              width: 44.r,
+              height: 44.r,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: isToday ? AppGradients.primary(isDark: isDark) : null,
+                color: isToday ? null : context.mutedColor,
+              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(name, style: AppTextStyles.h3.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
-                            SizedBox(height: 2.h),
-                            Text(subtitle, style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
-                          ],
-                        ),
-                      ),
-                      CustomBadge(
-                        text: isReady ? 'Start Now' : 'Scheduled',
-                        backgroundColor: isReady
-                            ? context.coralColor.withOpacity(0.12)
-                            : context.mutedColor,
-                        textColor: isReady ? context.coralColor : context.mutedForeground,
-                      ),
-                    ],
+                  Text(
+                    dayShort,
+                    style: AppTextStyles.caption.copyWith(
+                      color: isToday ? Colors.white : context.mutedForeground,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 9.sp,
+                    ),
                   ),
-                  SizedBox(height: AppSpacing.lg),
-                  Row(
-                    children: [
-                      Icon(AppIcons.dumbbell, size: 14.r, color: context.mutedForeground),
-                      SizedBox(width: AppSpacing.sm),
-                      Text('$exercises exercises', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
-                      Text('  \u2022  ', style: TextStyle(color: context.mutedForeground)),
-                      Icon(AppIcons.clock, size: 14.r, color: context.mutedForeground),
-                      SizedBox(width: AppSpacing.sm),
-                      Text(duration, style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
-                    ],
-                  ),
-                  SizedBox(height: AppSpacing.lg),
-                  Row(
-                    children: [
-                      _miniStat(context, 'Total Sets', '$sets'),
-                      SizedBox(width: AppSpacing.md),
-                      _miniStat(context, 'Est. Volume', '$volume kg'),
-                    ],
+                  Text(
+                    '$dateNum',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: isToday ? Colors.white : context.foreground,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.sp,
+                    ),
                   ),
                 ],
               ),
             ),
-            if (isReady)
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
-                decoration: BoxDecoration(
-                  gradient: AppGradients.primary(isDark: isDark),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(14.r),
-                    bottomRight: Radius.circular(14.r),
+            SizedBox(width: AppSpacing.lg),
+            // Workout info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isRestDay ? 'Rest Day' : workoutDay.name,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: isRestDay ? context.mutedForeground : context.foreground,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Start Workout', style: AppTextStyles.bodySmall.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
-                    SizedBox(
-                      width: 28.r,
-                      height: 28.r,
-                      child: Center(child: Icon(AppIcons.play, size: 16.r, color: Colors.white)),
+                  if (!isRestDay) ...[
+                    SizedBox(height: 2.h),
+                    Text(
+                      '${workoutDay.exercises.length} exercises',
+                      style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
                     ),
                   ],
-                ),
+                ],
               ),
+            ),
+            // Status badge
+            if (!isRestDay)
+              _buildStatusBadge(context, isCompleted: isCompleted, isMissed: isMissed, isToday: isToday),
           ],
         ),
       ),
     );
   }
 
-  Widget _miniStat(BuildContext context, String label, String value) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: context.mutedColor,
-          borderRadius: AppRadius.borderLg,
-        ),
-        child: Column(
-          children: [
-            Text(label, style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
-            Text(value, style: AppTextStyles.bodySmall.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
-          ],
-        ),
-      ),
+  Widget _buildStatusBadge(BuildContext context, {required bool isCompleted, required bool isMissed, required bool isToday}) {
+    if (isCompleted) {
+      return CustomBadge(
+        text: 'Done',
+        icon: AppIcons.check,
+        backgroundColor: context.primaryColor.withValues(alpha: 0.12),
+        textColor: context.primaryColor,
+      );
+    }
+    if (isMissed) {
+      return CustomBadge(
+        text: 'Missed',
+        backgroundColor: context.destructiveColor.withValues(alpha: 0.12),
+        textColor: context.destructiveColor,
+      );
+    }
+    if (isToday) {
+      return CustomBadge(
+        text: 'Today',
+        icon: AppIcons.play,
+        backgroundColor: context.coralColor.withValues(alpha: 0.12),
+        textColor: context.coralColor,
+      );
+    }
+    return CustomBadge(
+      text: 'Scheduled',
+      backgroundColor: context.mutedColor,
+      textColor: context.mutedForeground,
     );
   }
 
-  Widget _buildWeeklyStats(BuildContext context, bool isDark, int completed, int remaining, int pct) {
-    return CustomCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('This Week', style: AppTextStyles.h3.copyWith(color: context.foreground)),
-          SizedBox(height: AppSpacing.sm),
-          Text(
-            pct >= 100
-                ? 'All workouts done \u2014 great week!'
-                : pct >= 50
-                    ? 'Keep it up, you\u2019re on track!'
-                    : 'Let\u2019s get moving this week!',
-            style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+  Future<void> _onDayTapped(BuildContext context, String dayName, bool isToday, WorkoutDay workoutDay) async {
+    if (isToday) {
+      context.push('/workout/${workoutDay.id}');
+      return;
+    }
+
+    final confirmed = await _showDifferentDayDialog(context, dayName);
+    if (confirmed && context.mounted) {
+      context.push('/workout/${workoutDay.id}');
+    }
+  }
+
+  Future<bool> _showDifferentDayDialog(BuildContext context, String dayName) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Different Day'),
+        content: Text('This workout is scheduled for $dayName. Are you sure you want to log it today?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
           ),
-          SizedBox(height: AppSpacing.xl),
-          StatsGrid(
-            items: [
-              StatsGridItem(icon: AppIcons.checkCircle, iconColor: context.primaryColor, value: '$completed', label: 'Completed'),
-              StatsGridItem(icon: AppIcons.clock, iconColor: context.secondaryColor, value: '$remaining', label: 'Remaining'),
-              StatsGridItem(icon: AppIcons.trendingUp, iconColor: context.accentColor, value: '$pct%', label: 'Progress'),
-            ],
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Start Anyway'),
           ),
         ],
       ),
     );
+    return result ?? false;
   }
 }
