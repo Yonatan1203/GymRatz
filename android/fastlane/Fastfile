@@ -1,0 +1,31 @@
+default_platform(:android)
+
+platform :android do
+  desc "Build and upload to Google Play Internal Testing"
+  lane :internal do
+    # Build the AAB
+    sh("cd ../.. && flutter build appbundle --release --dart-define=RC_GOOGLE_KEY=#{ENV['RC_GOOGLE_KEY']}")
+
+    # Upload to Play Store internal track
+    upload_to_play_store(
+      track: "internal",
+      aab: "../../build/app/outputs/bundle/release/app-release.aab",
+      json_key: ENV["PLAY_STORE_JSON_KEY"] || "play-store-key.json",
+      package_name: "com.gymratz.gymratz",
+      skip_upload_metadata: false,
+      skip_upload_changelogs: false,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+  end
+
+  desc "Build debug APK for testing"
+  lane :build_debug do
+    sh("cd ../.. && flutter build apk --debug")
+  end
+
+  desc "Build release APK"
+  lane :build_release do
+    sh("cd ../.. && flutter build apk --release --dart-define=RC_GOOGLE_KEY=#{ENV['RC_GOOGLE_KEY']}")
+  end
+end

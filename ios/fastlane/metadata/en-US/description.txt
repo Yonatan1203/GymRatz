@@ -1,0 +1,25 @@
+GymRatz is your personal workout companion that makes progressive overload simple and automatic.
+
+BUILD CUSTOM PROGRAMS
+Create workout programs tailored to your goals. Assign exercises to specific days, set rep ranges, and choose your progression mode — strength, hypertrophy, or endurance.
+
+SMART PROGRESSIVE OVERLOAD
+GymRatz tracks your weights and reps every session. After each workout, the built-in progression engine tells you exactly when and how to increase weight. No guesswork.
+
+WEEKLY WORKOUT VIEW
+See your entire week at a glance. Know what's scheduled, what's done, and what you missed. Tap any day to start logging.
+
+TRACK EVERYTHING
+• Workout history with full exercise details
+• Personal records tracked automatically
+• Body weight logging
+• Weekly volume and streak tracking
+• Calendar view of your training
+
+SET YOUR MAIN PROGRAM
+Choose your active program and it integrates everywhere — your calendar, workout tab, and weight pre-fills all sync up automatically.
+
+DESIGNED FOR THE GYM
+Clean interface that works when your hands are chalky. Large tap targets, quick set logging, and a rest timer that stays out of your way.
+
+Start your 7-day free trial today. Cancel anytime.
