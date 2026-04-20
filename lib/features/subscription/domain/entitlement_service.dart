@@ -1,6 +1,7 @@
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../data/entitlement_repository.dart';
+import '../data/entitlement_repository.dart' show SubscriptionState;
 
 class EntitlementService {
   final EntitlementRepository _repo;
@@ -29,4 +30,7 @@ class EntitlementService {
   Future<bool> purchase(Package package) => _repo.purchase(package);
 
   Future<bool> restorePurchases() => _repo.restorePurchases();
+
+  Future<SubscriptionState> getSubscriptionState() => _repo.getSubscriptionState();
+  Stream<SubscriptionState> subscriptionStateStream() => _repo.subscriptionStateStream();
 }

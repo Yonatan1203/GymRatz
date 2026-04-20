@@ -6,6 +6,8 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../../../core/constants.dart';
 
+enum SubscriptionState { trial, active, expired }
+
 class EntitlementRepository {
   static final EntitlementRepository _instance =
       EntitlementRepository._internal();
@@ -107,5 +109,43 @@ class EntitlementRepository {
     } catch (_) {
       return false;
     }
+  }
+
+  /// Get the subscription state: active, trial, or expired.
+  Future<SubscriptionState> getSubscriptionState() async {
+    try {
+      final info = await Purchases.getCustomerInfo();
+      final entitlement = info.entitlements.active[AppConstants.entitlementId];
+      if (entitlement == null) return SubscriptionState.expired;
+      if (entitlement.periodType == PeriodType.trial) {
+        return SubscriptionState.trial;
+      }
+      return SubscriptionState.active;
+    } catch (_) {
+      return SubscriptionState.expired;
+    }
+  }
+
+  /// Stream of subscription state changes.
+  Stream<SubscriptionState> subscriptionStateStream() {
+    final controller = StreamController<SubscriptionState>.broadcast();
+
+    getSubscriptionState().then((state) {
+      if (!controller.isClosed) controller.add(state);
+    });
+
+    Purchases.addCustomerInfoUpdateListener((info) {
+      if (controller.isClosed) return;
+      final entitlement = info.entitlements.active[AppConstants.entitlementId];
+      if (entitlement == null) {
+        controller.add(SubscriptionState.expired);
+      } else if (entitlement.periodType == PeriodType.trial) {
+        controller.add(SubscriptionState.trial);
+      } else {
+        controller.add(SubscriptionState.active);
+      }
+    });
+
+    return controller.stream;
   }
 }
