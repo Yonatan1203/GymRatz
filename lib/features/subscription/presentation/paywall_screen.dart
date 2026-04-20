@@ -109,9 +109,9 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 children: [
                   Icon(AppIcons.crown, size: 48.r, color: Colors.white),
                   SizedBox(height: AppSpacing.lg),
-                  Text('Upgrade to Pro', style: AppTextStyles.h1.copyWith(color: Colors.white)),
+                  Text('GymRatz Premium', style: AppTextStyles.h1.copyWith(color: Colors.white)),
                   SizedBox(height: AppSpacing.sm),
-                  Text('Unlock your full potential', style: AppTextStyles.bodySmall.copyWith(color: Colors.white70)),
+                  Text('Track workouts, build programs, crush your goals', style: AppTextStyles.bodySmall.copyWith(color: Colors.white70)),
                 ],
               ),
             ),
@@ -125,6 +125,14 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                     const Center(child: CircularProgressIndicator())
                   else
                     _buildPricingCards(context, isDark),
+                  SizedBox(height: AppSpacing.md),
+                  Center(
+                    child: Text(
+                      '7-day free trial included \u2022 Cancel anytime',
+                      style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                   SizedBox(height: AppSpacing.xl),
                   Center(
                     child: ScaleTap(
@@ -150,35 +158,29 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
   Widget _buildFeatureComparison(BuildContext context, bool isDark) {
     final features = [
-      ('Active Programs', '1', 'Unlimited', AppIcons.dumbbell),
-      ('Workout History', '2 weeks', 'Full', AppIcons.calendar),
-      ('Exercise Library', 'Basic', 'All', AppIcons.list),
-      ('Progressive Overload', 'Basic', 'Advanced', AppIcons.trendingUp),
-      ('Export Data', '-', 'Yes', AppIcons.download),
-      ('Priority Support', '-', 'Yes', AppIcons.headphones),
+      ('Unlimited Programs', AppIcons.dumbbell),
+      ('Full Workout History', AppIcons.calendar),
+      ('Complete Exercise Library', AppIcons.list),
+      ('Progressive Overload Tracking', AppIcons.trendingUp),
+      ('Export Your Data', AppIcons.download),
+      ('Priority Support', AppIcons.headphones),
     ];
 
     return CustomCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(child: Text('Feature', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground, fontWeight: FontWeight.w600))),
-              SizedBox(width: 60.w, child: Center(child: Text('Free', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground, fontWeight: FontWeight.w600)))),
-              SizedBox(width: 60.w, child: Center(child: Text('Pro', style: AppTextStyles.bodySmall.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600)))),
-            ],
-          ),
+          Text('Everything included:', style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
           SizedBox(height: AppSpacing.lg),
-          Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
           ...features.map((f) => Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
             child: Row(
               children: [
-                Icon(f.$4, size: 16.r, color: context.mutedForeground),
+                Icon(AppIcons.checkCircle, size: 18.r, color: context.primaryColor),
+                SizedBox(width: AppSpacing.lg),
+                Icon(f.$2, size: 16.r, color: context.mutedForeground),
                 SizedBox(width: AppSpacing.md),
-                Expanded(child: Text(f.$1, style: AppTextStyles.bodySmall.copyWith(color: context.foreground))),
-                SizedBox(width: 60.w, child: Center(child: Text(f.$2, style: AppTextStyles.caption.copyWith(color: context.mutedForeground)))),
-                SizedBox(width: 60.w, child: Center(child: Text(f.$3, style: AppTextStyles.caption.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600)))),
+                Text(f.$1, style: AppTextStyles.bodySmall.copyWith(color: context.foreground)),
               ],
             ),
           )),
@@ -189,7 +191,8 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
   Widget _buildPricingCards(BuildContext context, bool isDark) {
     final offering = _offerings?.current;
-    final packages = offering?.availablePackages ?? [];
+    final packages = [...(offering?.availablePackages ?? [])];
+    packages.removeWhere((p) => p.packageType == PackageType.weekly);
 
     if (packages.isEmpty) {
       return CustomButton(
