@@ -116,7 +116,7 @@ class ProgramsScreen extends ConsumerWidget {
               children: programs
                   .map((p) => Padding(
                         padding: EdgeInsets.only(bottom: AppSpacing.itemGap),
-                        child: _buildProgramCard(context, p),
+                        child: _buildProgramCard(context, ref, p),
                       ))
                   .toList(),
             );
@@ -126,7 +126,7 @@ class ProgramsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProgramCard(BuildContext context, Program p) {
+  Widget _buildProgramCard(BuildContext context, WidgetRef ref, Program p) {
     return ScaleTap(
       onTap: () => context.push('/programs/detail/${p.id}'),
       child: CustomCard(
@@ -149,9 +149,25 @@ class ProgramsScreen extends ConsumerWidget {
                   Padding(
                     padding: EdgeInsets.only(right: AppSpacing.md),
                     child: CustomBadge(
-                      text: 'Active',
+                      text: 'Main',
                       backgroundColor: context.coralColor.withOpacity(0.12),
                       textColor: context.coralColor,
+                    ),
+                  )
+                else
+                  Padding(
+                    padding: EdgeInsets.only(right: AppSpacing.md),
+                    child: GestureDetector(
+                      onTap: () async {
+                        final uid = ref.read(currentUidProvider);
+                        if (uid == null) return;
+                        await ref.read(programRepositoryProvider).setActiveProgram(uid, p.id);
+                      },
+                      child: CustomBadge(
+                        text: 'Set as Main',
+                        backgroundColor: context.primaryColor.withOpacity(0.08),
+                        textColor: context.primaryColor,
+                      ),
                     ),
                   ),
                 Icon(AppIcons.chevronRight, size: 20.r, color: context.mutedForeground),

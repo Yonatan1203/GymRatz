@@ -112,10 +112,10 @@ class WorkoutScreen extends ConsumerWidget {
                 SizedBox(height: AppSpacing.xl),
                 Icon(AppIcons.dumbbell, size: 36.r, color: context.primaryColor),
                 SizedBox(height: 20.h),
-                Text('No Active Program', style: AppTextStyles.h3.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
+                Text('No Main Program', style: AppTextStyles.h3.copyWith(color: context.foreground, fontWeight: FontWeight.w600)),
                 SizedBox(height: AppSpacing.md),
                 Text(
-                  'Create or activate a program to start tracking your workouts.',
+                  'Set a main program to see your weekly workouts here.',
                   style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
                   textAlign: TextAlign.center,
                 ),
