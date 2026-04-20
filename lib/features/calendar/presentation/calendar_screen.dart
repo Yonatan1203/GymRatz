@@ -14,10 +14,10 @@ import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/scale_tap.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/staggered_list.dart';
-import '../../../shared/data/sample_data.dart';
+
 import '../../../theme/app_icons.dart';
 import '../../../theme/app_radius.dart';
-import '../../../theme/app_shadows.dart';
+
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 
@@ -145,7 +145,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
                       decoration: BoxDecoration(
-                        color: context.primaryColor.withOpacity(0.15),
+                        color: context.primaryColor.withValues(alpha:0.15),
                         borderRadius: AppRadius.borderFull,
                       ),
                       child: Text(
@@ -190,7 +190,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
       decoration: BoxDecoration(
-        color: context.primaryColor.withOpacity(0.1),
+        color: context.primaryColor.withValues(alpha:0.1),
         borderRadius: AppRadius.borderXl,
       ),
       child: Row(
@@ -289,11 +289,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         Color textColor;
         switch (statusCode) {
           case 1: // Completed — teal filled
-            bgColor = context.primaryColor.withOpacity(0.2);
+            bgColor = context.primaryColor.withValues(alpha:0.2);
             textColor = context.primaryColor;
             break;
           case 2: // Scheduled — subtle outline
-            bgColor = context.primaryColor.withOpacity(0.06);
+            bgColor = context.primaryColor.withValues(alpha:0.06);
             textColor = context.foreground;
             break;
           case 3: // Missed — orange
@@ -302,7 +302,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             break;
           default: // Rest — clean
             bgColor = context.cardColor;
-            textColor = context.mutedForeground.withOpacity(0.7);
+            textColor = context.mutedForeground.withValues(alpha:0.7);
         }
 
         // Today highlight overrides
@@ -316,9 +316,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         } else if (isSelected) {
           border = Border.all(color: context.primaryColor, width: 2);
         } else if (statusCode == 1) {
-          border = Border.all(color: context.primaryColor.withOpacity(0.3));
+          border = Border.all(color: context.primaryColor.withValues(alpha:0.3));
         } else if (statusCode == 2) {
-          border = Border.all(color: context.primaryColor.withOpacity(0.2));
+          border = Border.all(color: context.primaryColor.withValues(alpha:0.2));
         }
 
         return ScaleTap(
@@ -530,7 +530,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   ],
                 ),
               SizedBox(height: AppSpacing.xl),
-              Divider(color: context.mutedForeground.withOpacity(0.15)),
+              Divider(color: context.mutedForeground.withValues(alpha:0.15)),
               SizedBox(height: AppSpacing.lg),
               Text('Recent Entries', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
               SizedBox(height: AppSpacing.md),
@@ -568,37 +568,23 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             )).toList(),
           );
         }
-        return _buildSampleWeightEntries(context, unit);
+        return _buildNoEntries(context);
       },
       loading: () => Padding(
         padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
         child: const Center(child: CircularProgressIndicator()),
       ),
-      error: (_, _) => _buildSampleWeightEntries(context, unit),
+      error: (_, _) => _buildNoEntries(context),
     );
   }
 
-  Widget _buildSampleWeightEntries(BuildContext context, String unit) {
-    return Column(
-      children: SampleData.weightEntries.map((e) => Padding(
-        padding: EdgeInsets.only(bottom: AppSpacing.md),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              e['date'] as String,
-              style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
-            ),
-            Text(
-              '${e['weight']} $unit',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: context.primaryColor,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      )).toList(),
+  Widget _buildNoEntries(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      child: Text(
+        'No entries yet. Tap above to log your weight.',
+        style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
+      ),
     );
   }
 }
@@ -614,7 +600,7 @@ class _RingPainter extends CustomPainter {
     final radius = size.width / 2 - 4;
 
     final trackPaint = Paint()
-      ..color = color.withOpacity(0.2)
+      ..color = color.withValues(alpha:0.2)
       ..strokeWidth = 6
       ..style = PaintingStyle.stroke;
 

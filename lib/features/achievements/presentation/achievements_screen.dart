@@ -13,7 +13,7 @@ import '../../../shared/widgets/custom_badge.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/stats_grid.dart';
 import '../../../shared/widgets/progress_bar_widget.dart';
-import '../../../shared/data/sample_data.dart';
+
 import '../../../shared/models/achievement.dart';
 
 class AchievementsScreen extends ConsumerStatefulWidget {
@@ -83,7 +83,7 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final achievements = ref.watch(achievementsProvider).valueOrNull ?? SampleData.achievements;
+    final achievements = ref.watch(achievementsProvider).valueOrNull ?? [];
     final unlockedCount = achievements.where((a) => a.unlocked).length;
     final totalPoints = achievements.where((a) => a.unlocked).fold<int>(0, (sum, a) => sum + a.points);
 
@@ -282,7 +282,7 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(AppIcons.trophy, size: 48.r, color: context.mutedForeground.withOpacity(0.6)),
+          Icon(AppIcons.trophy, size: 48.r, color: context.mutedForeground.withValues(alpha:0.6)),
           SizedBox(height: 12.h),
           Text('No achievements in this category', style: AppTextStyles.body.copyWith(color: context.mutedForeground)),
         ],
