@@ -10,6 +10,7 @@ class Program {
   final String? description;
   final List<WorkoutDay> days;
   final bool isActive;
+  final bool prefillWeights;
   final DateTime? createdAt;
 
   const Program({
@@ -22,6 +23,7 @@ class Program {
     this.description,
     this.days = const [],
     this.isActive = false,
+    this.prefillWeights = true,
     this.createdAt,
   });
 
@@ -35,6 +37,7 @@ class Program {
         'description': description,
         'days': days.map((d) => d.toJson()).toList(),
         'isActive': isActive,
+        'prefillWeights': prefillWeights,
         'createdAt': createdAt?.toIso8601String(),
       };
 
@@ -51,6 +54,7 @@ class Program {
                 .toList() ??
             [],
         isActive: json['isActive'] as bool? ?? false,
+        prefillWeights: json['prefillWeights'] as bool? ?? true,
         createdAt: json['createdAt'] != null
             ? DateTime.tryParse(json['createdAt'] as String)
             : null,
@@ -66,6 +70,7 @@ class Program {
     String? description,
     List<WorkoutDay>? days,
     bool? isActive,
+    bool? prefillWeights,
     DateTime? createdAt,
   }) =>
       Program(
@@ -78,6 +83,7 @@ class Program {
         description: description ?? this.description,
         days: days ?? this.days,
         isActive: isActive ?? this.isActive,
+        prefillWeights: prefillWeights ?? this.prefillWeights,
         createdAt: createdAt ?? this.createdAt,
       );
 }

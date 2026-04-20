@@ -20,7 +20,8 @@ class WorkoutService {
   WorkoutService(this._workoutRepo, this._prRepo);
 
   /// Create a new workout from a program day template.
-  /// Pre-fills weights from the most recent completed workout for this day.
+  /// Pre-fills weights from the most recent completed workout for this day
+  /// if [program.prefillWeights] is true.
   Future<Workout> startWorkout({
     required String uid,
     required Program program,
@@ -28,17 +29,19 @@ class WorkoutService {
   }) async {
     // Look up last completed workout for this program day
     Map<String, WorkoutExercise>? lastExercises;
-    try {
-      final recentWorkouts = await _workoutRepo.getRecentWorkoutsForDay(
-        uid, program.id, day.id,
-      );
-      if (recentWorkouts.isNotEmpty) {
-        lastExercises = {
-          for (final e in recentWorkouts.first.exercises) e.name: e
-        };
+    if (program.prefillWeights) {
+      try {
+        final recentWorkouts = await _workoutRepo.getRecentWorkoutsForDay(
+          uid, program.id, day.id,
+        );
+        if (recentWorkouts.isNotEmpty) {
+          lastExercises = {
+            for (final e in recentWorkouts.first.exercises) e.name: e
+          };
+        }
+      } catch (_) {
+        // Non-fatal: proceed without pre-fill
       }
-    } catch (_) {
-      // Non-fatal: proceed without pre-fill
     }
 
     final exercises = day.exercises.map((pe) {
