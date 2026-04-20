@@ -16,6 +16,11 @@ class EntitlementRepository {
 
   bool _initialized = false;
 
+  /// Debug override: when true, all entitlement checks return active.
+  /// Set via --dart-define=ADMIN_MODE=true
+  static const bool _adminMode =
+      bool.fromEnvironment('ADMIN_MODE', defaultValue: false);
+
   /// Initialize RevenueCat SDK (call once at app startup).
   Future<void> initialize() async {
     if (_initialized) return;
@@ -50,6 +55,7 @@ class EntitlementRepository {
 
   /// Check if the user has the active entitlement.
   Future<bool> isPro() async {
+    if (_adminMode) return true;
     try {
       final info = await Purchases.getCustomerInfo();
       return info.entitlements.active.containsKey(AppConstants.entitlementId);
@@ -60,6 +66,7 @@ class EntitlementRepository {
 
   /// Stream of pro status changes.
   Stream<bool> isProStream() {
+    if (_adminMode) return Stream.value(true);
     final controller = StreamController<bool>.broadcast();
 
     // Initial check
@@ -113,6 +120,7 @@ class EntitlementRepository {
 
   /// Get the subscription state: active, trial, or expired.
   Future<SubscriptionState> getSubscriptionState() async {
+    if (_adminMode) return SubscriptionState.active;
     try {
       final info = await Purchases.getCustomerInfo();
       final entitlement = info.entitlements.active[AppConstants.entitlementId];
@@ -128,6 +136,7 @@ class EntitlementRepository {
 
   /// Stream of subscription state changes.
   Stream<SubscriptionState> subscriptionStateStream() {
+    if (_adminMode) return Stream.value(SubscriptionState.active);
     final controller = StreamController<SubscriptionState>.broadcast();
 
     getSubscriptionState().then((state) {
