@@ -71,4 +71,5 @@ functions/node_modules/
 # Release signing
 android/key.properties
 android/*.keystore
+android/app/gymratz-release.keystore
 *.jks
