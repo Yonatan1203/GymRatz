@@ -57,6 +57,21 @@ class WorkoutRepository {
     return snap.docs.map((d) => Workout.fromJson(d.data())).toList();
   }
 
+  /// Get most recent completed workouts for a specific program day.
+  Future<List<Workout>> getRecentWorkoutsForDay(
+      String uid, String programId, String workoutDayId,
+      {int limit = 1}) async {
+    final snap = await _workouts(uid)
+        .where('programId', isEqualTo: programId)
+        .where('workoutDayId', isEqualTo: workoutDayId)
+        .where('status', isEqualTo: WorkoutStatus.completed.name)
+        .orderBy('date', descending: true)
+        .limit(limit)
+        .get();
+
+    return snap.docs.map((d) => Workout.fromJson(d.data())).toList();
+  }
+
   Future<List<Workout>> getRecentWorkoutsForExercise(
       String uid, String exerciseName,
       {int limit = 5}) async {

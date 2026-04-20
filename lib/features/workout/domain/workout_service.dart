@@ -20,11 +20,34 @@ class WorkoutService {
   WorkoutService(this._workoutRepo, this._prRepo);
 
   /// Create a new workout from a program day template.
-  Workout startWorkout({
+  /// Pre-fills weights from the most recent completed workout for this day
+  /// if [program.prefillWeights] is true.
+  Future<Workout> startWorkout({
+    required String uid,
     required Program program,
     required WorkoutDay day,
-  }) {
+  }) async {
+    // Look up last completed workout for this program day
+    Map<String, WorkoutExercise>? lastExercises;
+    if (program.prefillWeights) {
+      try {
+        final recentWorkouts = await _workoutRepo.getRecentWorkoutsForDay(
+          uid, program.id, day.id,
+        );
+        if (recentWorkouts.isNotEmpty) {
+          lastExercises = {
+            for (final e in recentWorkouts.first.exercises) e.name: e
+          };
+        }
+      } catch (_) {
+        // Non-fatal: proceed without pre-fill
+      }
+    }
+
     final exercises = day.exercises.map((pe) {
+      final lastExercise = lastExercises?[pe.name];
+      final lastSets = lastExercise?.sets ?? [];
+
       return WorkoutExercise(
         name: pe.name,
         equipment: pe.equipment ?? '',
@@ -34,9 +57,9 @@ class WorkoutService {
         progressionMode: pe.progressionMode,
         sets: List.generate(
           pe.sets,
-          (_) => WorkoutSet(
-            weight: 0,
-            reps: 0,
+          (i) => WorkoutSet(
+            weight: i < lastSets.length ? lastSets[i].weight : 0,
+            reps: i < lastSets.length ? lastSets[i].reps : 0,
             rir: pe.targetRir,
             equipmentType: pe.equipmentType,
           ),

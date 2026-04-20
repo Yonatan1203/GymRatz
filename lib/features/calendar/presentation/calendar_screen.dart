@@ -284,10 +284,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           statusCode = 3;
         }
 
-        // Fall back to SampleData if no Firestore data
-        if (calendarData.isEmpty && dayNumber - 1 < SampleData.calendarDays.length) {
-          statusCode = SampleData.calendarDays[dayNumber - 1];
-        }
 
         Color bgColor;
         Color textColor;

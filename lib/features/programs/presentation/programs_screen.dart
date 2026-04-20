@@ -112,8 +112,14 @@ class ProgramsScreen extends ConsumerWidget {
             if (programs.isEmpty) {
               return _buildEmptyState(context);
             }
+            // Sort: main program first
+            final sorted = [...programs]..sort((a, b) {
+              if (a.isActive && !b.isActive) return -1;
+              if (!a.isActive && b.isActive) return 1;
+              return 0;
+            });
             return Column(
-              children: programs
+              children: sorted
                   .map((p) => Padding(
                         padding: EdgeInsets.only(bottom: AppSpacing.itemGap),
                         child: _buildProgramCard(context, ref, p),
@@ -159,9 +165,17 @@ class ProgramsScreen extends ConsumerWidget {
                     padding: EdgeInsets.only(right: AppSpacing.md),
                     child: GestureDetector(
                       onTap: () async {
+                        final result = await showDialog<Map<String, dynamic>>(
+                          context: context,
+                          builder: (ctx) => _SetAsMainDialog(programName: p.name),
+                        );
+                        if (result == null) return;
                         final uid = ref.read(currentUidProvider);
                         if (uid == null) return;
-                        await ref.read(programRepositoryProvider).setActiveProgram(uid, p.id);
+                        final prefillWeights = result['prefillWeights'] as bool;
+                        final repo = ref.read(programRepositoryProvider);
+                        await repo.setActiveProgram(uid, p.id);
+                        await repo.updateProgram(uid, p.id, {'prefillWeights': prefillWeights});
                       },
                       child: CustomBadge(
                         text: 'Set as Main',
@@ -306,6 +320,70 @@ class ProgramsScreen extends ConsumerWidget {
                 ),
               ),
             )),
+      ],
+    );
+  }
+}
+
+class _SetAsMainDialog extends StatefulWidget {
+  final String programName;
+  const _SetAsMainDialog({required this.programName});
+
+  @override
+  State<_SetAsMainDialog> createState() => _SetAsMainDialogState();
+}
+
+class _SetAsMainDialogState extends State<_SetAsMainDialog> {
+  bool _prefillWeights = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Set as Main Program'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Set "${widget.programName}" as your main program? This will update your calendar and workout schedule.',
+          ),
+          SizedBox(height: 16.h),
+          Text(
+            'Workout Weights',
+            style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600),
+          ),
+          SizedBox(height: 8.h),
+          RadioListTile<bool>(
+            title: Text('Restore previous weights', style: AppTextStyles.bodySmall),
+            subtitle: Text('Use weights from your last sessions', style: AppTextStyles.caption),
+            value: true,
+            groupValue: _prefillWeights,
+            onChanged: (v) => setState(() => _prefillWeights = v!),
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
+          RadioListTile<bool>(
+            title: Text('Start fresh', style: AppTextStyles.bodySmall),
+            subtitle: Text('Begin with empty weights', style: AppTextStyles.caption),
+            value: false,
+            groupValue: _prefillWeights,
+            onChanged: (v) => setState(() => _prefillWeights = v!),
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop({
+            'prefillWeights': _prefillWeights,
+          }),
+          child: const Text('Confirm'),
+        ),
       ],
     );
   }

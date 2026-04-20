@@ -46,7 +46,8 @@ final programByIdProvider =
 final recentWorkoutsProvider = StreamProvider<List<Workout>>((ref) {
   final uid = ref.watch(currentUidProvider);
   if (uid == null) return Stream.value([]);
-  return ref.watch(workoutRepositoryProvider).watchRecentWorkouts(uid);
+  // Fetch enough to cover the current week reliably
+  return ref.watch(workoutRepositoryProvider).watchRecentWorkouts(uid, limit: 30);
 });
 
 // ─── Personal Records ───
@@ -127,6 +128,10 @@ final calendarMonthProvider = FutureProvider.family<Map<int, WorkoutStatus>, Str
   final year = int.parse(parts[0]);
   final month = int.parse(parts[1]);
 
+  // Watch recent workouts to trigger rebuild when a workout is completed
+  ref.watch(recentWorkoutsProvider);
+
+  // Get logged workouts for this month
   final workouts = await ref
       .watch(workoutRepositoryProvider)
       .getWorkoutsForMonth(uid, year, month);
@@ -135,6 +140,40 @@ final calendarMonthProvider = FutureProvider.family<Map<int, WorkoutStatus>, Str
   for (final w in workouts) {
     result[w.date.day] = w.status;
   }
+
+  // Overlay scheduled days from active program
+  // Use .value to properly await the stream's first emission
+  final activeProgramAsync = ref.watch(activeProgramProvider);
+  final activeProgram = activeProgramAsync.valueOrNull;
+  if (activeProgram != null) {
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    const dayOfWeekNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    // Build set of scheduled day-of-week names from program
+    final scheduledDays = <String>{};
+    for (final day in activeProgram.days) {
+      scheduledDays.add(day.dayOfWeek);
+    }
+
+    final today = DateTime.now();
+    final todayMidnight = DateTime(today.year, today.month, today.day);
+
+    // Mark days that match the program schedule as "scheduled" if not already logged
+    for (int d = 1; d <= daysInMonth; d++) {
+      if (result.containsKey(d)) continue; // Already has a status (completed/missed)
+      final date = DateTime(year, month, d);
+      final dayName = dayOfWeekNames[date.weekday - 1];
+      if (scheduledDays.contains(dayName)) {
+        // Future/today → scheduled, past → missed
+        if (date.isBefore(todayMidnight)) {
+          result[d] = WorkoutStatus.missed;
+        } else {
+          result[d] = WorkoutStatus.scheduled;
+        }
+      }
+    }
+  }
+
   return result;
 });
 
