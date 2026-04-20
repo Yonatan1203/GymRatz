@@ -247,11 +247,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   _sectionTitle('Preferences'),
                   SizedBox(height: AppSpacing.lg),
                   _prefRow('Notifications', _notifications, (v) => setState(() => _notifications = v)),
-                  _prefRow(
-                    'Dark Mode',
-                    ref.watch(themeProvider) == ThemeMode.dark,
-                    (_) => ref.read(themeProvider.notifier).toggleTheme(),
-                  ),
                   SizedBox(height: AppSpacing.xxxl),
                   CustomButton(
                     text: 'Save Changes',
