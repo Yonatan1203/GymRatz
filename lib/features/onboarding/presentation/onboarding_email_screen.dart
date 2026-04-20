@@ -124,7 +124,7 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
                           width: 40.r,
                           height: 40.r,
                           decoration: BoxDecoration(
-                            color: context.primaryColor.withOpacity(0.1),
+                            color: context.primaryColor.withValues(alpha:0.1),
                             borderRadius: AppRadius.borderLg,
                           ),
                           child: Icon(

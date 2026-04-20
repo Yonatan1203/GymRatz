@@ -75,7 +75,7 @@ class HomeScreen extends ConsumerWidget {
                 width: 40.r,
                 height: 40.r,
                 decoration: BoxDecoration(
-                  color: context.primaryColor.withOpacity(0.15),
+                  color: context.primaryColor.withValues(alpha:0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -94,7 +94,7 @@ class HomeScreen extends ConsumerWidget {
                     width: 40.r,
                     height: 40.r,
                     decoration: BoxDecoration(
-                      color: context.primaryColor.withOpacity(0.15),
+                      color: context.primaryColor.withValues(alpha:0.15),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(AppIcons.user, size: 18.r, color: context.foreground),
@@ -114,9 +114,9 @@ class HomeScreen extends ConsumerWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: context.coralColor.withOpacity(0.12),
+                  color: context.coralColor.withValues(alpha:0.12),
                   borderRadius: AppRadius.borderLg,
-                  border: Border.all(color: context.coralColor.withOpacity(0.2)),
+                  border: Border.all(color: context.coralColor.withValues(alpha:0.2)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -145,11 +145,11 @@ class HomeScreen extends ConsumerWidget {
                   width: 56.w,
                   decoration: BoxDecoration(
                     color: isToday
-                        ? context.primaryColor.withOpacity(0.15)
-                        : context.primaryColor.withOpacity(0.06),
+                        ? context.primaryColor.withValues(alpha:0.15)
+                        : context.primaryColor.withValues(alpha:0.06),
                     borderRadius: AppRadius.borderLg,
                     border: isToday
-                        ? Border.all(color: context.primaryColor.withOpacity(0.3))
+                        ? Border.all(color: context.primaryColor.withValues(alpha:0.3))
                         : null,
                   ),
                   child: Column(

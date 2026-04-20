@@ -65,10 +65,10 @@ class AsyncValueWidget<T> extends StatelessWidget {
                 width: 64.r,
                 height: 64.r,
                 decoration: BoxDecoration(
-                  color: context.destructiveColor.withOpacity(0.1),
+                  color: context.destructiveColor.withValues(alpha: 0.1),
                   borderRadius: AppRadius.borderXl,
                   border: Border.all(
-                    color: context.destructiveColor.withOpacity(0.15),
+                    color: context.destructiveColor.withValues(alpha: 0.15),
                   ),
                 ),
                 child: Center(

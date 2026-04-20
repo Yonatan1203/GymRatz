@@ -300,7 +300,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(AppIcons.barChart2, size: 40.r, color: context.mutedForeground.withOpacity(0.6)),
+              Icon(AppIcons.barChart2, size: 40.r, color: context.mutedForeground.withValues(alpha:0.6)),
               SizedBox(height: 12.h),
               Text(message, style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
             ],
@@ -510,7 +510,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 padding: EdgeInsets.symmetric(vertical: 24.h),
                 child: Column(
                   children: [
-                    Icon(AppIcons.trophy, size: 36.r, color: context.mutedForeground.withOpacity(0.6)),
+                    Icon(AppIcons.trophy, size: 36.r, color: context.mutedForeground.withValues(alpha:0.6)),
                     SizedBox(height: 8.h),
                     Text(
                       prsList.isEmpty ? 'No personal records yet' : 'No PRs for this exercise',
@@ -588,7 +588,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 padding: EdgeInsets.symmetric(vertical: 24.h),
                 child: Column(
                   children: [
-                    Icon(AppIcons.dumbbell, size: 36.r, color: context.mutedForeground.withOpacity(0.6)),
+                    Icon(AppIcons.dumbbell, size: 36.r, color: context.mutedForeground.withValues(alpha:0.6)),
                     SizedBox(height: 8.h),
                     Text('No workouts logged yet', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
                   ],

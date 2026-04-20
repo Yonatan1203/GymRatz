@@ -156,7 +156,7 @@ class ProgramsScreen extends ConsumerWidget {
                     padding: EdgeInsets.only(right: AppSpacing.md),
                     child: CustomBadge(
                       text: 'Main',
-                      backgroundColor: context.coralColor.withOpacity(0.12),
+                      backgroundColor: context.coralColor.withValues(alpha:0.12),
                       textColor: context.coralColor,
                     ),
                   )
@@ -179,7 +179,7 @@ class ProgramsScreen extends ConsumerWidget {
                       },
                       child: CustomBadge(
                         text: 'Set as Main',
-                        backgroundColor: context.primaryColor.withOpacity(0.08),
+                        backgroundColor: context.primaryColor.withValues(alpha:0.08),
                         textColor: context.primaryColor,
                       ),
                     ),

@@ -253,7 +253,7 @@ class _OnboardingHeightScreenState
                                     color: isSelected
                                         ? context.foreground
                                         : context.mutedForeground
-                                            .withOpacity(0.6),
+                                            .withValues(alpha:0.6),
                                     fontWeight: isSelected
                                         ? FontWeight.w700
                                         : FontWeight.w400,
@@ -335,7 +335,7 @@ class _OnboardingHeightScreenState
                                     color: isSelected
                                         ? context.foreground
                                         : context.mutedForeground
-                                            .withOpacity(0.6),
+                                            .withValues(alpha:0.6),
                                     fontWeight: isSelected
                                         ? FontWeight.w700
                                         : FontWeight.w400,
@@ -386,7 +386,7 @@ class _OnboardingHeightScreenState
                 padding: EdgeInsets.symmetric(vertical: 14.h),
                 decoration: BoxDecoration(
                   color: _isMetric
-                      ? primary.withOpacity(0.1)
+                      ? primary.withValues(alpha:0.1)
                       : Colors.transparent,
                   borderRadius: AppRadius.borderXl,
                   border: _isMetric
@@ -428,7 +428,7 @@ class _OnboardingHeightScreenState
                 padding: EdgeInsets.symmetric(vertical: 14.h),
                 decoration: BoxDecoration(
                   color: !_isMetric
-                      ? primary.withOpacity(0.1)
+                      ? primary.withValues(alpha:0.1)
                       : Colors.transparent,
                   borderRadius: AppRadius.borderXl,
                   border: !_isMetric

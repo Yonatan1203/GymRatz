@@ -475,7 +475,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                           Icon(
                             AppIcons.dumbbell,
                             size: 32.r,
-                            color: context.mutedForeground.withOpacity(0.6),
+                            color: context.mutedForeground.withValues(alpha:0.6),
                           ),
                           SizedBox(height: 8.h),
                           Text(
@@ -1134,7 +1134,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                   ],
                 ),
               ),
-              Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
+              Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
               ...options.map((option) {
                 final isSelected = option == currentValue;
                 return InkWell(

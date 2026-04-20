@@ -188,7 +188,7 @@ class _OnboardingStyleScreenState
           padding: EdgeInsets.all(16.r),
           decoration: BoxDecoration(
             color: isSelected
-                ? primary.withOpacity(0.1)
+                ? primary.withValues(alpha:0.1)
                 : context.cardColor,
             borderRadius: AppRadius.borderXl,
             border: Border.all(
@@ -272,7 +272,7 @@ class _OnboardingStyleScreenState
         child: Container(
           decoration: BoxDecoration(
             color: isSelected
-                ? primary.withOpacity(0.1)
+                ? primary.withValues(alpha:0.1)
                 : context.cardColor,
             borderRadius: AppRadius.borderXl,
             border: Border.all(

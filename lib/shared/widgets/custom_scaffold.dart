@@ -68,7 +68,6 @@ class CustomScaffold extends ConsumerWidget {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final tabCount = 5;
-                    final tabWidth = constraints.maxWidth / tabCount;
                     final activeIndex = navigationShell.currentIndex;
 
                     return Column(
