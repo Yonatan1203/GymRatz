@@ -32,12 +32,6 @@ class CustomScaffold extends ConsumerWidget {
               Expanded(child: navigationShell),
             ],
           ),
-          // Theme toggle button
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            right: 16,
-            child: _ThemeToggle(isDark: isDark, ref: ref),
-          ),
           // Floating active workout banner
           if (activeSession != null)
             Positioned(
@@ -131,42 +125,6 @@ Widget _expandedNavItem(IconData icon, String label, bool isActive, VoidCallback
       isDark: isDark,
     ),
   );
-}
-
-class _ThemeToggle extends StatelessWidget {
-  final bool isDark;
-  final WidgetRef ref;
-
-  const _ThemeToggle({required this.isDark, required this.ref});
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Switch to ${isDark ? 'light' : 'dark'} mode',
-      child: GestureDetector(
-      onTap: () {
-        PlatformAdapter.hapticMedium();
-        ref.read(themeProvider.notifier).toggleTheme();
-      },
-      child: SizedBox(
-        width: 44,
-        height: 44,
-        child: Center(
-          child: AnimatedRotation(
-            turns: isDark ? 0.5 : 0.0,
-            duration: const Duration(milliseconds: 200),
-            child: Icon(
-              isDark ? AppIcons.sun : AppIcons.moon,
-              size: 20,
-              color: isDark ? AppColors.darkForeground : AppColors.lightForeground,
-            ),
-          ),
-        ),
-      ),
-    ),
-    );
-  }
 }
 
 class _NavItem extends StatefulWidget {
