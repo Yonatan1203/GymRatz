@@ -49,18 +49,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 children: [
                   _sectionTitle(context, 'APPEARANCE'),
                   CustomCard(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                    child: Row(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(isDark ? AppIcons.moon : AppIcons.sun, size: 20.r, color: context.mutedForeground),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Text('Dark Mode', style: AppTextStyles.body.copyWith(color: context.foreground)),
+                        Row(
+                          children: [
+                            Icon(isDark ? AppIcons.moon : AppIcons.sun, size: 20.r, color: context.mutedForeground),
+                            SizedBox(width: 12.w),
+                            Text('Theme', style: AppTextStyles.body.copyWith(color: context.foreground)),
+                          ],
                         ),
-                        CustomToggle(
-                          value: isDark,
-                          onChanged: (_) => ref.read(themeProvider.notifier).toggleTheme(),
-                        ),
+                        SizedBox(height: 12.h),
+                        _buildThemeSelector(ref, isDark),
                       ],
                     ),
                   ),
@@ -146,20 +147,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           },
                         ),
                         Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
-                        ref.watch(isProProvider).when(
-                          data: (isPro) => isPro
-                              ? const SizedBox.shrink()
-                              : MenuItemWidget(
-                                  icon: AppIcons.zap,
-                                  label: 'Upgrade to Pro',
-                                  onTap: () => context.push('/paywall'),
-                                ),
-                          loading: () => const SizedBox.shrink(),
-                          error: (_, __) => MenuItemWidget(
-                            icon: AppIcons.zap,
-                            label: 'Upgrade to Pro',
-                            onTap: () => context.push('/paywall'),
-                          ),
+                        MenuItemWidget(
+                          icon: AppIcons.zap,
+                          label: 'Subscribe',
+                          onTap: () => context.push('/paywall'),
                         ),
                       ],
                     ),
@@ -266,6 +257,52 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Expanded(child: Text(label, style: AppTextStyles.body.copyWith(color: context.foreground))),
           CustomToggle(value: value, onChanged: onChanged),
         ],
+      ),
+    );
+  }
+
+  Widget _buildThemeSelector(WidgetRef ref, bool isDark) {
+    final currentMode = ref.watch(themeProvider);
+
+    return Row(
+      children: [
+        _themeOption(ref, 'Light', ThemeMode.light, currentMode),
+        SizedBox(width: 8.w),
+        _themeOption(ref, 'Dark', ThemeMode.dark, currentMode),
+        SizedBox(width: 8.w),
+        _themeOption(ref, 'System', ThemeMode.system, currentMode),
+      ],
+    );
+  }
+
+  Widget _themeOption(WidgetRef ref, String label, ThemeMode mode, ThemeMode current) {
+    final isSelected = current == mode;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => ref.read(themeProvider.notifier).setThemeMode(mode),
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 10.h),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? context.primaryColor.withOpacity(0.12)
+                : context.mutedColor,
+            borderRadius: BorderRadius.circular(8.r),
+            border: Border.all(
+              color: isSelected ? context.primaryColor : Colors.transparent,
+              width: 1.5,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: isSelected ? context.primaryColor : context.mutedForeground,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
