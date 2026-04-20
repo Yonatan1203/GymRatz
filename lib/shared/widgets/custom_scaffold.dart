@@ -10,6 +10,7 @@ import '../../theme/app_shadows.dart';
 import '../utils/extensions.dart';
 import '../utils/platform_adapter.dart';
 import 'active_workout_banner.dart';
+import '../../features/subscription/presentation/subscription_gate.dart';
 import 'offline_banner.dart';
 
 class CustomScaffold extends ConsumerWidget {
@@ -29,7 +30,9 @@ class CustomScaffold extends ConsumerWidget {
           Column(
             children: [
               const OfflineBanner(),
-              Expanded(child: navigationShell),
+              Expanded(
+                child: SubscriptionGate(child: navigationShell),
+              ),
             ],
           ),
           // Floating active workout banner
