@@ -47,8 +47,6 @@ class ProfileScreen extends ConsumerWidget {
                       MenuItemWidget(icon: AppIcons.calendar, label: 'Calendar', onTap: () => context.go('/calendar')),
                     ]),
                     SizedBox(height: AppSpacing.sectionGap),
-                    _buildSubscriptionItem(context, ref),
-                    SizedBox(height: AppSpacing.sectionGap),
                     _buildMenuSection(context, 'ACCOUNT', [
                       MenuItemWidget(icon: AppIcons.settings, label: 'Settings', onTap: () => context.push('/settings')),
                     ]),
@@ -173,31 +171,6 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
         )),
-      ],
-    );
-  }
-
-  Widget _buildSubscriptionItem(BuildContext context, WidgetRef ref) {
-    final isPro = ref.watch(isProProvider).valueOrNull ?? false;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('SUBSCRIPTION', style: AppTextStyles.caption.copyWith(color: context.mutedForeground, fontWeight: FontWeight.w600, letterSpacing: 1)),
-        SizedBox(height: AppSpacing.md),
-        ScaleTap(
-          onTap: isPro ? null : () => context.push('/paywall'),
-          child: CustomCard(
-            variant: isPro ? CardVariant.standard : CardVariant.actionCta,
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-            child: MenuItemWidget(
-              icon: AppIcons.crown,
-              label: isPro ? 'GymRatz Pro' : 'Upgrade to Pro',
-              iconColor: isPro ? context.primaryColor : null,
-              onTap: isPro ? null : () => context.push('/paywall'),
-            ),
-          ),
-        ),
       ],
     );
   }
