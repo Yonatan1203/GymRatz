@@ -1,0 +1,9 @@
+Initial release of GymRatz!
+
+• Create custom workout programs
+• Smart progressive overload suggestions
+• Weekly workout view with completion tracking
+• Personal records and workout history
+• Calendar with program integration
+• Body weight tracking
+• 7-day free trial

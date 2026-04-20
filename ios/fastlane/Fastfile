@@ -1,0 +1,30 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Build and upload to TestFlight"
+  lane :beta do
+    setup_ci if ENV["CI"]
+
+    # Install provisioning profiles via match
+    match(
+      type: "appstore",
+      app_identifier: "com.gymratz.gymratz",
+      readonly: true,
+    )
+
+    # Build the IPA
+    sh("cd ../.. && flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --dart-define=RC_APPLE_KEY=#{ENV['RC_APPLE_KEY']}")
+
+    # Upload to TestFlight
+    upload_to_testflight(
+      ipa: "../../build/ios/ipa/GymRatz.ipa",
+      skip_waiting_for_build_processing: true,
+      apple_id: ENV["APPLE_APP_ID"],
+    )
+  end
+
+  desc "Build IPA only (no upload)"
+  lane :build do
+    sh("cd ../.. && flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --dart-define=RC_APPLE_KEY=#{ENV['RC_APPLE_KEY']}")
+  end
+end
