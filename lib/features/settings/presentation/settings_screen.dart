@@ -161,7 +161,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: Column(
                       children: [
-                        MenuItemWidget(icon: AppIcons.helpCircle, label: 'Help & FAQ', onTap: () {}),
+                        MenuItemWidget(icon: AppIcons.helpCircle, label: 'Help & FAQ', onTap: () => launchUrl(Uri.parse(AppConstants.faqUrl))),
                         Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
                         MenuItemWidget(icon: AppIcons.shield, label: 'Privacy Policy', onTap: () => launchUrl(Uri.parse(AppConstants.privacyPolicyUrl))),
                         Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
