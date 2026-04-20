@@ -58,7 +58,7 @@ class WorkoutScreen extends ConsumerWidget {
   Widget _buildHeader(BuildContext context) {
     final now = DateTime.now();
     final mondayOffset = now.weekday - 1;
-    final monday = now.subtract(Duration(days: mondayOffset));
+    final monday = DateTime(now.year, now.month, now.day).subtract(Duration(days: mondayOffset));
     final sunday = monday.add(const Duration(days: 6));
 
     final dateRange = '${_months[monday.month - 1]} ${monday.day} - ${_months[sunday.month - 1]} ${sunday.day}';
@@ -151,7 +151,9 @@ class WorkoutScreen extends ConsumerWidget {
   Widget _buildWeeklyBody(BuildContext context, bool isDark, List<WorkoutDay> days, List<Workout> recentWorkouts) {
     final now = DateTime.now();
     final mondayOffset = now.weekday - 1;
-    final monday = now.subtract(Duration(days: mondayOffset));
+    // Normalize to midnight to avoid time-of-day comparison issues
+    final monday = DateTime(now.year, now.month, now.day).subtract(Duration(days: mondayOffset));
+    final sundayEnd = monday.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
 
     // Map dayOfWeek string to WorkoutDay
     final dayMap = <String, WorkoutDay>{};
@@ -164,8 +166,7 @@ class WorkoutScreen extends ConsumerWidget {
     for (final workout in recentWorkouts) {
       if (workout.status == WorkoutStatus.completed && workout.workoutDayId != null) {
         // Check if the workout date is within this week (Monday to Sunday)
-        final sunday = monday.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
-        if (!workout.date.isBefore(monday) && !workout.date.isAfter(sunday)) {
+        if (!workout.date.isBefore(monday) && !workout.date.isAfter(sundayEnd)) {
           completedDayIds.add(workout.workoutDayId!);
         }
       }
