@@ -38,10 +38,10 @@ class EmptyStateWidget extends StatelessWidget {
                 width: 64.r,
                 height: 64.r,
                 decoration: BoxDecoration(
-                  color: context.primaryColor.withOpacity(0.1),
+                  color: context.primaryColor.withValues(alpha: 0.1),
                   borderRadius: AppRadius.borderXl,
                   border: Border.all(
-                    color: context.primaryColor.withOpacity(0.15),
+                    color: context.primaryColor.withValues(alpha: 0.15),
                   ),
                 ),
                 child: Center(
@@ -89,10 +89,10 @@ class EmptyStateWidget extends StatelessWidget {
                       vertical: 10.h,
                     ),
                     decoration: BoxDecoration(
-                      color: context.coralColor.withOpacity(0.08),
+                      color: context.coralColor.withValues(alpha: 0.08),
                       borderRadius: AppRadius.borderLg,
                       border: Border.all(
-                        color: context.coralColor.withOpacity(0.2),
+                        color: context.coralColor.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Text(

@@ -44,9 +44,9 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
           shaderCallback: (bounds) {
             return LinearGradient(
               colors: [
-                baseColor.withOpacity(0.5),
-                baseColor.withOpacity(1.0),
-                baseColor.withOpacity(0.5),
+                baseColor.withValues(alpha: 0.5),
+                baseColor.withValues(alpha: 1.0),
+                baseColor.withValues(alpha: 0.5),
               ],
               stops: [
                 (_controller.value - 0.3).clamp(0.0, 1.0),

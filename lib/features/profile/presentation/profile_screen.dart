@@ -91,7 +91,7 @@ class ProfileScreen extends ConsumerWidget {
             width: 96.r,
             height: 96.r,
             decoration: BoxDecoration(
-              color: context.primaryColor.withOpacity(0.15),
+              color: context.primaryColor.withValues(alpha:0.15),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -120,7 +120,6 @@ class ProfileScreen extends ConsumerWidget {
     final prsAsync = ref.watch(personalRecordsProvider);
     final prs = prsAsync.valueOrNull;
 
-    // Fall back to sample data if no Firestore data yet
     final prList = prs != null && prs.isNotEmpty
         ? prs
             .map((p) => {
@@ -130,12 +129,17 @@ class ProfileScreen extends ConsumerWidget {
                   'date': '${p.date.month}/${p.date.day}/${p.date.year}',
                 })
             .toList()
-        : SampleData.personalRecords;
+        : <Map<String, dynamic>>[];
 
     return Column(
       children: [
         SectionHeader(title: 'PERSONAL RECORDS', actionText: 'View All', onAction: () => context.push('/progress')),
         SizedBox(height: AppSpacing.lg),
+        if (prList.isEmpty)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+            child: Text('No personal records yet. Complete workouts to set PRs!', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+          ),
         ...prList.map((pr) => Padding(
           padding: EdgeInsets.only(bottom: AppSpacing.md),
           child: ScaleTap(

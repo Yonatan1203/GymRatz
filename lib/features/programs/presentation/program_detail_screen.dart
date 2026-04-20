@@ -253,7 +253,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                       Container(
                         padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
                         decoration: BoxDecoration(
-                          color: context.primaryColor.withOpacity(0.15),
+                          color: context.primaryColor.withValues(alpha:0.15),
                           borderRadius: AppRadius.borderFull,
                         ),
                         child: Text(
@@ -268,7 +268,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                       Container(
                         padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
                         decoration: BoxDecoration(
-                          color: context.coralColor.withOpacity(0.12),
+                          color: context.coralColor.withValues(alpha:0.12),
                           borderRadius: AppRadius.borderFull,
                         ),
                         child: Row(
@@ -341,7 +341,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
         width: 40.r,
         height: 40.r,
         decoration: BoxDecoration(
-          color: context.primaryColor.withOpacity(0.15),
+          color: context.primaryColor.withValues(alpha:0.15),
           borderRadius: BorderRadius.circular(10.r),
         ),
         child: Icon(icon, color: context.foreground, size: 20.r),
@@ -353,7 +353,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
     return Container(
       padding: EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: context.primaryColor.withOpacity(0.08),
+        color: context.primaryColor.withValues(alpha:0.08),
         borderRadius: AppRadius.borderLg,
       ),
       child: Column(
@@ -380,7 +380,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
             child: LinearProgressIndicator(
               value: progress / 100,
               minHeight: 8.h,
-              backgroundColor: context.primaryColor.withOpacity(0.15),
+              backgroundColor: context.primaryColor.withValues(alpha:0.15),
               valueColor: AlwaysStoppedAnimation<Color>(context.primaryColor),
             ),
           ),
@@ -627,7 +627,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                   ),
                 ),
                 if (isExpanded) ...[
-                  Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
+                  Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
                   ...day.exercises.asMap().entries.map((exEntry) {
                     final exIdx = exEntry.key;
                     final ex = exEntry.value;
@@ -700,7 +700,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
           Icon(
             AppIcons.calendar,
             size: 40.r,
-            color: context.mutedForeground.withOpacity(0.6),
+            color: context.mutedForeground.withValues(alpha:0.6),
           ),
           SizedBox(height: AppSpacing.md),
           Text(

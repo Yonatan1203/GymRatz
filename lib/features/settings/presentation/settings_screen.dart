@@ -77,7 +77,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             NotificationService().requestPermission();
                           }
                         }),
-                        Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
+                        Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
                         _toggleRow('Workout Reminders', _workoutReminders, (v) {
                           setState(() => _workoutReminders = v);
                           if (v) {
@@ -91,7 +91,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             NotificationService().cancelWorkoutReminders();
                           }
                         }),
-                        Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
+                        Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
                         _toggleRow('Rest Timer Sound', _restTimerSound, (v) => setState(() => _restTimerSound = v)),
                       ],
                     ),
@@ -103,7 +103,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: Column(
                       children: [
                         MenuItemWidget(icon: AppIcons.user, label: 'Edit Profile', onTap: () => context.push('/profile/edit')),
-                        Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
+                        Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
                         MenuItemWidget(icon: AppIcons.shield, label: 'Privacy & Security', onTap: () {}),
                       ],
                     ),
@@ -115,7 +115,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: Column(
                       children: [
                         MenuItemWidget(icon: AppIcons.download, label: 'Export Data', onTap: () {}),
-                        Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
+                        Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
                         MenuItemWidget(
                           icon: AppIcons.trash2,
                           label: 'Delete Account',
@@ -146,7 +146,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             }
                           },
                         ),
-                        Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
+                        Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
                         MenuItemWidget(
                           icon: AppIcons.zap,
                           label: 'Subscribe',
@@ -162,11 +162,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: Column(
                       children: [
                         MenuItemWidget(icon: AppIcons.helpCircle, label: 'Help & FAQ', onTap: () => context.push('/faq')),
-                        Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
+                        Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
                         MenuItemWidget(icon: AppIcons.shield, label: 'Privacy Policy', onTap: () => launchUrl(Uri.parse(AppConstants.privacyPolicyUrl))),
-                        Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
+                        Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
                         MenuItemWidget(icon: AppIcons.fileText, label: 'Terms of Service', onTap: () => launchUrl(Uri.parse(AppConstants.termsOfServiceUrl))),
-                        Divider(color: context.mutedForeground.withOpacity(0.15), height: 1),
+                        Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
                         MenuItemWidget(icon: AppIcons.info, label: 'About', onTap: () {}),
                       ],
                     ),
@@ -285,7 +285,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           padding: EdgeInsets.symmetric(vertical: 10.h),
           decoration: BoxDecoration(
             color: isSelected
-                ? context.primaryColor.withOpacity(0.12)
+                ? context.primaryColor.withValues(alpha:0.12)
                 : context.mutedColor,
             borderRadius: BorderRadius.circular(8.r),
             border: Border.all(

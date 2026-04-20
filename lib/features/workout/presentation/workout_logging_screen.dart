@@ -23,7 +23,7 @@ import '../../../shared/widgets/custom_badge.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_card.dart';
 import '../../../shared/widgets/custom_input.dart';
-import '../../../shared/data/sample_data.dart';
+
 import '../../../shared/models/enums.dart';
 import '../../../shared/models/exercise.dart';
 import '../../../shared/models/workout.dart';
@@ -221,9 +221,8 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
         )).toList();
         _sets = _exercises.map((e) => List<WorkoutSet>.from(e.sets)).toList();
       } else {
-        final sampleExercises = SampleData.todayExercises;
-        _exercises = sampleExercises;
-        _sets = sampleExercises.map((e) => List<WorkoutSet>.from(e.sets)).toList();
+        _exercises = [];
+        _sets = [];
       }
       _expanded = {0};
 

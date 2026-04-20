@@ -41,13 +41,13 @@ class GradientHeader extends StatelessWidget {
             )
           : BoxDecoration(
               color: isDark
-                  ? context.primaryColor.withOpacity(0.12)
-                  : context.primaryColor.withOpacity(0.08),
+                  ? context.primaryColor.withValues(alpha: 0.12)
+                  : context.primaryColor.withValues(alpha: 0.08),
               border: Border(
                 bottom: BorderSide(
                   color: isDark
-                      ? context.primaryColor.withOpacity(0.15)
-                      : context.primaryColor.withOpacity(0.12),
+                      ? context.primaryColor.withValues(alpha: 0.15)
+                      : context.primaryColor.withValues(alpha: 0.12),
                   width: 1,
                 ),
               ),

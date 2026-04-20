@@ -10,7 +10,7 @@ import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/section_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
-import '../../../shared/data/sample_data.dart';
+
 
 class FavoritesScreen extends ConsumerWidget {
   const FavoritesScreen({super.key});
@@ -19,9 +19,7 @@ class FavoritesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final favoriteIds = ref.watch(favoriteExerciseIdsProvider).valueOrNull ?? {};
     final allExercises = ref.watch(exerciseLibraryProvider);
-    final favExercises = favoriteIds.isNotEmpty
-        ? allExercises.where((e) => favoriteIds.contains(e.id)).toList()
-        : SampleData.exercises.where((e) => e.isFavorite).toList();
+    final favExercises = allExercises.where((e) => favoriteIds.contains(e.id)).toList();
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -86,7 +84,7 @@ class FavoritesScreen extends ConsumerWidget {
       padding: EdgeInsets.all(32.r),
       child: Column(
         children: [
-          Icon(AppIcons.heart, size: 48.r, color: context.mutedForeground.withOpacity(0.6)),
+          Icon(AppIcons.heart, size: 48.r, color: context.mutedForeground.withValues(alpha:0.6)),
           SizedBox(height: 12.h),
           Text(message, style: AppTextStyles.body.copyWith(color: context.mutedForeground)),
         ],

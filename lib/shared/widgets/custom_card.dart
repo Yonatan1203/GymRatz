@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_shadows.dart';
 import '../utils/extensions.dart';
@@ -45,7 +44,7 @@ class CustomCard extends StatelessWidget {
       if (backgroundColor != null) {
         resolvedBgColor = backgroundColor;
       } else if (variant == CardVariant.actionCta) {
-        resolvedBgColor = context.coralColor.withOpacity(0.08);
+        resolvedBgColor = context.coralColor.withValues(alpha: 0.08);
       } else {
         resolvedBgColor = context.cardColor;
       }
@@ -57,11 +56,11 @@ class CustomCard extends StatelessWidget {
       resolvedBorder = border!;
     } else if (variant == CardVariant.workout) {
       resolvedBorder = Border.all(
-        color: context.primaryColor.withOpacity(0.25),
+        color: context.primaryColor.withValues(alpha: 0.25),
       );
     } else if (variant == CardVariant.actionCta) {
       resolvedBorder = Border.all(
-        color: context.coralColor.withOpacity(0.2),
+        color: context.coralColor.withValues(alpha: 0.2),
       );
     } else {
       resolvedBorder = Border.all(
