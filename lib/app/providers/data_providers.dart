@@ -127,6 +127,7 @@ final calendarMonthProvider = FutureProvider.family<Map<int, WorkoutStatus>, Str
   final year = int.parse(parts[0]);
   final month = int.parse(parts[1]);
 
+  // Get logged workouts for this month
   final workouts = await ref
       .watch(workoutRepositoryProvider)
       .getWorkoutsForMonth(uid, year, month);
@@ -135,6 +136,35 @@ final calendarMonthProvider = FutureProvider.family<Map<int, WorkoutStatus>, Str
   for (final w in workouts) {
     result[w.date.day] = w.status;
   }
+
+  // Overlay scheduled days from active program
+  final activeProgram = ref.watch(activeProgramProvider).valueOrNull;
+  if (activeProgram != null) {
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    final dayOfWeekNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    // Build set of scheduled day-of-week names from program
+    final scheduledDays = <String>{};
+    for (final day in activeProgram.days) {
+      scheduledDays.add(day.dayOfWeek);
+    }
+
+    // Mark days that match the program schedule as "scheduled" if not already logged
+    for (int d = 1; d <= daysInMonth; d++) {
+      if (result.containsKey(d)) continue; // Already has a status (completed/missed)
+      final date = DateTime(year, month, d);
+      final dayName = dayOfWeekNames[date.weekday - 1];
+      if (scheduledDays.contains(dayName)) {
+        // Only mark future/today days as scheduled, past as missed
+        final today = DateTime.now();
+        final isInPast = date.isBefore(DateTime(today.year, today.month, today.day));
+        if (!isInPast) {
+          result[d] = WorkoutStatus.scheduled;
+        }
+      }
+    }
+  }
+
   return result;
 });
 

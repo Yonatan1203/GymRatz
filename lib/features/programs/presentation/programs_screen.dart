@@ -112,8 +112,14 @@ class ProgramsScreen extends ConsumerWidget {
             if (programs.isEmpty) {
               return _buildEmptyState(context);
             }
+            // Sort: main program first
+            final sorted = [...programs]..sort((a, b) {
+              if (a.isActive && !b.isActive) return -1;
+              if (!a.isActive && b.isActive) return 1;
+              return 0;
+            });
             return Column(
-              children: programs
+              children: sorted
                   .map((p) => Padding(
                         padding: EdgeInsets.only(bottom: AppSpacing.itemGap),
                         child: _buildProgramCard(context, ref, p),
@@ -159,6 +165,24 @@ class ProgramsScreen extends ConsumerWidget {
                     padding: EdgeInsets.only(right: AppSpacing.md),
                     child: GestureDetector(
                       onTap: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Set as Main Program'),
+                            content: Text('Set "${p.name}" as your main program? This will update your calendar and workout schedule.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(true),
+                                child: const Text('Confirm'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirmed != true) return;
                         final uid = ref.read(currentUidProvider);
                         if (uid == null) return;
                         await ref.read(programRepositoryProvider).setActiveProgram(uid, p.id);
