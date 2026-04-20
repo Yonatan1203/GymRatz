@@ -365,6 +365,19 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
 
   Future<void> _finishWorkout() async {
     if (_saving) return;
+
+    // Guard: ensure subscription is active before saving workout
+    try {
+      await ref.read(subscriptionGuardProvider)();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Subscription expired — subscribe to continue.')),
+        );
+      }
+      return;
+    }
+
     setState(() => _saving = true);
 
     _timer?.cancel();

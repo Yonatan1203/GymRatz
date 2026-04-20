@@ -1,7 +1,7 @@
 import 'package:purchases_flutter/purchases_flutter.dart';
 
+import '../../../core/exceptions.dart';
 import '../data/entitlement_repository.dart';
-import '../data/entitlement_repository.dart' show SubscriptionState;
 
 class EntitlementService {
   final EntitlementRepository _repo;
@@ -33,4 +33,13 @@ class EntitlementService {
 
   Future<SubscriptionState> getSubscriptionState() => _repo.getSubscriptionState();
   Stream<SubscriptionState> subscriptionStateStream() => _repo.subscriptionStateStream();
+
+  /// Throws [SubscriptionExpiredException] if user's subscription is expired.
+  /// Call before write operations.
+  Future<void> requireActiveSubscription() async {
+    final state = await getSubscriptionState();
+    if (state == SubscriptionState.expired) {
+      throw SubscriptionExpiredException();
+    }
+  }
 }

@@ -212,6 +212,18 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
         (sortOrder[a.packageType] ?? 99)
             .compareTo(sortOrder[b.packageType] ?? 99));
 
+    // Calculate savings for yearly plan
+    final monthlyPkg = packages.where((p) => p.packageType == PackageType.monthly).toList();
+    int savingsPercent = 0;
+    if (monthlyPkg.isNotEmpty) {
+      final monthlyCost = monthlyPkg.first.storeProduct.price * 12;
+      final yearlyPkg = packages.where((p) => p.packageType == PackageType.annual).toList();
+      if (yearlyPkg.isNotEmpty && monthlyCost > 0) {
+        final savings = monthlyCost - yearlyPkg.first.storeProduct.price;
+        savingsPercent = ((savings / monthlyCost) * 100).round();
+      }
+    }
+
     return Column(
       children: packages.map((pkg) {
         final product = pkg.storeProduct;
@@ -253,6 +265,16 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                                   color: isYearly
                                       ? Colors.white70
                                       : context.mutedForeground,
+                                ),
+                              ),
+                            ],
+                            if (isYearly && savingsPercent > 0) ...[
+                              SizedBox(height: AppSpacing.xs),
+                              Text(
+                                'Save $savingsPercent%',
+                                style: AppTextStyles.caption.copyWith(
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],

@@ -25,3 +25,9 @@ class FirestoreException extends AppException {
   @override
   String toString() => 'FirestoreException($code): $message';
 }
+
+/// Thrown when a write action is attempted with an expired subscription.
+class SubscriptionExpiredException implements Exception {
+  @override
+  String toString() => 'Subscription expired — subscribe to continue.';
+}
