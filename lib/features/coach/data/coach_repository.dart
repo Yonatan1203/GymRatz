@@ -244,6 +244,48 @@ class CoachRepository {
     await batch.commit();
   }
 
+  // ─── Coach Program Templates ───
+
+  CollectionReference<Map<String, dynamic>> _coachPrograms(String coachUid) =>
+      _coachDoc(coachUid).collection('programs');
+
+  Stream<List<Map<String, dynamic>>> watchCoachPrograms(String coachUid) {
+    return _coachPrograms(coachUid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs.map((d) {
+              final data = d.data();
+              data['id'] = d.id;
+              return data;
+            }).toList());
+  }
+
+  Future<void> createCoachProgram(
+      String coachUid, Map<String, dynamic> programJson) async {
+    final docRef = _coachPrograms(coachUid).doc();
+    programJson['id'] = docRef.id;
+    programJson['createdAt'] = DateTime.now().toIso8601String();
+    await docRef.set(programJson);
+  }
+
+  Future<void> updateCoachProgram(
+      String coachUid, String programId, Map<String, dynamic> fields) async {
+    await _coachPrograms(coachUid).doc(programId).update(fields);
+  }
+
+  Future<void> deleteCoachProgram(String coachUid, String programId) async {
+    await _coachPrograms(coachUid).doc(programId).delete();
+  }
+
+  Future<Map<String, dynamic>?> getCoachProgram(
+      String coachUid, String programId) async {
+    final snap = await _coachPrograms(coachUid).doc(programId).get();
+    if (!snap.exists || snap.data() == null) return null;
+    final data = snap.data()!;
+    data['id'] = snap.id;
+    return data;
+  }
+
   // ─── Invite code generation ───
 
   static String generateInviteCode() {

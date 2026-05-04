@@ -33,6 +33,13 @@ final coachInvitesProvider = StreamProvider<List<CoachInvite>>((ref) {
   return ref.watch(coachServiceProvider).watchInvites(uid);
 });
 
+final coachProgramsProvider =
+    StreamProvider<List<Map<String, dynamic>>>((ref) {
+  final uid = ref.watch(currentUidProvider);
+  if (uid == null) return Stream.value([]);
+  return ref.watch(coachRepositoryProvider).watchCoachPrograms(uid);
+});
+
 final pendingApplicationsProvider =
     StreamProvider<List<Map<String, dynamic>>>((ref) {
   return ref.watch(coachServiceProvider).watchPendingApplications();
