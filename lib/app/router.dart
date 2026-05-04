@@ -29,9 +29,14 @@ import '../features/settings/presentation/faq_screen.dart';
 import '../features/achievements/presentation/achievements_screen.dart';
 import '../features/favorites/presentation/favorites_screen.dart';
 import '../features/subscription/presentation/paywall_screen.dart';
+import '../shared/models/enums.dart';
+import '../features/coach/presentation/coach_application_screen.dart';
+import '../features/coach/presentation/join_coach_screen.dart';
 import '../shared/utils/platform_adapter.dart';
 import '../shared/widgets/custom_scaffold.dart';
+import 'coach_router.dart';
 import 'providers/auth_providers.dart';
+import 'providers/data_providers.dart';
 
 // ─── Transition Helpers ───
 
@@ -114,6 +119,7 @@ const _publicPaths = {
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
+  final userProfile = ref.watch(userProfileProvider).valueOrNull;
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
@@ -122,14 +128,28 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoggedIn = authState.valueOrNull != null;
       final currentPath = state.uri.path;
       final isPublicRoute = _publicPaths.contains(currentPath);
+      final isCoachRoute = currentPath.startsWith('/coach');
+      final role = userProfile?.role ?? UserRole.user;
+      final isCoachRole = role.isCoachRole;
 
       // Not signed in and trying to access protected route -> onboarding
       if (!isLoggedIn && !isPublicRoute) {
         return '/onboarding';
       }
 
-      // Signed in and on auth/onboarding route -> go home
+      // Signed in and on auth/onboarding route -> check role
       if (isLoggedIn && (currentPath == '/login' || currentPath == '/onboarding')) {
+        return isCoachRole ? '/coach/dashboard' : '/home';
+      }
+
+      // Coach role trying to access non-coach user routes -> coach dashboard
+      if (isLoggedIn && isCoachRole && !isCoachRoute && !isPublicRoute &&
+          currentPath != '/apply-coach' && currentPath != '/join-coach') {
+        return '/coach/dashboard';
+      }
+
+      // User role trying to access /coach routes -> home
+      if (isLoggedIn && !isCoachRole && isCoachRoute) {
         return '/home';
       }
 
@@ -388,6 +408,30 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => slideTransitionPage(
           state: state,
           child: const PaywallScreen(),
+        ),
+      ),
+
+      // ─── Coach Shell (Bottom Nav) ───
+      coachShellRoute(),
+
+      // ─── Coach Standalone Screens ───
+      ...coachStandaloneRoutes(),
+
+      // ─── Coach Application Routes ───
+      GoRoute(
+        path: '/join-coach',
+        name: 'join-coach',
+        pageBuilder: (context, state) => slideTransitionPage(
+          state: state,
+          child: const JoinCoachScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/apply-coach',
+        name: 'apply-coach',
+        pageBuilder: (context, state) => slideTransitionPage(
+          state: state,
+          child: const CoachApplicationScreen(),
         ),
       ),
     ],
