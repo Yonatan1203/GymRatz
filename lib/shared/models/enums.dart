@@ -95,3 +95,32 @@ enum GoalPreset {
     }
   }
 }
+
+/// User role within the app.
+enum UserRole {
+  user('user'),
+  coach('coach'),
+  adminUser('admin_user'),
+  adminCoach('admin_coach');
+
+  final String value;
+  const UserRole(this.value);
+
+  bool get isAdmin => this == adminUser || this == adminCoach;
+  bool get isCoachRole => this == coach || this == adminCoach;
+
+  static UserRole fromString(String? value) {
+    switch (value) {
+      case 'user':
+        return UserRole.user;
+      case 'coach':
+        return UserRole.coach;
+      case 'admin_user':
+        return UserRole.adminUser;
+      case 'admin_coach':
+        return UserRole.adminCoach;
+      default:
+        return UserRole.user;
+    }
+  }
+}
