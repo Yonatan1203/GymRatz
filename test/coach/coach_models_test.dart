@@ -4,6 +4,7 @@ import 'package:gymratz/shared/models/user_profile.dart';
 import 'package:gymratz/shared/models/coach_profile.dart';
 import 'package:gymratz/shared/models/coach_invite.dart';
 import 'package:gymratz/shared/models/coach_client.dart';
+import 'package:gymratz/shared/models/program.dart';
 
 void main() {
   group('UserRole enum', () {
@@ -277,6 +278,51 @@ void main() {
       };
       final client = CoachClient.fromJson(json);
       expect(client.inviteMethod, 'code');
+    });
+  });
+
+  group('Program coach fields', () {
+    test('toJson includes assignedByCoach and coachId', () {
+      final program = Program(
+        id: 'p1',
+        name: 'Test Program',
+        workouts: 3,
+        weeks: 4,
+        assignedByCoach: true,
+        coachId: 'coach-123',
+      );
+
+      final json = program.toJson();
+      expect(json['assignedByCoach'], true);
+      expect(json['coachId'], 'coach-123');
+    });
+
+    test('fromJson parses assignedByCoach and coachId', () {
+      final json = {
+        'id': 'p1',
+        'name': 'Test Program',
+        'workouts': 3,
+        'weeks': 4,
+        'assignedByCoach': true,
+        'coachId': 'coach-456',
+      };
+
+      final program = Program.fromJson(json);
+      expect(program.assignedByCoach, true);
+      expect(program.coachId, 'coach-456');
+    });
+
+    test('fromJson defaults assignedByCoach to false when missing', () {
+      final json = {
+        'id': 'p1',
+        'name': 'Test Program',
+        'workouts': 3,
+        'weeks': 4,
+      };
+
+      final program = Program.fromJson(json);
+      expect(program.assignedByCoach, false);
+      expect(program.coachId, isNull);
     });
   });
 }
