@@ -1,9 +1,13 @@
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../../../core/exceptions.dart';
+import '../../../shared/models/enums.dart';
 import '../data/entitlement_repository.dart';
 
 class EntitlementService {
+  /// Check if a role grants permanent pro access.
+  static bool isRoleBasedPro(UserRole role) => role.isAdmin;
+
   final EntitlementRepository _repo;
 
   EntitlementService(this._repo);
