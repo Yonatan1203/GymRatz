@@ -143,12 +143,35 @@ class ProgramsScreen extends ConsumerWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    p.name,
-                    style: AppTextStyles.h4.copyWith(
-                      color: context.foreground,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        p.name,
+                        style: AppTextStyles.h4.copyWith(
+                          color: context.foreground,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (p.assignedByCoach)
+                        Padding(
+                          padding: EdgeInsets.only(top: 4.h),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                            decoration: BoxDecoration(
+                              color: context.primaryColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(4.r),
+                            ),
+                            child: Text(
+                              'Assigned by Coach',
+                              style: AppTextStyles.caption.copyWith(
+                                color: context.primaryColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 if (p.isActive)
@@ -165,6 +188,13 @@ class ProgramsScreen extends ConsumerWidget {
                     padding: EdgeInsets.only(right: AppSpacing.md),
                     child: GestureDetector(
                       onTap: () async {
+                        final userProfile = ref.read(userProfileProvider).valueOrNull;
+                        if (userProfile?.coachId != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Your coach manages your active program')),
+                          );
+                          return;
+                        }
                         final result = await showDialog<Map<String, dynamic>>(
                           context: context,
                           builder: (ctx) => _SetAsMainDialog(programName: p.name),
