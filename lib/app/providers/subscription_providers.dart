@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/exceptions.dart';
 import '../../features/subscription/data/entitlement_repository.dart';
 import '../../features/subscription/domain/entitlement_service.dart';
-import '../../shared/models/enums.dart';
 import 'auth_providers.dart';
 import 'data_providers.dart';
 
