@@ -283,6 +283,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               label: 'Join a Coach',
               onTap: () => context.push('/join-coach'),
             ),
+            Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
+            MenuItemWidget(
+              icon: AppIcons.award,
+              label: 'Apply to Become a Coach',
+              onTap: () => context.push('/apply-coach'),
+            ),
           ],
         ],
       ),

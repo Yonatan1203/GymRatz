@@ -42,6 +42,11 @@ service cloud.firestore {
         allow read: if isOwner(coachUid) || request.auth != null;
         allow create, update, delete: if isOwner(coachUid);
       }
+
+      match /programs/{programId} {
+        allow read: if isOwner(coachUid) || isAdmin();
+        allow create, update, delete: if isOwner(coachUid);
+      }
     }
 
     match /invite_codes/{code} {
