@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:uuid/uuid.dart';
 import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
 import '../../../shared/models/enums.dart';
 import '../../../shared/models/exercise.dart';
+import '../../../shared/models/program.dart';
 import '../../../shared/models/program_exercise.dart';
 import '../../../shared/models/workout_day.dart' as wd;
 import '../../../theme/app_gradients.dart';
@@ -20,7 +22,9 @@ import '../../../shared/widgets/custom_card.dart';
 import '../../../shared/widgets/custom_input.dart';
 
 class CreateProgramScreen extends ConsumerStatefulWidget {
-  const CreateProgramScreen({super.key});
+  const CreateProgramScreen({super.key, this.forCoach = false});
+
+  final bool forCoach;
 
   @override
   ConsumerState<CreateProgramScreen> createState() => _CreateProgramScreenState();
@@ -196,16 +200,32 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
         );
       }).toList();
 
-      await ref.read(programServiceProvider).createProgram(
-            uid,
-            name: name,
-            days: days,
-            weeks: weeks,
-            description: _descriptionController.text.trim().isNotEmpty
-                ? _descriptionController.text.trim()
-                : null,
-            difficulty: _difficulty,
-          );
+      if (widget.forCoach) {
+        final programJson = Program(
+          id: const Uuid().v4(),
+          name: name,
+          workouts: days.length,
+          weeks: weeks,
+          days: days,
+          description: _descriptionController.text.trim().isNotEmpty
+              ? _descriptionController.text.trim()
+              : null,
+          difficulty: _difficulty,
+          createdAt: DateTime.now(),
+        ).toJson();
+        await ref.read(coachRepositoryProvider).createCoachProgram(uid, programJson);
+      } else {
+        await ref.read(programServiceProvider).createProgram(
+              uid,
+              name: name,
+              days: days,
+              weeks: weeks,
+              description: _descriptionController.text.trim().isNotEmpty
+                  ? _descriptionController.text.trim()
+                  : null,
+              difficulty: _difficulty,
+            );
+      }
       if (mounted) context.pop();
     } catch (e) {
       if (mounted) {

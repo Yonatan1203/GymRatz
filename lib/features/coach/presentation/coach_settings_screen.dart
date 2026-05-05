@@ -57,6 +57,16 @@ class CoachSettingsScreen extends ConsumerWidget {
                             height: 1),
                         _buildProfileInfo(context, 'Clients',
                             '${profile?.clientCount ?? 0} / ${profile?.maxClients ?? 0}'),
+                        Divider(
+                            color: context.mutedForeground
+                                .withValues(alpha: 0.15),
+                            height: 1),
+                        MenuItemWidget(
+                          icon: AppIcons.edit,
+                          label: 'Edit Profile',
+                          onTap: () =>
+                              GoRouter.of(context).push('/coach/profile/edit'),
+                        ),
                       ],
                     ),
                   ),

@@ -4,9 +4,11 @@ import '../features/coach/presentation/assign_program_screen.dart';
 import '../features/coach/presentation/client_detail_screen.dart';
 import '../features/coach/presentation/clients_screen.dart';
 import '../features/coach/presentation/coach_approval_screen.dart';
+import '../features/coach/presentation/coach_edit_profile_screen.dart';
 import '../features/coach/presentation/coach_dashboard_screen.dart';
 import '../features/coach/presentation/coach_programs_screen.dart';
 import '../features/coach/presentation/coach_settings_screen.dart';
+import '../features/programs/presentation/create_program_screen.dart';
 import '../features/coach/presentation/invite_management_screen.dart';
 import '../shared/widgets/coach_scaffold.dart';
 import 'router.dart';
@@ -105,6 +107,22 @@ List<GoRoute> coachStandaloneRoutes() {
       pageBuilder: (context, state) => slideTransitionPage(
         state: state,
         child: const CoachApprovalScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/coach/profile/edit',
+      name: 'coach-edit-profile',
+      pageBuilder: (context, state) => slideTransitionPage(
+        state: state,
+        child: const CoachEditProfileScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/coach/programs/create',
+      name: 'coach-create-program',
+      pageBuilder: (context, state) => slideTransitionPage(
+        state: state,
+        child: const CreateProgramScreen(forCoach: true),
       ),
     ),
   ];

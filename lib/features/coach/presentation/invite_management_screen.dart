@@ -109,6 +109,61 @@ class _InviteManagementScreenState
     );
   }
 
+  void _showEmailInviteDialog() {
+    final emailController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Email Invite'),
+        content: TextField(
+          controller: emailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: const InputDecoration(
+            labelText: 'Client Email',
+            hintText: 'client@example.com',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final email = emailController.text.trim();
+              if (email.isEmpty || !email.contains('@')) return;
+              Navigator.of(ctx).pop();
+              await _generateEmailInvite(email);
+            },
+            child: const Text('Send'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _generateEmailInvite(String email) async {
+    final uid = ref.read(currentUidProvider);
+    if (uid == null) return;
+    setState(() => _isCreating = true);
+    try {
+      final invite = await ref
+          .read(coachServiceProvider)
+          .createInvite(uid, clientEmail: email);
+      if (mounted) {
+        _showCodeDialog(invite.code);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCreating = false);
+    }
+  }
+
   Future<void> _revokeInvite(CoachInvite invite) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -157,11 +212,26 @@ class _InviteManagementScreenState
               padding: EdgeInsets.all(AppSpacing.screenPadding),
               child: StaggeredList(
                 children: [
-                  CustomButton(
-                    text: 'Generate Invite Code',
-                    icon: AppIcons.plus,
-                    isLoading: _isCreating,
-                    onPressed: _generateInvite,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CustomButton(
+                          text: 'Code Invite',
+                          icon: AppIcons.plus,
+                          isLoading: _isCreating,
+                          onPressed: _generateInvite,
+                        ),
+                      ),
+                      SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: CustomButton(
+                          text: 'Email Invite',
+                          icon: AppIcons.mail,
+                          variant: ButtonVariant.outline,
+                          onPressed: _showEmailInviteDialog,
+                        ),
+                      ),
+                    ],
                   ),
                   SizedBox(height: AppSpacing.sectionGap),
                   _buildInviteList(context, invitesAsync),

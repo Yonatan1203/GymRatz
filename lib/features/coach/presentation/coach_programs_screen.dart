@@ -227,10 +227,7 @@ class CoachProgramsScreen extends ConsumerWidget {
   }
 
   void _showCreateDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => const _CreateTemplateDialog(),
-    );
+    GoRouter.of(context).push('/coach/programs/create');
   }
 
   void _confirmDelete(
@@ -305,106 +302,3 @@ class CoachProgramsScreen extends ConsumerWidget {
   }
 }
 
-class _CreateTemplateDialog extends ConsumerStatefulWidget {
-  const _CreateTemplateDialog();
-
-  @override
-  ConsumerState<_CreateTemplateDialog> createState() =>
-      _CreateTemplateDialogState();
-}
-
-class _CreateTemplateDialogState extends ConsumerState<_CreateTemplateDialog> {
-  final _nameController = TextEditingController();
-  final _weeksController = TextEditingController(text: '4');
-  final _workoutsController = TextEditingController(text: '3');
-  String? _difficulty = 'Intermediate';
-  bool _isCreating = false;
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _weeksController.dispose();
-    _workoutsController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Create Template'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Program Name'),
-              textCapitalization: TextCapitalization.words,
-            ),
-            SizedBox(height: 12.h),
-            TextField(
-              controller: _workoutsController,
-              decoration: const InputDecoration(labelText: 'Workouts/Week'),
-              keyboardType: TextInputType.number,
-            ),
-            SizedBox(height: 12.h),
-            TextField(
-              controller: _weeksController,
-              decoration: const InputDecoration(labelText: 'Weeks'),
-              keyboardType: TextInputType.number,
-            ),
-            SizedBox(height: 12.h),
-            DropdownButtonFormField<String>(
-              initialValue: _difficulty,
-              decoration: const InputDecoration(labelText: 'Difficulty'),
-              items: ['Beginner', 'Intermediate', 'Advanced']
-                  .map((d) => DropdownMenuItem(value: d, child: Text(d)))
-                  .toList(),
-              onChanged: (v) => setState(() => _difficulty = v),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: _isCreating
-              ? null
-              : () async {
-                  final name = _nameController.text.trim();
-                  if (name.isEmpty) return;
-                  setState(() => _isCreating = true);
-                  final uid = ref.read(currentUidProvider);
-                  if (uid == null) return;
-                  await ref.read(coachRepositoryProvider).createCoachProgram(
-                    uid,
-                    {
-                      'name': name,
-                      'workouts':
-                          int.tryParse(_workoutsController.text) ?? 3,
-                      'weeks': int.tryParse(_weeksController.text) ?? 4,
-                      'difficulty': _difficulty,
-                      'progress': 0,
-                      'days': [],
-                      'isActive': false,
-                      'prefillWeights': true,
-                    },
-                  );
-                  if (mounted) Navigator.of(context).pop();
-                },
-          child: _isCreating
-              ? SizedBox(
-                  width: 16.r,
-                  height: 16.r,
-                  child:
-                      const CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Create'),
-        ),
-      ],
-    );
-  }
-}
