@@ -7,7 +7,7 @@ class AppConstants {
       String.fromEnvironment('RC_APPLE_KEY', defaultValue: 'appl_REPLACE_ME');
   static const String revenueCatGoogleApiKey =
       String.fromEnvironment('RC_GOOGLE_KEY',
-          defaultValue: 'test_QPrCcBDWPprQOPWibhFNchqaTPB');
+          defaultValue: 'goog_FLzUpFxMnQOfgdqMveJwwCBdMuK');
 
   // RevenueCat identifiers
   static const String entitlementId = 'GymRatz';
@@ -37,6 +37,6 @@ class AppConstants {
 
   // App info
   static const String appVersion = '1.0.0';
-  static const String privacyPolicyUrl = 'https://gymratz-app.github.io/privacy';
-  static const String termsOfServiceUrl = 'https://gymratz-app.github.io/terms';
+  static const String privacyPolicyUrl = 'https://yonatan1203.github.io/GymRatz/legal/privacy.html';
+  static const String termsOfServiceUrl = 'https://yonatan1203.github.io/GymRatz/legal/terms.html';
 }

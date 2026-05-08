@@ -14,3 +14,6 @@
 -keep class com.google.android.gms.** { *; }
 -dontwarn com.google.firebase.**
 -dontwarn com.google.android.gms.**
+
+# Play Core (required by Flutter deferred components)
+-dontwarn com.google.android.play.core.**
