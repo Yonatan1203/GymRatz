@@ -17,7 +17,7 @@ on:
 
 jobs:
   build-android:
-    if: ${{ github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both' || startsWith(github.ref, 'refs/tags/v') }}
+    if: ${{ github.event_name == 'push' || github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -60,7 +60,7 @@ jobs:
           track: internal
 
   build-ios:
-    if: ${{ github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both' || startsWith(github.ref, 'refs/tags/v') }}
+    if: ${{ github.event_name == 'push' || github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both' }}
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
