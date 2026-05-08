@@ -78,6 +78,7 @@ class AppIcons {
 
   // ── People / Auth ──────────────────────────────────────────────────
   static const IconData users = LucideIcons.users;
+  static const IconData userPlus = LucideIcons.userPlus;
   static const IconData mail = LucideIcons.mail;
   static const IconData camera = LucideIcons.camera;
   static const IconData lock = LucideIcons.lock;

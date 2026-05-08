@@ -1,3 +1,5 @@
+import 'enums.dart';
+
 class UserProfile {
   final String? uid;
   final String name;
@@ -15,6 +17,9 @@ class UserProfile {
   final bool healthEnabled;
   final String? discovery;
   final List<String> favoriteExerciseIds;
+  final UserRole role;
+  final String? coachId;
+  final DateTime? coachLinkedAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -35,6 +40,9 @@ class UserProfile {
     this.healthEnabled = false,
     this.discovery,
     this.favoriteExerciseIds = const [],
+    this.role = UserRole.user,
+    this.coachId,
+    this.coachLinkedAt,
     this.createdAt,
     this.updatedAt,
   });
@@ -56,6 +64,9 @@ class UserProfile {
         'healthEnabled': healthEnabled,
         'discovery': discovery,
         'favoriteExerciseIds': favoriteExerciseIds,
+        'role': role.value,
+        'coachId': coachId,
+        'coachLinkedAt': coachLinkedAt?.toIso8601String(),
         'createdAt': createdAt?.toIso8601String(),
         'updatedAt': updatedAt?.toIso8601String(),
       };
@@ -83,6 +94,11 @@ class UserProfile {
                 ?.map((e) => e as String)
                 .toList() ??
             [],
+        role: UserRole.fromString(json['role'] as String?),
+        coachId: json['coachId'] as String?,
+        coachLinkedAt: json['coachLinkedAt'] != null
+            ? DateTime.tryParse(json['coachLinkedAt'] as String)
+            : null,
         createdAt: json['createdAt'] != null
             ? DateTime.tryParse(json['createdAt'] as String)
             : null,
@@ -108,6 +124,9 @@ class UserProfile {
     bool? healthEnabled,
     String? discovery,
     List<String>? favoriteExerciseIds,
+    UserRole? role,
+    String? coachId,
+    DateTime? coachLinkedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) =>
@@ -128,6 +147,9 @@ class UserProfile {
         healthEnabled: healthEnabled ?? this.healthEnabled,
         discovery: discovery ?? this.discovery,
         favoriteExerciseIds: favoriteExerciseIds ?? this.favoriteExerciseIds,
+        role: role ?? this.role,
+        coachId: coachId ?? this.coachId,
+        coachLinkedAt: coachLinkedAt ?? this.coachLinkedAt,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );

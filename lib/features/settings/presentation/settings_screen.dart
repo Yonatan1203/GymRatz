@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants.dart';
@@ -108,6 +109,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ],
                     ),
                   ),
+                  SizedBox(height: AppSpacing.sectionGap),
+                  _sectionTitle(context, 'COACH'),
+                  _buildCoachSection(context, ref),
                   SizedBox(height: AppSpacing.sectionGap),
                   _sectionTitle(context, 'DATA'),
                   CustomCard(
@@ -241,6 +245,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+
+  Widget _buildCoachSection(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(userProfileProvider).valueOrNull;
+    final hasCoach = profile?.coachId != null;
+
+    return CustomCard(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Column(
+        children: [
+          if (hasCoach) ...[
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 14.h),
+              child: Row(
+                children: [
+                  Icon(AppIcons.users, size: 20.r, color: context.primaryColor),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Linked to a Coach', style: AppTextStyles.body.copyWith(color: context.foreground)),
+                        if (profile?.coachLinkedAt != null)
+                          Text(
+                            'Since ${DateFormat.yMMMd().format(profile!.coachLinkedAt!)}',
+                            style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            MenuItemWidget(
+              icon: AppIcons.userPlus,
+              label: 'Join a Coach',
+              onTap: () => context.push('/join-coach'),
+            ),
+            Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
+            MenuItemWidget(
+              icon: AppIcons.award,
+              label: 'Apply to Become a Coach',
+              onTap: () => context.push('/apply-coach'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
   Widget _sectionTitle(BuildContext context, String title) {
     return Padding(

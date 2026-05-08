@@ -12,6 +12,8 @@ class Program {
   final bool isActive;
   final bool prefillWeights;
   final DateTime? createdAt;
+  final bool assignedByCoach;
+  final String? coachId;
 
   const Program({
     required this.id,
@@ -25,6 +27,8 @@ class Program {
     this.isActive = false,
     this.prefillWeights = true,
     this.createdAt,
+    this.assignedByCoach = false,
+    this.coachId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -39,6 +43,8 @@ class Program {
         'isActive': isActive,
         'prefillWeights': prefillWeights,
         'createdAt': createdAt?.toIso8601String(),
+        'assignedByCoach': assignedByCoach,
+        'coachId': coachId,
       };
 
   factory Program.fromJson(Map<String, dynamic> json) => Program(
@@ -58,6 +64,8 @@ class Program {
         createdAt: json['createdAt'] != null
             ? DateTime.tryParse(json['createdAt'] as String)
             : null,
+        assignedByCoach: json['assignedByCoach'] as bool? ?? false,
+        coachId: json['coachId'] as String?,
       );
 
   Program copyWith({
@@ -72,6 +80,8 @@ class Program {
     bool? isActive,
     bool? prefillWeights,
     DateTime? createdAt,
+    bool? assignedByCoach,
+    String? coachId,
   }) =>
       Program(
         id: id ?? this.id,
@@ -85,5 +95,7 @@ class Program {
         isActive: isActive ?? this.isActive,
         prefillWeights: prefillWeights ?? this.prefillWeights,
         createdAt: createdAt ?? this.createdAt,
+        assignedByCoach: assignedByCoach ?? this.assignedByCoach,
+        coachId: coachId ?? this.coachId,
       );
 }

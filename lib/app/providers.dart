@@ -8,6 +8,7 @@ export 'providers/service_providers.dart';
 export 'providers/data_providers.dart';
 export 'providers/subscription_providers.dart';
 export 'providers/active_workout_provider.dart';
+export 'providers/coach_providers.dart';
 
 // ─── Theme Provider ───
 final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeMode>((ref) {

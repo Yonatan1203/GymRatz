@@ -16,6 +16,25 @@ class AppConstants {
   static const String productMonthly = 'monthly';
   static const String productYearly = 'yearly';
 
+  // Coach tier product identifiers
+  static const String productCoach5 = 'coach_5';
+  static const String productCoach10 = 'coach_10';
+  static const String productCoach20 = 'coach_20';
+
+  // Max clients per coach tier
+  static int maxClientsForTier(String tier) {
+    switch (tier) {
+      case productCoach5:
+        return 5;
+      case productCoach10:
+        return 10;
+      case productCoach20:
+        return 20;
+      default:
+        return 0;
+    }
+  }
+
   // App info
   static const String appVersion = '1.0.0';
   static const String privacyPolicyUrl = 'https://gymratz-app.github.io/privacy';
