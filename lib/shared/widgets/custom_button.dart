@@ -142,9 +142,10 @@ class CustomButton extends StatelessWidget {
       );
     }
 
-    final color = forceWhite
+    // When used inside ElevatedButton, null lets foregroundColor from the style apply
+    final Color? color = forceWhite
         ? Colors.white
-        : (textColor ?? Colors.white);
+        : textColor;
 
     return Row(
       mainAxisSize: MainAxisSize.min,

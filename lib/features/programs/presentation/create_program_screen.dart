@@ -43,6 +43,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
   String? _selectedCategory;
   String _difficulty = 'Intermediate';
 
+
   final _customName = TextEditingController();
   String _customCategory = 'Chest';
   String _customEquipment = 'Dumbbell';
@@ -257,6 +258,18 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
         return EquipmentType.bodyweight;
       default:
         return EquipmentType.barbell;
+    }
+  }
+
+  List<Exercise> _cachedExercises = const [];
+  bool _exercisesLoaded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_exercisesLoaded) {
+      _cachedExercises = ref.read(exerciseLibraryProvider);
+      _exercisesLoaded = true;
     }
   }
 
@@ -581,18 +594,24 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
             SizedBox(height: 12.h),
             Row(
               children: [
-                _editableConfigField(context, dayId, ex, 'Sets', '${ex.sets}', 60.w),
+                _configSheetField(context, ex, 'Sets', '${ex.sets}', 60.w),
                 SizedBox(width: 8.w),
-                _editableConfigField(context, dayId, ex, 'Rep Range', '${ex.repMin}-${ex.repMax}', 80.w),
+                _configSheetField(context, ex, 'Rep Range', '${ex.repMin}-${ex.repMax}', 80.w),
                 SizedBox(width: 8.w),
-                _editableConfigField(context, dayId, ex, 'RIR', '${ex.targetRir}', 50.w),
+                _configSheetField(context, ex, 'RIR', '${ex.targetRir}', 50.w),
                 SizedBox(width: 8.w),
-                _editableConfigField(context, dayId, ex, 'Rest', '${ex.restSeconds}s', 60.w),
+                _configSheetField(context, ex, 'Rest', '${ex.restSeconds}s', 60.w),
               ],
             ),
             SizedBox(height: 8.h),
             GestureDetector(
-              onTap: () => _editProgressionType(dayId, ex),
+              onTap: () => _showConfigSheet(
+                context,
+                'Progression Type',
+                ex.progressionType.label,
+                ProgressionMode.values.map((m) => m.label).toList(),
+                (v) => setState(() => ex.progressionType = ProgressionMode.values.firstWhere((m) => m.label == v)),
+              ),
               child: Row(
                 children: [
                   Text(
@@ -617,16 +636,15 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
     );
   }
 
-  Widget _editableConfigField(
+  Widget _configSheetField(
     BuildContext context,
-    String dayId,
     _ExerciseConfig ex,
     String label,
-    String value,
+    String displayValue,
     double width,
   ) {
     return GestureDetector(
-      onTap: () => _showEditDialog(context, dayId, ex, label),
+      onTap: () => _openConfigSheet(context, ex, label),
       child: SizedBox(
         width: width,
         child: Column(
@@ -653,13 +671,13 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                   children: [
                     Flexible(
                       child: Text(
-                        value,
+                        displayValue,
                         style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     SizedBox(width: 2.w),
-                    Icon(AppIcons.edit, size: 10.r, color: context.mutedForeground),
+                    Icon(AppIcons.chevronDown, size: 10.r, color: context.mutedForeground),
                   ],
                 ),
               ),
@@ -670,151 +688,148 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
     );
   }
 
-  Future<void> _showEditDialog(BuildContext context, String dayId, _ExerciseConfig ex, String label) async {
-    if (label == 'Rep Range') {
-      await _showRepRangeDialog(context, dayId, ex);
-      return;
-    }
-
-    String currentValue;
+  void _openConfigSheet(BuildContext context, _ExerciseConfig ex, String label) {
     switch (label) {
       case 'Sets':
-        currentValue = '${ex.sets}';
+        _showConfigSheet(
+          context, 'Sets', '${ex.sets}',
+          List.generate(10, (i) => '${i + 1}'),
+          (v) => setState(() => ex.sets = int.parse(v)),
+        );
+      case 'Rep Range':
+        _showConfigSheet(
+          context, 'Rep Range', '${ex.repMin}-${ex.repMax}',
+          const ['1-3', '1-5', '3-5', '3-6', '4-6', '5-8', '6-8', '6-10', '8-10', '8-12', '10-12', '10-15', '12-15', '15-20', '20-30'],
+          (v) {
+            final parts = v.split('-');
+            setState(() {
+              ex.repMin = int.parse(parts[0]);
+              ex.repMax = int.parse(parts[1]);
+            });
+          },
+        );
       case 'RIR':
-        currentValue = '${ex.targetRir}';
+        _showConfigSheet(
+          context, 'RIR (Reps in Reserve)', '${ex.targetRir}',
+          const ['0', '1', '2', '3', '4', '5'],
+          (v) => setState(() => ex.targetRir = int.parse(v)),
+        );
       case 'Rest':
-        currentValue = '${ex.restSeconds}';
-      default:
-        return;
+        _showConfigSheet(
+          context, 'Rest (seconds)', '${ex.restSeconds}s',
+          const ['30', '45', '60', '90', '120', '150', '180', '240', '300'],
+          (v) => setState(() => ex.restSeconds = int.parse(v)),
+          displayTransform: (v) => '${v}s',
+        );
     }
-
-    final controller = TextEditingController(text: currentValue);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Edit $label'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: label == 'Rest' ? 'Seconds' : 'Enter value',
-            suffixText: label == 'Rest' ? 's' : null,
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-
-    if (result == null || result.isEmpty) return;
-    final parsed = int.tryParse(result);
-    if (parsed == null || parsed < 0) return;
-
-    setState(() {
-      switch (label) {
-        case 'Sets':
-          ex.sets = parsed.clamp(1, 20);
-        case 'RIR':
-          ex.targetRir = parsed.clamp(0, 5);
-        case 'Rest':
-          ex.restSeconds = parsed.clamp(0, 600);
-      }
-    });
   }
 
-  Future<void> _showRepRangeDialog(BuildContext context, String dayId, _ExerciseConfig ex) async {
-    final minController = TextEditingController(text: '${ex.repMin}');
-    final maxController = TextEditingController(text: '${ex.repMax}');
+  /// Bottom sheet picker for exercise config — uses sheet's own context
+  /// for all InheritedWidget access to avoid _dependents.isEmpty crashes.
+  void _showConfigSheet(
+    BuildContext context,
+    String title,
+    String currentValue,
+    List<String> options,
+    ValueChanged<String> onChanged, {
+    String Function(String)? displayTransform,
+  }) {
+    // Dismiss keyboard before opening sheet
+    FocusManager.instance.primaryFocus?.unfocus();
 
-    final result = await showDialog<bool>(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Edit Rep Range'),
-        content: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: minController,
-                keyboardType: TextInputType.number,
-                autofocus: true,
-                decoration: const InputDecoration(labelText: 'Min'),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12.w),
-              child: const Text('-'),
-            ),
-            Expanded(
-              child: TextField(
-                controller: maxController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Max'),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-    );
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final isDark = theme.brightness == Brightness.dark;
+        final fg = isDark ? Colors.white : Colors.black;
+        final mutedFg = isDark ? Colors.white60 : Colors.black54;
+        final primaryColor = theme.colorScheme.primary;
 
-    if (result != true) {
-      minController.dispose();
-      maxController.dispose();
-      return;
-    }
-
-    final min = int.tryParse(minController.text);
-    final max = int.tryParse(maxController.text);
-    minController.dispose();
-    maxController.dispose();
-
-    if (min == null || max == null || min < 1 || max < min) return;
-
-    setState(() {
-      ex.repMin = min.clamp(1, 100);
-      ex.repMax = max.clamp(min, 100);
-    });
-  }
-
-  void _editProgressionType(String dayId, _ExerciseConfig ex) {
-    showDialog(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: const Text('Progression Type'),
-        children: ProgressionMode.values.map((mode) {
-          return SimpleDialogOption(
-            onPressed: () {
-              setState(() => ex.progressionType = mode);
-              Navigator.pop(ctx);
-            },
-            child: Row(
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.5,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                if (ex.progressionType == mode)
-                  Icon(AppIcons.check, size: 16.r, color: context.primaryColor)
-                else
-                  SizedBox(width: 16.r),
-                SizedBox(width: 8.w),
-                Text(mode.label),
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: mutedFg.withValues(alpha: 0.3),
+                    borderRadius: AppRadius.borderFull,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                  child: Row(
+                    children: [
+                      Text(title, style: AppTextStyles.h3.copyWith(color: fg)),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(ctx),
+                        child: Icon(AppIcons.x, size: 20, color: mutedFg),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(color: mutedFg.withValues(alpha: 0.15), height: 1),
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: options.map((option) {
+                      final isSelected = option == currentValue || (displayTransform != null && displayTransform(option) == currentValue);
+                      return InkWell(
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted) onChanged(option);
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: isSelected ? primaryColor.withValues(alpha: 0.08) : null,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  displayTransform != null ? displayTransform(option) : option,
+                                  style: AppTextStyles.body.copyWith(
+                                    color: isSelected ? primaryColor : fg,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(AppIcons.check, size: 20, color: primaryColor),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 8),
               ],
             ),
-          );
-        }).toList(),
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildExercisePicker(BuildContext context, String dayId) {
-    final allExercises = ref.read(exerciseLibraryProvider);
+    final allExercises = _cachedExercises;
     final categories = allExercises.map((e) => e.category).toSet().toList()..sort();
 
     final filtered = allExercises.where((e) {
@@ -1119,83 +1134,97 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
   ) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: context.cardColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
+        // Use the sheet's own context for all InheritedWidget lookups
+        // to avoid cross-boundary dependencies that cause _dependents.isEmpty
+        final theme = Theme.of(ctx);
+        final colorScheme = theme.colorScheme;
+        final fg = theme.brightness == Brightness.dark
+            ? Colors.white
+            : Colors.black;
+        final mutedFg = theme.brightness == Brightness.dark
+            ? Colors.white60
+            : Colors.black54;
+        final primaryColor = colorScheme.primary;
+
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle bar
-              Container(
-                margin: EdgeInsets.only(top: 12.h),
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: context.mutedForeground.withValues(alpha: 0.3),
-                  borderRadius: AppRadius.borderFull,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.5,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: mutedFg.withValues(alpha: 0.3),
+                    borderRadius: AppRadius.borderFull,
+                  ),
                 ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 8.h),
-                child: Row(
-                  children: [
-                    Text(
-                      title,
-                      style: AppTextStyles.h3.copyWith(color: context.foreground),
-                    ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(ctx),
-                      child: Icon(AppIcons.x, size: 20.r, color: context.mutedForeground),
-                    ),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                  child: Row(
+                    children: [
+                      Text(title, style: AppTextStyles.h3.copyWith(color: fg)),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(ctx),
+                        child: Icon(AppIcons.x, size: 20, color: mutedFg),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
-              ...options.map((option) {
-                final isSelected = option == currentValue;
-                return InkWell(
-                  onTap: () {
-                    onChanged(option);
-                    Navigator.pop(ctx);
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? context.primaryColor.withValues(alpha: 0.08)
-                          : null,
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            option,
-                            style: AppTextStyles.body.copyWith(
-                              color: isSelected
-                                  ? context.primaryColor
-                                  : context.foreground,
-                              fontWeight:
-                                  isSelected ? FontWeight.w600 : FontWeight.w400,
-                            ),
+                Divider(color: mutedFg.withValues(alpha: 0.15), height: 1),
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: options.map((option) {
+                      final isSelected = option == currentValue;
+                      return InkWell(
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted) onChanged(option);
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? primaryColor.withValues(alpha: 0.08)
+                                : null,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  option,
+                                  style: AppTextStyles.body.copyWith(
+                                    color: isSelected ? primaryColor : fg,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(AppIcons.check, size: 20, color: primaryColor),
+                            ],
                           ),
                         ),
-                        if (isSelected)
-                          Icon(
-                            AppIcons.check,
-                            size: 20.r,
-                            color: context.primaryColor,
-                          ),
-                      ],
-                    ),
+                      );
+                    }).toList(),
                   ),
-                );
-              }),
-              SizedBox(height: 8.h),
-            ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         );
       },

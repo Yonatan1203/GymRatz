@@ -25,6 +25,7 @@ class OnboardingEmailScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -32,15 +33,17 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
+  bool get _nameValid => _nameController.text.trim().isNotEmpty;
   bool get _emailValid =>
       _emailController.text.contains('@') && _emailController.text.contains('.');
   bool get _passwordValid => _passwordController.text.length >= 6;
-  bool get _isValid => _emailValid && _passwordValid;
+  bool get _isValid => _nameValid && _emailValid && _passwordValid;
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +73,15 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
                         .copyWith(color: context.mutedForeground),
                   ),
                   SizedBox(height: AppSpacing.xxl),
+                  CustomInput(
+                    controller: _nameController,
+                    label: 'Full Name',
+                    hint: 'Your name',
+                    textInputAction: TextInputAction.next,
+                    prefixIcon: Icon(AppIcons.user, size: 20.r),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  SizedBox(height: 16.h),
                   CustomInput(
                     controller: _emailController,
                     label: 'Email Address',
@@ -172,6 +184,7 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
             enabled: _isValid,
             onPressed: () {
               final notifier = ref.read(onboardingProvider.notifier);
+              notifier.setFullName(_nameController.text.trim());
               notifier.setEmail(_emailController.text.trim());
               notifier.setPassword(_passwordController.text);
               notifier.setNotificationsEnabled(_notificationsEnabled);

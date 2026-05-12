@@ -11,6 +11,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'app/app.dart';
 import 'core/env.dart';
 import 'core/notification_service.dart';
+import 'core/pip_service.dart';
 import 'features/subscription/data/entitlement_repository.dart';
 import 'firebase_options.dart';
 
@@ -101,6 +102,7 @@ Future<void> _initDeferredServices() async {
   await Future.wait([
     _initRevenueCat(),
     _initNotifications(),
+    _initPip(),
   ]);
 }
 
@@ -117,5 +119,13 @@ Future<void> _initNotifications() async {
     await NotificationService().initialize();
   } catch (e) {
     debugPrint('Notification init skipped: $e');
+  }
+}
+
+Future<void> _initPip() async {
+  try {
+    await PipService().initialize();
+  } catch (e) {
+    debugPrint('PiP init skipped: $e');
   }
 }

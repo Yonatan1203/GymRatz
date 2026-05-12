@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../theme/app_icons.dart';
 
 import '../../app/providers.dart';
+import '../../core/pip_service.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_shadows.dart';
 import '../utils/extensions.dart';
@@ -13,16 +14,42 @@ import 'active_workout_banner.dart';
 import '../../features/subscription/presentation/subscription_gate.dart';
 import 'offline_banner.dart';
 
-class CustomScaffold extends ConsumerWidget {
+class CustomScaffold extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   const CustomScaffold({super.key, required this.navigationShell});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CustomScaffold> createState() => _CustomScaffoldState();
+}
+
+class _CustomScaffoldState extends ConsumerState<CustomScaffold> {
+  bool _isInPip = false;
+
+  @override
+  void initState() {
+    super.initState();
+    PipService().onPipChanged = (inPip) {
+      if (mounted) setState(() => _isInPip = inPip);
+    };
+  }
+
+  @override
+  void dispose() {
+    PipService().onPipChanged = null;
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final activeSession = ref.watch(activeWorkoutSessionProvider);
+
+    // Show simple timer view when in PiP mode
+    if (_isInPip && activeSession != null) {
+      return _buildPipView(context, isDark);
+    }
 
     return Scaffold(
       body: Stack(
@@ -31,7 +58,7 @@ class CustomScaffold extends ConsumerWidget {
             children: [
               const OfflineBanner(),
               Expanded(
-                child: SubscriptionGate(child: navigationShell),
+                child: SubscriptionGate(child: widget.navigationShell),
               ),
             ],
           ),
@@ -68,7 +95,7 @@ class CustomScaffold extends ConsumerWidget {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final tabCount = 5;
-                    final activeIndex = navigationShell.currentIndex;
+                    final activeIndex = widget.navigationShell.currentIndex;
 
                     return Column(
                       mainAxisSize: MainAxisSize.min,
@@ -97,11 +124,11 @@ class CustomScaffold extends ConsumerWidget {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            _expandedNavItem(AppIcons.dumbbell, 'Workout', activeIndex == 0, () => navigationShell.goBranch(0), isDark),
-                            _expandedNavItem(AppIcons.calendar, 'Calendar', activeIndex == 1, () => navigationShell.goBranch(1), isDark),
-                            _expandedNavItem(AppIcons.home, 'Home', activeIndex == 2, () => navigationShell.goBranch(2), isDark),
-                            _expandedNavItem(AppIcons.library, 'Programs', activeIndex == 3, () => navigationShell.goBranch(3), isDark),
-                            _expandedNavItem(AppIcons.user, 'Profile', activeIndex == 4, () => navigationShell.goBranch(4), isDark),
+                            _expandedNavItem(AppIcons.dumbbell, 'Workout', activeIndex == 0, () => widget.navigationShell.goBranch(0), isDark),
+                            _expandedNavItem(AppIcons.calendar, 'Calendar', activeIndex == 1, () => widget.navigationShell.goBranch(1), isDark),
+                            _expandedNavItem(AppIcons.home, 'Home', activeIndex == 2, () => widget.navigationShell.goBranch(2), isDark),
+                            _expandedNavItem(AppIcons.library, 'Programs', activeIndex == 3, () => widget.navigationShell.goBranch(3), isDark),
+                            _expandedNavItem(AppIcons.user, 'Profile', activeIndex == 4, () => widget.navigationShell.goBranch(4), isDark),
                           ],
                         ),
                       ],
@@ -112,6 +139,48 @@ class CustomScaffold extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPipView(BuildContext context, bool isDark) {
+    final session = ref.watch(activeWorkoutSessionProvider)!;
+    final restTimerValue = ref.watch(restTimerSecondsProvider).valueOrNull;
+    final restActive = session.restActive && session.timerRunning && restTimerValue != null;
+    final restSeconds = restTimerValue ?? 0;
+    final timerDone = restActive && restSeconds == 0;
+
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (timerDone)
+              Icon(AppIcons.bell, size: 48, color: context.coralColor)
+            else if (restActive)
+              Text(
+                '${(restSeconds ~/ 60).toString().padLeft(2, '0')}:${(restSeconds % 60).toString().padLeft(2, '0')}',
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w700,
+                  color: context.primaryColor,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              )
+            else
+              Text(
+                session.workoutName,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: context.foreground),
+                textAlign: TextAlign.center,
+              ),
+            const SizedBox(height: 8),
+            Text(
+              restActive ? (timerDone ? 'Rest Complete!' : 'Rest') : 'In Progress',
+              style: TextStyle(fontSize: 14, color: context.mutedForeground),
+            ),
+          ],
+        ),
       ),
     );
   }

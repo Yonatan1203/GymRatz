@@ -9,7 +9,10 @@ import '../../../shared/widgets/custom_card.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/section_header.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../app/providers.dart';
+import '../../../shared/widgets/scale_tap.dart';
+import '../../../shared/widgets/progress_bar_widget.dart';
 
 
 class FavoritesScreen extends ConsumerWidget {
@@ -21,13 +24,19 @@ class FavoritesScreen extends ConsumerWidget {
     final allExercises = ref.watch(exerciseLibraryProvider);
     final favExercises = allExercises.where((e) => favoriteIds.contains(e.id)).toList();
 
+    final favProgramIds = ref.watch(favoriteProgramIdsProvider);
+    final programsAsync = ref.watch(userProgramsProvider);
+    final favPrograms = programsAsync.valueOrNull
+        ?.where((p) => favProgramIds.contains(p.id))
+        .toList() ?? [];
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
           children: [
             GradientHeader(
               showBackButton: true,
-              child: Text('Favorites', style: AppTextStyles.h1.copyWith(color: Colors.white)),
+              child: Text('Favorites', style: AppTextStyles.h1.copyWith(color: context.foreground)),
             ),
             Padding(
               padding: EdgeInsets.all(AppSpacing.screenPadding),
@@ -35,11 +44,57 @@ class FavoritesScreen extends ConsumerWidget {
                 children: [
                   const SectionHeader(title: 'Favorite Programs'),
                   SizedBox(height: AppSpacing.lg),
-                  _emptyState(context, 'No favorite programs yet'),
-                  SizedBox(height: AppSpacing.sectionGap),
-                  const SectionHeader(title: 'Favorite Workouts'),
-                  SizedBox(height: AppSpacing.lg),
-                  _emptyState(context, 'No favorite workouts yet'),
+                  if (favPrograms.isEmpty)
+                    _emptyState(context, 'No favorite programs yet')
+                  else
+                    ...favPrograms.map((p) => Padding(
+                      padding: EdgeInsets.only(bottom: 8.h),
+                      child: ScaleTap(
+                        onTap: () => context.push('/programs/detail/${p.id}'),
+                        child: CustomCard(
+                          padding: EdgeInsets.all(12.r),
+                          child: Row(
+                            children: [
+                              Icon(AppIcons.dumbbell, size: 20.r, color: context.primaryColor),
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(p.name, style: AppTextStyles.bodySmall.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      '${p.workouts} workouts/week \u2022 ${p.weeks} weeks',
+                                      style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+                                    ),
+                                    SizedBox(height: 6.h),
+                                    Row(
+                                      children: [
+                                        Expanded(child: ProgressBarWidget(progress: p.progress / 100)),
+                                        SizedBox(width: 8.w),
+                                        Text('${p.progress}%', style: AppTextStyles.caption.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              GestureDetector(
+                                onTap: () {
+                                  final uid = ref.read(currentUidProvider);
+                                  if (uid == null) return;
+                                  ref.read(userRepositoryProvider).toggleFavoriteProgram(uid, p.id);
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.all(4.r),
+                                  child: Icon(Icons.favorite, size: 20.r, color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )),
                   SizedBox(height: AppSpacing.sectionGap),
                   const SectionHeader(title: 'Favorite Exercises'),
                   SizedBox(height: AppSpacing.lg),
@@ -63,7 +118,7 @@ class FavoritesScreen extends ConsumerWidget {
                                 ],
                               ),
                             ),
-                            Icon(AppIcons.heart, size: 20.r, color: Colors.red),
+                            Icon(Icons.favorite, size: 20.r, color: Colors.red),
                           ],
                         ),
                       ),
@@ -84,7 +139,7 @@ class FavoritesScreen extends ConsumerWidget {
       padding: EdgeInsets.all(32.r),
       child: Column(
         children: [
-          Icon(AppIcons.heart, size: 48.r, color: context.mutedForeground.withValues(alpha:0.6)),
+          Icon(Icons.favorite_border, size: 48.r, color: context.mutedForeground.withValues(alpha:0.6)),
           SizedBox(height: 12.h),
           Text(message, style: AppTextStyles.body.copyWith(color: context.mutedForeground)),
         ],

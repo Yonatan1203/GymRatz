@@ -483,6 +483,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       label: 'Weight ($unit)',
                       hint: 'e.g., 175',
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (_) => setState(() {}),
                     ),
                     SizedBox(height: AppSpacing.lg),
                     Row(

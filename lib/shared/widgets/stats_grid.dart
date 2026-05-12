@@ -91,7 +91,7 @@ class StatsGrid extends StatelessWidget {
                       item.value,
                       style: AppTextStyles.h2.copyWith(
                         color: useTransparentBg
-                            ? Colors.white
+                            ? (isDark ? Colors.white : AppColors.lightForeground)
                             : (isDark
                                 ? AppColors.darkForeground
                                 : AppColors.lightForeground),

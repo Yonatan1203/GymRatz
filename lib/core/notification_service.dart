@@ -98,6 +98,64 @@ class NotificationService {
     await prefs.setBool(_keyReminderEnabled, false);
   }
 
+  static const _restTimerNotifId = 100;
+  static const _restDoneNotifId = 101;
+
+  /// Show an ongoing notification and schedule a "Rest Complete" alert.
+  Future<void> showRestTimerNotification(int seconds) async {
+    final minutes = seconds ~/ 60;
+    final secs = seconds % 60;
+    final timerText = '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+
+    // Show ongoing notification with timer info
+    await _plugin.show(
+      _restTimerNotifId,
+      'Rest Timer',
+      'Resting for $timerText',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'rest_timer',
+          'Rest Timer',
+          channelDescription: 'Rest timer countdown during workouts',
+          importance: Importance.low,
+          priority: Priority.low,
+          ongoing: true,
+          autoCancel: false,
+          showWhen: false,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+
+    // Schedule a "Rest Complete" notification for when the timer ends
+    final scheduledDate = tz.TZDateTime.now(tz.local).add(Duration(seconds: seconds));
+    await _plugin.zonedSchedule(
+      _restDoneNotifId,
+      'Rest Complete!',
+      'Time to get back to work!',
+      scheduledDate,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'rest_timer_done',
+          'Rest Timer Done',
+          channelDescription: 'Notification when rest timer completes',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.wallClockTime,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  /// Cancel rest timer notifications.
+  Future<void> cancelRestTimerNotification() async {
+    await _plugin.cancel(_restTimerNotifId);
+    await _plugin.cancel(_restDoneNotifId);
+  }
+
   tz.TZDateTime _nextInstanceOfDayTime(int weekday, int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);
     var scheduled =

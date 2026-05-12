@@ -15,6 +15,7 @@ class OnboardingState {
   final String? selectedUnits; // 'metric' or 'imperial'
   final double height; // in cm
   final double weight; // in kg
+  final String fullName;
   final String email;
   final String password;
   final bool notificationsEnabled;
@@ -31,6 +32,7 @@ class OnboardingState {
     this.selectedUnits,
     this.height = 175,
     this.weight = 75,
+    this.fullName = '',
     this.email = '',
     this.password = '',
     this.notificationsEnabled = true,
@@ -48,6 +50,7 @@ class OnboardingState {
     String? selectedUnits,
     double? height,
     double? weight,
+    String? fullName,
     String? email,
     String? password,
     bool? notificationsEnabled,
@@ -64,6 +67,7 @@ class OnboardingState {
       selectedUnits: selectedUnits ?? this.selectedUnits,
       height: height ?? this.height,
       weight: weight ?? this.weight,
+      fullName: fullName ?? this.fullName,
       email: email ?? this.email,
       password: password ?? this.password,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
@@ -165,6 +169,10 @@ class OnboardingNotifier extends StateNotifier<OnboardingState> {
     _saveToCache();
   }
 
+  void setFullName(String name) {
+    state = state.copyWith(fullName: name);
+  }
+
   void setEmail(String email) {
     state = state.copyWith(email: email);
   }
@@ -202,7 +210,7 @@ class OnboardingNotifier extends StateNotifier<OnboardingState> {
         email: state.email,
         password: state.password,
         onboardingData: {
-          'name': state.email.split('@').first,
+          'name': state.fullName.isNotEmpty ? state.fullName : state.email.split('@').first,
           'height': heightStr,
           'weight': isMetric ? weightKg : state.weight,
           'unit': unit,

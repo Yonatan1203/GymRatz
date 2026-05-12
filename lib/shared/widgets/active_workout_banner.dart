@@ -11,17 +11,36 @@ import '../../theme/app_shadows.dart';
 import '../../theme/app_text_styles.dart';
 import '../utils/extensions.dart';
 import '../utils/platform_adapter.dart';
+import 'package:flutter/services.dart';
 
-class ActiveWorkoutBanner extends ConsumerWidget {
+class ActiveWorkoutBanner extends ConsumerStatefulWidget {
   const ActiveWorkoutBanner({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ActiveWorkoutBanner> createState() => _ActiveWorkoutBannerState();
+}
+
+class _ActiveWorkoutBannerState extends ConsumerState<ActiveWorkoutBanner> {
+  bool _hasVibrated = false;
+
+  @override
+  Widget build(BuildContext context) {
     final session = ref.watch(activeWorkoutSessionProvider);
     if (session == null) return const SizedBox.shrink();
 
     final isDark = context.isDark;
-    final elapsed = ref.watch(workoutElapsedSecondsProvider).valueOrNull ?? 0;
+    final restTimerValue = ref.watch(restTimerSecondsProvider).valueOrNull;
+    final restActive = session.restActive && session.timerRunning && restTimerValue != null;
+    final restSeconds = restTimerValue ?? 0;
+    final timerDone = restActive && restSeconds == 0;
+
+    // Vibrate once when timer reaches zero
+    if (timerDone && !_hasVibrated) {
+      _hasVibrated = true;
+      HapticFeedback.heavyImpact();
+    } else if (!timerDone) {
+      _hasVibrated = false;
+    }
 
     return GestureDetector(
       onTap: () {
@@ -41,7 +60,6 @@ class ActiveWorkoutBanner extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            // Navigate up button
             _CircleButton(
               icon: AppIcons.chevronUp,
               isDark: isDark,
@@ -51,7 +69,6 @@ class ActiveWorkoutBanner extends ConsumerWidget {
               },
             ),
             SizedBox(width: 10.w),
-            // Center content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,13 +89,18 @@ class ActiveWorkoutBanner extends ConsumerWidget {
                         ),
                       ),
                       SizedBox(width: 8.w),
-                      Text(
-                        _formatElapsed(elapsed),
-                        style: AppTextStyles.caption.copyWith(
-                          color: context.mutedForeground,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
+                      if (restActive)
+                        timerDone
+                            ? Icon(AppIcons.bell, size: 22.r, color: context.coralColor)
+                            : Text(
+                                _formatTimer(restSeconds),
+                                style: TextStyle(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: context.foreground,
+                                  fontFeatures: const [FontFeature.tabularFigures()],
+                                ),
+                              ),
                     ],
                   ),
                   if (session.currentExerciseName.isNotEmpty)
@@ -96,7 +118,6 @@ class ActiveWorkoutBanner extends ConsumerWidget {
               ),
             ),
             SizedBox(width: 10.w),
-            // Discard button
             _CircleButton(
               icon: AppIcons.trash2,
               isDark: isDark,
@@ -109,13 +130,9 @@ class ActiveWorkoutBanner extends ConsumerWidget {
     );
   }
 
-  String _formatElapsed(int totalSeconds) {
-    final h = totalSeconds ~/ 3600;
-    final m = (totalSeconds % 3600) ~/ 60;
+  String _formatTimer(int totalSeconds) {
+    final m = totalSeconds ~/ 60;
     final s = totalSeconds % 60;
-    if (h > 0) {
-      return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
-    }
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 

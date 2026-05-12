@@ -17,6 +17,7 @@ class UserProfile {
   final bool healthEnabled;
   final String? discovery;
   final List<String> favoriteExerciseIds;
+  final List<String> favoriteProgramIds;
   final UserRole role;
   final String? coachId;
   final DateTime? coachLinkedAt;
@@ -40,6 +41,7 @@ class UserProfile {
     this.healthEnabled = false,
     this.discovery,
     this.favoriteExerciseIds = const [],
+    this.favoriteProgramIds = const [],
     this.role = UserRole.user,
     this.coachId,
     this.coachLinkedAt,
@@ -64,6 +66,7 @@ class UserProfile {
         'healthEnabled': healthEnabled,
         'discovery': discovery,
         'favoriteExerciseIds': favoriteExerciseIds,
+        'favoriteProgramIds': favoriteProgramIds,
         'role': role.value,
         'coachId': coachId,
         'coachLinkedAt': coachLinkedAt?.toIso8601String(),
@@ -91,6 +94,10 @@ class UserProfile {
         healthEnabled: json['healthEnabled'] as bool? ?? false,
         discovery: json['discovery'] as String?,
         favoriteExerciseIds: (json['favoriteExerciseIds'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            [],
+        favoriteProgramIds: (json['favoriteProgramIds'] as List<dynamic>?)
                 ?.map((e) => e as String)
                 .toList() ??
             [],
@@ -124,6 +131,7 @@ class UserProfile {
     bool? healthEnabled,
     String? discovery,
     List<String>? favoriteExerciseIds,
+    List<String>? favoriteProgramIds,
     UserRole? role,
     String? coachId,
     DateTime? coachLinkedAt,
@@ -147,6 +155,7 @@ class UserProfile {
         healthEnabled: healthEnabled ?? this.healthEnabled,
         discovery: discovery ?? this.discovery,
         favoriteExerciseIds: favoriteExerciseIds ?? this.favoriteExerciseIds,
+        favoriteProgramIds: favoriteProgramIds ?? this.favoriteProgramIds,
         role: role ?? this.role,
         coachId: coachId ?? this.coachId,
         coachLinkedAt: coachLinkedAt ?? this.coachLinkedAt,

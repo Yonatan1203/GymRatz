@@ -10,6 +10,7 @@ import 'package:uuid/uuid.dart';
 import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
+import '../../../core/notification_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_gradients.dart';
 import '../../../theme/app_radius.dart';
@@ -57,8 +58,12 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   bool _initialized = false;
   late DateTime _startTime;
   WorkoutSummary? _workoutSummary;
+  static const _workoutCacheKeyPrefix = 'in_progress_workout';
 
-  static const _workoutCacheKey = 'in_progress_workout';
+  String get _workoutCacheKey {
+    final uid = ref.read(currentUidProvider) ?? '';
+    return '${_workoutCacheKeyPrefix}_$uid';
+  }
 
   /// Save current workout state after each set update
   Future<void> _saveWorkoutState() async {
@@ -92,7 +97,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     return true;
   }
 
-  static Future<void> clearWorkoutCache() async {
+  Future<void> _clearWorkoutCache() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_workoutCacheKey);
   }
@@ -125,7 +130,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       }
     } catch (e) {
       debugPrint('Failed to restore workout from cache: $e');
-      await clearWorkoutCache();
+      await _clearWorkoutCache();
     }
   }
 
@@ -190,14 +195,25 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       _exercises = List.from(existingSession.exercises);
       _sets = existingSession.sets.map((s) => List<WorkoutSet>.from(s)).toList();
       _expanded = Set.from(existingSession.expandedIndices);
-      _restSeconds = existingSession.restSeconds;
       _restActive = existingSession.restActive;
       _restMinimized = existingSession.restMinimized;
       _timerRunning = existingSession.timerRunning;
       _notes = existingSession.notes;
       _elapsedSeconds = DateTime.now().difference(_startTime).inSeconds;
-      if (_restActive && _timerRunning) {
-        _beginCountdown();
+      // Recalculate rest seconds from restEndTime so it stays accurate
+      if (_restActive && _timerRunning && existingSession.restEndTime != null) {
+        final remaining = existingSession.restEndTime!.difference(DateTime.now()).inSeconds;
+        if (remaining > 0) {
+          _restSeconds = remaining;
+          // Defer to avoid modifying provider state during build
+          Future(_beginCountdown);
+        } else {
+          _restActive = false;
+          _timerRunning = false;
+          Future(_syncToProvider);
+        }
+      } else {
+        _restSeconds = existingSession.restSeconds;
       }
     } else {
       _startTime = DateTime.now();
@@ -255,7 +271,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
             actions: [
               TextButton(
                 onPressed: () {
-                  clearWorkoutCache();
+                  _clearWorkoutCache();
                   Navigator.pop(ctx);
                 },
                 child: const Text('Discard'),
@@ -324,14 +340,30 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   }
 
   void _beginCountdown() {
+    final endTime = DateTime.now().add(Duration(seconds: _restSeconds));
     setState(() => _timerRunning = true);
+    // Sync restEndTime so the banner can count down independently
+    ref.read(activeWorkoutSessionProvider.notifier).syncState(
+      restActive: true,
+      timerRunning: true,
+      restSeconds: _restSeconds,
+      restEndTime: endTime,
+    );
+    // Schedule a notification for when the timer ends (works even if app is backgrounded)
+    NotificationService().showRestTimerNotification(_restSeconds);
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (_restSeconds > 0) {
         setState(() => _restSeconds--);
       } else {
         t.cancel();
         PlatformAdapter.hapticSelection();
-        setState(() { _restActive = false; _timerRunning = false; });
+        NotificationService().cancelRestTimerNotification();
+        // Keep restActive true briefly so banner/PiP can show the bell icon
+        Future.delayed(const Duration(seconds: 2), () {
+          if (!mounted) return;
+          setState(() { _restActive = false; _timerRunning = false; });
+          _syncToProvider();
+        });
       }
     });
   }
@@ -346,9 +378,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     });
 
     if (!wasCompleted) {
-      // Completing a set — start rest timer
-      _showRestTimer();
-      _beginCountdown();
+      // Completing a set — just sync, user can manually start rest timer
       _syncToProvider();
     } else {
       // Uncompleting — just sync
@@ -399,7 +429,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     );
 
     ref.read(activeWorkoutSessionProvider.notifier).endSession();
-    await clearWorkoutCache();
+    await _clearWorkoutCache();
 
     if (uid != null) {
       try {
@@ -777,7 +807,14 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
             button: true,
             label: 'Dismiss timer',
             child: GestureDetector(
-              onTap: () { _timer?.cancel(); setState(() { _restActive = false; _timerRunning = false; }); },
+              onTap: () {
+                _timer?.cancel();
+                NotificationService().cancelRestTimerNotification();
+                setState(() { _restActive = false; _timerRunning = false; });
+                ref.read(activeWorkoutSessionProvider.notifier).syncState(
+                  restActive: false, timerRunning: false, clearRestEndTime: true,
+                );
+              },
               child: Icon(AppIcons.x, size: 18.r, color: Colors.white70),
             ),
           ),
@@ -936,7 +973,9 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
           ),
           Expanded(
             flex: 3,
-            child: _numField(context, exIdx, sIdx, 'weight', 'lbs'),
+            child: _exercises[exIdx].equipmentType == EquipmentType.bodyweight
+                ? Center(child: Text('-', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)))
+                : _numField(context, exIdx, sIdx, 'weight', ref.read(userProfileProvider).valueOrNull?.unit ?? 'lbs'),
           ),
           Expanded(
             flex: 2,
@@ -1114,7 +1153,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                   children: [
                     Expanded(child: _completionStatCard(context, isDark, AppIcons.repeat, 'Total Reps', '$totalReps')),
                     SizedBox(width: 12.w),
-                    Expanded(child: _completionStatCard(context, isDark, AppIcons.barChart2, 'Volume', '${totalVolume.toInt()} lbs')),
+                    Expanded(child: _completionStatCard(context, isDark, AppIcons.barChart2, 'Volume', '${totalVolume.toInt()} ${ref.read(userProfileProvider).valueOrNull?.unit ?? 'lbs'}')),
                   ],
                 ),
                 SizedBox(height: 12.h),
@@ -1139,7 +1178,8 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                   variant: ButtonVariant.outline,
                   icon: AppIcons.share2,
                   onPressed: () {
-                    final summary = '$_workoutName\n$durationStr | $completedSets sets | ${totalVolume.toInt()} lbs volume';
+                    final volUnit = ref.read(userProfileProvider).valueOrNull?.unit ?? 'lbs';
+                    final summary = '$_workoutName\n$durationStr | $completedSets sets | ${totalVolume.toInt()} $volUnit volume';
                     Clipboard.setData(ClipboardData(text: summary));
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Workout summary copied to clipboard')),

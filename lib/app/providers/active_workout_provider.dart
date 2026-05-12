@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/pip_service.dart';
 import '../../shared/models/workout_exercise.dart';
 import '../../shared/models/workout_set.dart';
 
@@ -16,6 +19,8 @@ class ActiveWorkoutSession {
   final bool restMinimized;
   final bool timerRunning;
   final String notes;
+  /// When the rest timer will reach zero (set when countdown begins).
+  final DateTime? restEndTime;
 
   const ActiveWorkoutSession({
     required this.dayId,
@@ -30,6 +35,7 @@ class ActiveWorkoutSession {
     this.restMinimized = false,
     this.timerRunning = false,
     this.notes = '',
+    this.restEndTime,
   });
 
   ActiveWorkoutSession copyWith({
@@ -45,6 +51,8 @@ class ActiveWorkoutSession {
     bool? restMinimized,
     bool? timerRunning,
     String? notes,
+    DateTime? restEndTime,
+    bool clearRestEndTime = false,
   }) {
     return ActiveWorkoutSession(
       dayId: dayId ?? this.dayId,
@@ -59,6 +67,7 @@ class ActiveWorkoutSession {
       restMinimized: restMinimized ?? this.restMinimized,
       timerRunning: timerRunning ?? this.timerRunning,
       notes: notes ?? this.notes,
+      restEndTime: clearRestEndTime ? null : (restEndTime ?? this.restEndTime),
     );
   }
 }
@@ -98,6 +107,8 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutSession?> {
     bool? timerRunning,
     String? currentExerciseName,
     String? notes,
+    DateTime? restEndTime,
+    bool clearRestEndTime = false,
   }) {
     if (state == null) return;
     state = state!.copyWith(
@@ -110,11 +121,25 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutSession?> {
       timerRunning: timerRunning,
       currentExerciseName: currentExerciseName,
       notes: notes,
+      restEndTime: restEndTime,
+      clearRestEndTime: clearRestEndTime,
     );
+    // Manage PiP based on timer state
+    _updatePip();
   }
 
   void endSession() {
     state = null;
+    PipService().disable();
+  }
+
+  void _updatePip() {
+    final s = state;
+    if (s != null && s.restActive && s.timerRunning && s.restEndTime != null) {
+      PipService().enable();
+    } else {
+      PipService().disable();
+    }
   }
 }
 
@@ -128,5 +153,16 @@ final workoutElapsedSecondsProvider = StreamProvider<int>((ref) {
   if (session == null) return const Stream.empty();
   return Stream.periodic(const Duration(seconds: 1), (_) {
     return DateTime.now().difference(session.startTime).inSeconds;
+  });
+});
+
+/// Live countdown of rest timer seconds remaining (derived from restEndTime).
+final restTimerSecondsProvider = StreamProvider<int>((ref) {
+  final session = ref.watch(activeWorkoutSessionProvider);
+  if (session == null || session.restEndTime == null || !session.timerRunning) {
+    return const Stream.empty();
+  }
+  return Stream.periodic(const Duration(seconds: 1), (_) {
+    return max(0, session.restEndTime!.difference(DateTime.now()).inSeconds);
   });
 });

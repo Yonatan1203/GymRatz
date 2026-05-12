@@ -179,7 +179,9 @@ class WorkoutScreen extends ConsumerWidget {
       final dayShort = _weekDaysShort[i];
       final isToday = date.day == now.day && date.month == now.month && date.year == now.year;
       final scheduledDay = dayMap[dayName];
-      final isCompleted = scheduledDay != null && completedDayIds.contains(scheduledDay.id);
+      // Skip rest days (days with no scheduled workout)
+      if (scheduledDay == null) continue;
+      final isCompleted = completedDayIds.contains(scheduledDay.id);
       final isPast = date.isBefore(DateTime(now.year, now.month, now.day)) && !isToday;
 
       dayRows.add(

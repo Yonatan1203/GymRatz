@@ -29,7 +29,6 @@ import '../features/settings/presentation/faq_screen.dart';
 import '../features/achievements/presentation/achievements_screen.dart';
 import '../features/favorites/presentation/favorites_screen.dart';
 import '../features/subscription/presentation/paywall_screen.dart';
-import '../shared/models/enums.dart';
 import '../features/coach/presentation/coach_application_screen.dart';
 import '../features/coach/presentation/join_coach_screen.dart';
 import '../shared/utils/platform_adapter.dart';
@@ -119,7 +118,7 @@ const _publicPaths = {
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
-  final userProfile = ref.watch(userProfileProvider).valueOrNull;
+  final role = ref.watch(userRoleProvider);
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
@@ -129,7 +128,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       final currentPath = state.uri.path;
       final isPublicRoute = _publicPaths.contains(currentPath);
       final isCoachRoute = currentPath.startsWith('/coach');
-      final role = userProfile?.role ?? UserRole.user;
       final isCoachRole = role.isCoachRole;
 
       // Not signed in and trying to access protected route -> onboarding

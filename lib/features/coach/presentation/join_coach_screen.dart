@@ -86,7 +86,7 @@ class _JoinCoachScreenState extends ConsumerState<JoinCoachScreen> {
             GradientHeader(
               showBackButton: true,
               child: Text('Join a Coach',
-                  style: AppTextStyles.h1.copyWith(color: Colors.white)),
+                  style: AppTextStyles.h1.copyWith(color: context.foreground)),
             ),
             Padding(
               padding: EdgeInsets.all(AppSpacing.screenPadding),

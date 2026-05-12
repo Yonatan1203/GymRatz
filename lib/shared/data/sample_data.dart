@@ -144,7 +144,7 @@ class SampleData {
     WorkoutDay(
       id: '2',
       name: 'Pull Day A',
-      dayOfWeek: 'Tuesday',
+      dayOfWeek: 'Wednesday',
       exercises: [
         ProgramExercise(id: '4', name: 'Barbell Row', sets: 3, repMin: 8, repMax: 10, targetRir: 2, restSeconds: 120, progressionMode: ProgressionMode.strength, category: 'Back', equipment: 'Barbell', equipmentType: EquipmentType.barbell),
         ProgramExercise(id: '5', name: 'Pull-ups', sets: 3, repMin: 6, repMax: 10, targetRir: 2, restSeconds: 120, progressionMode: ProgressionMode.endurance, category: 'Back', equipment: 'Body Weight', equipmentType: EquipmentType.bodyweight),
@@ -154,7 +154,7 @@ class SampleData {
     WorkoutDay(
       id: '3',
       name: 'Leg Day',
-      dayOfWeek: 'Wednesday',
+      dayOfWeek: 'Friday',
       exercises: [
         ProgramExercise(id: '7', name: 'Squat', sets: 4, repMin: 6, repMax: 8, targetRir: 2, restSeconds: 180, progressionMode: ProgressionMode.strength, category: 'Legs', equipment: 'Barbell', equipmentType: EquipmentType.barbell),
         ProgramExercise(id: '8', name: 'Romanian Deadlift', sets: 3, repMin: 8, repMax: 10, targetRir: 2, restSeconds: 120, progressionMode: ProgressionMode.strength, category: 'Legs', equipment: 'Barbell', equipmentType: EquipmentType.barbell),

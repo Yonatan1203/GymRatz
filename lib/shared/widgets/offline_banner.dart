@@ -10,7 +10,8 @@ class OfflineBanner extends StatelessWidget {
     return StreamBuilder<List<ConnectivityResult>>(
       stream: Connectivity().onConnectivityChanged,
       builder: (context, snapshot) {
-        final results = snapshot.data ?? [];
+        if (!snapshot.hasData) return const SizedBox.shrink();
+        final results = snapshot.data!;
         final isOffline =
             results.contains(ConnectivityResult.none) || results.isEmpty;
 

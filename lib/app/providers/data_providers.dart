@@ -20,6 +20,11 @@ final userProfileProvider = StreamProvider<UserProfile?>((ref) {
   return ref.watch(userRepositoryProvider).watchUser(uid);
 });
 
+/// Only the user's role — used by the router so it doesn't rebuild on every profile change.
+final userRoleProvider = Provider<UserRole>((ref) {
+  return ref.watch(userProfileProvider).valueOrNull?.role ?? UserRole.user;
+});
+
 // ─── Active Program ───
 final activeProgramProvider = StreamProvider<Program?>((ref) {
   final uid = ref.watch(currentUidProvider);
@@ -107,6 +112,13 @@ final favoriteExerciseIdsProvider = StreamProvider<Set<String>>((ref) {
   final profile = ref.watch(userProfileProvider).valueOrNull;
   if (profile == null) return Stream.value({});
   return Stream.value(profile.favoriteExerciseIds.toSet());
+});
+
+// ─── Favorite Program IDs ───
+final favoriteProgramIdsProvider = Provider<Set<String>>((ref) {
+  final profile = ref.watch(userProfileProvider).valueOrNull;
+  if (profile == null) return {};
+  return profile.favoriteProgramIds.toSet();
 });
 
 // ─── Workout Stats ───

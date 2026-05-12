@@ -66,4 +66,20 @@ class UserRepository {
 
     await updateUser(uid, {'favoriteExerciseIds': favorites});
   }
+
+  Future<void> toggleFavoriteProgram(String uid, String programId) async {
+    final doc = await _userDoc(uid).get();
+    final data = doc.data();
+    if (data == null) return;
+
+    final favorites =
+        List<String>.from(data['favoriteProgramIds'] as List? ?? []);
+    if (favorites.contains(programId)) {
+      favorites.remove(programId);
+    } else {
+      favorites.add(programId);
+    }
+
+    await updateUser(uid, {'favoriteProgramIds': favorites});
+  }
 }

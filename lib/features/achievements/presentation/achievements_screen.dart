@@ -101,14 +101,14 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Achievements', style: AppTextStyles.h1.copyWith(color: Colors.white)),
+                Text('Achievements', style: AppTextStyles.h1.copyWith(color: context.foreground)),
                 SizedBox(height: 16.h),
                 StatsGrid(
                   useTransparentBg: true,
                   items: [
-                    StatsGridItem(icon: AppIcons.trophy, iconColor: Colors.white, value: '$unlockedCount', label: 'Unlocked'),
-                    StatsGridItem(icon: AppIcons.target, iconColor: Colors.white, value: '${achievements.length}', label: 'Total'),
-                    StatsGridItem(icon: AppIcons.star, iconColor: Colors.white, value: '$totalPoints', label: 'Points'),
+                    StatsGridItem(icon: AppIcons.trophy, iconColor: context.foreground, value: '$unlockedCount', label: 'Unlocked'),
+                    StatsGridItem(icon: AppIcons.target, iconColor: context.foreground, value: '${achievements.length}', label: 'Total'),
+                    StatsGridItem(icon: AppIcons.star, iconColor: context.foreground, value: '$totalPoints', label: 'Points'),
                   ],
                 ),
               ],

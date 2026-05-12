@@ -133,6 +133,9 @@ class ProgramsScreen extends ConsumerWidget {
   }
 
   Widget _buildProgramCard(BuildContext context, WidgetRef ref, Program p) {
+    final favIds = ref.watch(favoriteProgramIdsProvider);
+    final isFav = favIds.contains(p.id);
+
     return ScaleTap(
       onTap: () => context.push('/programs/detail/${p.id}'),
       child: CustomCard(
@@ -195,14 +198,19 @@ class ProgramsScreen extends ConsumerWidget {
                           );
                           return;
                         }
-                        final result = await showDialog<Map<String, dynamic>>(
-                          context: context,
-                          builder: (ctx) => _SetAsMainDialog(programName: p.name),
-                        );
-                        if (result == null) return;
                         final uid = ref.read(currentUidProvider);
                         if (uid == null) return;
-                        final prefillWeights = result['prefillWeights'] as bool;
+                        final recentWorkouts = ref.read(recentWorkoutsProvider).valueOrNull ?? [];
+                        final hasHistory = recentWorkouts.isNotEmpty;
+                        bool prefillWeights = false;
+                        if (hasHistory) {
+                          final result = await showDialog<Map<String, dynamic>>(
+                            context: context,
+                            builder: (ctx) => _SetAsMainDialog(programName: p.name),
+                          );
+                          if (result == null) return;
+                          prefillWeights = result['prefillWeights'] as bool;
+                        }
                         final repo = ref.read(programRepositoryProvider);
                         await repo.setActiveProgram(uid, p.id);
                         await repo.updateProgram(uid, p.id, {'prefillWeights': prefillWeights});
@@ -214,6 +222,23 @@ class ProgramsScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    final uid = ref.read(currentUidProvider);
+                    if (uid == null) return;
+                    ref.read(userRepositoryProvider).toggleFavoriteProgram(uid, p.id);
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.all(8.r),
+                    child: Icon(
+                      isFav ? Icons.favorite : Icons.favorite_border,
+                      size: 20.r,
+                      color: isFav ? Colors.red : context.mutedForeground,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 4.w),
                 Icon(AppIcons.chevronRight, size: 20.r, color: context.mutedForeground),
               ],
             ),

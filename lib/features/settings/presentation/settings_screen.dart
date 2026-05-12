@@ -41,7 +41,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           children: [
             GradientHeader(
               showBackButton: true,
-              child: Text('Settings', style: AppTextStyles.h1.copyWith(color: Colors.white)),
+              child: Text('Settings', style: AppTextStyles.h1.copyWith(color: context.foreground)),
             ),
             Padding(
               padding: EdgeInsets.all(AppSpacing.screenPadding),

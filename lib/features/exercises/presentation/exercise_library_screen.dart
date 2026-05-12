@@ -217,9 +217,14 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
                     children: [
                       CustomBadge(text: exercise.type, backgroundColor: context.mutedColor, textColor: context.mutedForeground),
                       SizedBox(width: 8.w),
-                      Text(exercise.muscle, style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
-                      Text(' \u2022 ', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
-                      Text(exercise.equipment, style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                      Flexible(
+                        child: Text(
+                          '${exercise.muscle} \u2022 ${exercise.equipment}',
+                          style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
                     ],
                   ),
                   SizedBox(height: 8.h),
@@ -250,7 +255,7 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
                 child: Padding(
                   padding: EdgeInsets.all(8.r),
                   child: Icon(
-                    exercise.isFavorite ? AppIcons.heart : AppIcons.heart,
+                    exercise.isFavorite ? Icons.favorite : Icons.favorite_border,
                     size: 20.r,
                     color: exercise.isFavorite ? Colors.red : context.mutedForeground,
                   ),

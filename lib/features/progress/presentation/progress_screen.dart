@@ -51,14 +51,14 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Progress', style: AppTextStyles.h1.copyWith(color: Colors.white)),
+                  Text('Progress', style: AppTextStyles.h1.copyWith(color: context.foreground)),
                   SizedBox(height: 16.h),
                   StatsGrid(
                     useTransparentBg: true,
                     items: [
-                      StatsGridItem(icon: AppIcons.dumbbell, iconColor: Colors.white, value: '$totalWorkouts', label: 'Total'),
-                      StatsGridItem(icon: AppIcons.flame, iconColor: Colors.white, value: '$streak', label: 'Streak'),
-                      StatsGridItem(icon: AppIcons.trophy, iconColor: Colors.white, value: '$prCount', label: 'New PRs'),
+                      StatsGridItem(icon: AppIcons.dumbbell, iconColor: context.foreground, value: '$totalWorkouts', label: 'Total'),
+                      StatsGridItem(icon: AppIcons.flame, iconColor: context.foreground, value: '$streak', label: 'Streak'),
+                      StatsGridItem(icon: AppIcons.trophy, iconColor: context.foreground, value: '$prCount', label: 'New PRs'),
                     ],
                   ),
                 ],
