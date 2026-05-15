@@ -34,12 +34,12 @@ jobs:
 
       - name: Create key.properties
         run: |
-          cat > android/key.properties << EOF
-          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
-          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
-          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-          storeFile=gymratz-release.keystore
-          EOF
+          printf '%s\n' \
+            "storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}" \
+            "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" \
+            "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" \
+            "storeFile=gymratz-release.keystore" \
+            > android/key.properties
 
       - name: Build AAB
         run: flutter build appbundle --release --dart-define=RC_GOOGLE_KEY=${{ secrets.REVENUECAT_GOOGLE_KEY }} --dart-define=RC_APPLE_KEY=${{ secrets.REVENUECAT_APPLE_KEY }}
