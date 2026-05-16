@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
+import 'package:go_router/go_router.dart'; // for context.push
 import '../../../app/providers.dart';
 import '../../../theme/app_icons.dart';
 import '../../../theme/app_text_styles.dart';
@@ -12,8 +12,9 @@ import '../../../shared/utils/extensions.dart';
 /// The Profile tab (index 4) remains accessible so users can log out and manage settings.
 class SubscriptionGate extends ConsumerWidget {
   final Widget child;
+  final int currentIndex;
 
-  const SubscriptionGate({super.key, required this.child});
+  const SubscriptionGate({super.key, required this.child, required this.currentIndex});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -22,9 +23,7 @@ class SubscriptionGate extends ConsumerWidget {
     return isPro.when(
       data: (pro) {
         if (!pro) {
-          // Check if we're on the Profile tab (index 4) — allow interaction there
-          final shell = StatefulNavigationShell.maybeOf(context);
-          final isProfileTab = shell != null && shell.currentIndex == 4;
+          final isProfileTab = currentIndex == 4;
 
           return Column(
             children: [

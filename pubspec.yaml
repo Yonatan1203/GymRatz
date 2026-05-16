@@ -1,7 +1,7 @@
 name: gymratz
 description: "GymRatz - Track workouts, smash PRs, level up your fitness"
 publish_to: 'none'
-version: 1.0.8+10
+version: 1.0.8+11
 
 environment:
   sdk: ^3.10.8

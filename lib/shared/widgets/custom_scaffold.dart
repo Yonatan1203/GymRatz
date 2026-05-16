@@ -58,7 +58,10 @@ class _CustomScaffoldState extends ConsumerState<CustomScaffold> {
             children: [
               const OfflineBanner(),
               Expanded(
-                child: SubscriptionGate(child: widget.navigationShell),
+                child: SubscriptionGate(
+                  currentIndex: widget.navigationShell.currentIndex,
+                  child: widget.navigationShell,
+                ),
               ),
             ],
           ),
