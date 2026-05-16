@@ -50,6 +50,9 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     try {
       final success = await ref.read(entitlementServiceProvider).purchase(package);
       if (success && mounted) {
+        // Force refresh subscription state so the banner disappears
+        ref.invalidate(isProProvider);
+        ref.invalidate(subscriptionStateProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Purchase successful! Welcome to Pro.')),
         );

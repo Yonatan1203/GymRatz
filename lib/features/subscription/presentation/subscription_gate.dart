@@ -6,11 +6,9 @@ import '../../../app/providers.dart';
 import '../../../theme/app_icons.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
-import '../data/entitlement_repository.dart' show SubscriptionState;
 
 /// Wraps a child widget and shows a banner when subscription is expired.
-/// Users can still navigate (to access settings, log out, etc.) but see
-/// a visual cue that their subscription has ended.
+/// Uses isProProvider which checks RevenueCat, admin role, and coach-sponsored access.
 class SubscriptionGate extends ConsumerWidget {
   final Widget child;
 
@@ -18,11 +16,11 @@ class SubscriptionGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final subState = ref.watch(subscriptionStateProvider);
+    final isPro = ref.watch(isProProvider);
 
-    return subState.when(
-      data: (state) {
-        if (state == SubscriptionState.expired) {
+    return isPro.when(
+      data: (pro) {
+        if (!pro) {
           return Column(
             children: [
               _ExpiredBanner(),
