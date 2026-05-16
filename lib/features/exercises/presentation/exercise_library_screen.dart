@@ -36,6 +36,34 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
     await ref.read(userRepositoryProvider).toggleFavoriteExercise(uid, exercise.id);
   }
 
+  void _confirmDeleteExercise(BuildContext context, Exercise exercise) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Exercise'),
+        content: Text('Are you sure you want to delete "${exercise.name}"? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final uid = ref.read(currentUidProvider);
+      if (uid != null) {
+        await ref.read(exerciseRepositoryProvider).deleteExercise(uid, exercise.id);
+      }
+    }
+  }
+
   List<Exercise> _getFilteredExercises(List<Exercise> exercises) {
     return exercises.where((ex) {
       if (_selectedCategory != 'All' && ex.category != _selectedCategory) return false;
@@ -244,23 +272,44 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
                 ],
               ),
             ),
-            Semantics(
-              button: true,
-              label: exercise.isFavorite ? 'Remove from favorites' : 'Add to favorites',
-              child: GestureDetector(
-                onTap: () {
-                  PlatformAdapter.hapticSelection();
-                  _toggleFavorite(exercise);
-                },
-                child: Padding(
-                  padding: EdgeInsets.all(8.r),
-                  child: Icon(
-                    exercise.isFavorite ? Icons.favorite : Icons.favorite_border,
-                    size: 20.r,
-                    color: exercise.isFavorite ? Colors.red : context.mutedForeground,
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Semantics(
+                  button: true,
+                  label: exercise.isFavorite ? 'Remove from favorites' : 'Add to favorites',
+                  child: GestureDetector(
+                    onTap: () {
+                      PlatformAdapter.hapticSelection();
+                      _toggleFavorite(exercise);
+                    },
+                    child: Padding(
+                      padding: EdgeInsets.all(8.r),
+                      child: Icon(
+                        exercise.isFavorite ? Icons.favorite : Icons.favorite_border,
+                        size: 20.r,
+                        color: exercise.isFavorite ? Colors.red : context.mutedForeground,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                if (exercise.isDefault == false)
+                  Semantics(
+                    button: true,
+                    label: 'Delete exercise',
+                    child: GestureDetector(
+                      onTap: () => _confirmDeleteExercise(context, exercise),
+                      child: Padding(
+                        padding: EdgeInsets.all(8.r),
+                        child: Icon(
+                          AppIcons.trash2,
+                          size: 16.r,
+                          color: context.destructiveColor,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ],
         ),

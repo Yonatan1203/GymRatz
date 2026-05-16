@@ -39,7 +39,7 @@ class HomeScreen extends ConsumerWidget {
                   children: [
                     _buildStatsGrid(context, isDark, ref),
                     SizedBox(height: AppSpacing.sectionGap),
-                    _buildTodaysWorkout(context, isDark),
+                    _buildTodaysWorkout(context, isDark, ref),
                     SizedBox(height: AppSpacing.sectionGap),
                     _buildQuickActions(context, isDark),
                     SizedBox(height: AppSpacing.sectionGap),
@@ -55,8 +55,24 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context, bool isDark, WidgetRef ref) {
-    final weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const today = 2;
+    final weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    final now = DateTime.now();
+    // Get Sunday of this week (Sunday-first)
+    final sundayOffset = now.weekday % 7; // Sunday=7%7=0, Monday=1, etc.
+    final weekStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: sundayOffset));
+
+    // Get completed workout dates this week
+    final recentWorkouts = ref.watch(recentWorkoutsProvider).valueOrNull ?? [];
+    final completedDatesThisWeek = <int>{};
+    for (final workout in recentWorkouts) {
+      if (workout.status == WorkoutStatus.completed) {
+        final wDate = DateTime(workout.date.year, workout.date.month, workout.date.day);
+        if (!wDate.isBefore(weekStart) && wDate.isBefore(weekStart.add(const Duration(days: 7)))) {
+          // day index within the week (0=Sun, 6=Sat)
+          completedDatesThisWeek.add(wDate.difference(weekStart).inDays);
+        }
+      }
+    }
 
     final userProfile = ref.watch(userProfileProvider).valueOrNull;
     final stats = ref.watch(workoutStatsProvider).valueOrNull;
@@ -140,7 +156,9 @@ class HomeScreen extends ConsumerWidget {
               itemCount: weekDays.length,
               separatorBuilder: (_, __) => SizedBox(width: AppSpacing.md),
               itemBuilder: (context, index) {
-                final isToday = index == today;
+                final date = weekStart.add(Duration(days: index));
+                final isToday = date.day == now.day && date.month == now.month && date.year == now.year;
+                final hasCompleted = completedDatesThisWeek.contains(index);
                 return Container(
                   width: 56.w,
                   decoration: BoxDecoration(
@@ -165,7 +183,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       SizedBox(height: AppSpacing.sm),
                       Text(
-                        '${index + 10}',
+                        '${date.day}',
                         style: TextStyle(
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w600,
@@ -174,7 +192,7 @@ class HomeScreen extends ConsumerWidget {
                               : context.foreground,
                         ),
                       ),
-                      if (index < today) ...[
+                      if (hasCompleted) ...[
                         SizedBox(height: AppSpacing.sm),
                         Container(
                           width: 6.r,
@@ -240,96 +258,161 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTodaysWorkout(BuildContext context, bool isDark) {
-    return Column(
-      children: [
-        SectionHeader(
-          title: "Today's Workout",
-          actionText: 'View All',
-          onAction: () => context.go('/today'),
-        ),
-        SizedBox(height: AppSpacing.lg),
-        ScaleTap(
-          onTap: () => context.push('/workout/1'),
-          child: CustomCard(
-            variant: CardVariant.workout,
-            gradient: AppGradients.primary(isDark: isDark),
-            boxShadow: AppShadows.lg,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+  Widget _buildTodaysWorkout(BuildContext context, bool isDark, WidgetRef ref) {
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final todayName = dayNames[DateTime.now().weekday - 1];
+
+    final programAsync = ref.watch(activeProgramProvider);
+
+    return programAsync.when(
+      data: (program) {
+        if (program == null) {
+          // No active program
+          return Column(
+            children: [
+              SectionHeader(
+                title: "Today's Workout",
+                actionText: 'View All',
+                onAction: () => context.go('/today'),
+              ),
+              SizedBox(height: AppSpacing.lg),
+              CustomCard(
+                child: Column(
+                  children: [
+                    Icon(AppIcons.dumbbell, size: 36.r, color: context.mutedForeground),
+                    SizedBox(height: AppSpacing.lg),
+                    Text('No Active Program', style: AppTextStyles.h3.copyWith(color: context.foreground)),
+                    SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'Set an active program to see your daily workouts here.',
+                      style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }
+
+        final todaysWorkout = program.days.where((d) => d.dayOfWeek == todayName).firstOrNull;
+
+        if (todaysWorkout == null) {
+          // Rest day
+          return Column(
+            children: [
+              SectionHeader(
+                title: "Today's Workout",
+                actionText: 'View All',
+                onAction: () => context.go('/today'),
+              ),
+              SizedBox(height: AppSpacing.lg),
+              CustomCard(
+                child: Column(
+                  children: [
+                    Icon(AppIcons.moon, size: 36.r, color: context.mutedForeground),
+                    SizedBox(height: AppSpacing.lg),
+                    Text('Rest Day', style: AppTextStyles.h3.copyWith(color: context.foreground)),
+                    SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'No workout scheduled for today. Enjoy your recovery!',
+                      style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }
+
+        // Active workout for today
+        final exerciseCount = todaysWorkout.exercises.length;
+        final totalSets = todaysWorkout.exercises.fold<int>(0, (sum, e) => sum + e.sets);
+
+        return Column(
+          children: [
+            SectionHeader(
+              title: "Today's Workout",
+              actionText: 'View All',
+              onAction: () => context.go('/today'),
+            ),
+            SizedBox(height: AppSpacing.lg),
+            ScaleTap(
+              onTap: () => context.push('/workout/${todaysWorkout.id}'),
+              child: CustomCard(
+                variant: CardVariant.workout,
+                gradient: AppGradients.primary(isDark: isDark),
+                boxShadow: AppShadows.lg,
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Push Day', style: AppTextStyles.h3.copyWith(color: Colors.white)),
-                          SizedBox(height: AppSpacing.sm),
-                          Text('Upper Body Strength', style: AppTextStyles.bodySmall.copyWith(color: Colors.white70)),
-                        ],
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(todaysWorkout.name, style: AppTextStyles.h3.copyWith(color: Colors.white)),
+                              SizedBox(height: AppSpacing.sm),
+                              Text(program.name, style: AppTextStyles.bodySmall.copyWith(color: Colors.white70)),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          width: 48.r,
+                          height: 48.r,
+                          child: Center(child: Icon(AppIcons.play, size: 24.r, color: Colors.white)),
+                        ),
+                      ],
                     ),
-                    SizedBox(
-                      width: 48.r,
-                      height: 48.r,
-                      child: Center(child: Icon(AppIcons.play, size: 24.r, color: Colors.white)),
+                    SizedBox(height: AppSpacing.xl),
+                    Row(
+                      children: [
+                        Text('$exerciseCount Exercises', style: AppTextStyles.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.9))),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                          child: Text('\u2022', style: TextStyle(color: Colors.white.withValues(alpha: 0.9))),
+                        ),
+                        Text('$totalSets Sets', style: AppTextStyles.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.9))),
+                      ],
                     ),
                   ],
                 ),
-                SizedBox(height: AppSpacing.xl),
-                Row(
-                  children: [
-                    Text('6 Exercises', style: AppTextStyles.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.9))),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                      child: Text('\u2022', style: TextStyle(color: Colors.white.withValues(alpha: 0.9))),
-                    ),
-                    Text('45-60 min', style: AppTextStyles.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.9))),
-                  ],
-                ),
-                SizedBox(height: AppSpacing.xl),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.all(AppSpacing.md),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: AppRadius.borderLg,
-                        ),
-                        child: Column(
-                          children: [
-                            Text('Sets', style: AppTextStyles.caption.copyWith(color: Colors.white70)),
-                            Text('18', style: AppTextStyles.bodySmall.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.all(AppSpacing.md),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: AppRadius.borderLg,
-                        ),
-                        child: Column(
-                          children: [
-                            Text('Volume', style: AppTextStyles.caption.copyWith(color: Colors.white70)),
-                            Text('4,200kg', style: AppTextStyles.bodySmall.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
+          ],
+        );
+      },
+      loading: () => Column(
+        children: [
+          SectionHeader(
+            title: "Today's Workout",
+            actionText: 'View All',
+            onAction: () => context.go('/today'),
           ),
-        ),
-      ],
+          SizedBox(height: AppSpacing.lg),
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.sectionGap),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+        ],
+      ),
+      error: (error, _) => Column(
+        children: [
+          SectionHeader(
+            title: "Today's Workout",
+            actionText: 'View All',
+            onAction: () => context.go('/today'),
+          ),
+          SizedBox(height: AppSpacing.lg),
+          Text(
+            'Could not load workout',
+            style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
+          ),
+        ],
+      ),
     );
   }
 

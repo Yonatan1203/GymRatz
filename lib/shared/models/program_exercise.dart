@@ -12,6 +12,8 @@ class ProgramExercise {
   final String category;
   final String? equipment;
   final EquipmentType equipmentType;
+  /// Duration in minutes for cardio exercises (null for strength exercises).
+  final int? durationMinutes;
 
   const ProgramExercise({
     required this.id,
@@ -25,7 +27,10 @@ class ProgramExercise {
     this.category = 'Chest',
     this.equipment,
     this.equipmentType = EquipmentType.barbell,
+    this.durationMinutes,
   });
+
+  bool get isCardio => durationMinutes != null;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -39,6 +44,7 @@ class ProgramExercise {
         'category': category,
         'equipment': equipment,
         'equipmentType': equipmentType.name,
+        if (durationMinutes != null) 'durationMinutes': durationMinutes,
       };
 
   factory ProgramExercise.fromJson(Map<String, dynamic> json) {
@@ -68,6 +74,7 @@ class ProgramExercise {
         (e) => e.name == json['equipmentType'],
         orElse: () => EquipmentType.barbell,
       ),
+      durationMinutes: json['durationMinutes'] as int?,
     );
   }
 
@@ -83,6 +90,7 @@ class ProgramExercise {
     String? category,
     String? equipment,
     EquipmentType? equipmentType,
+    int? durationMinutes,
   }) =>
       ProgramExercise(
         id: id ?? this.id,
@@ -96,5 +104,6 @@ class ProgramExercise {
         category: category ?? this.category,
         equipment: equipment ?? this.equipment,
         equipmentType: equipmentType ?? this.equipmentType,
+        durationMinutes: durationMinutes ?? this.durationMinutes,
       );
 }

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../theme/app_icons.dart';
 
 import '../../app/providers.dart';
-import '../../core/pip_service.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_shadows.dart';
 import '../utils/extensions.dart';
@@ -24,32 +23,11 @@ class CustomScaffold extends ConsumerStatefulWidget {
 }
 
 class _CustomScaffoldState extends ConsumerState<CustomScaffold> {
-  bool _isInPip = false;
-
-  @override
-  void initState() {
-    super.initState();
-    PipService().onPipChanged = (inPip) {
-      if (mounted) setState(() => _isInPip = inPip);
-    };
-  }
-
-  @override
-  void dispose() {
-    PipService().onPipChanged = null;
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final activeSession = ref.watch(activeWorkoutSessionProvider);
-
-    // Show simple timer view when in PiP mode
-    if (_isInPip && activeSession != null) {
-      return _buildPipView(context, isDark);
-    }
 
     return Scaffold(
       body: Stack(
@@ -146,47 +124,6 @@ class _CustomScaffoldState extends ConsumerState<CustomScaffold> {
     );
   }
 
-  Widget _buildPipView(BuildContext context, bool isDark) {
-    final session = ref.watch(activeWorkoutSessionProvider)!;
-    final restTimerValue = ref.watch(restTimerSecondsProvider).valueOrNull;
-    final restActive = session.restActive && session.timerRunning && restTimerValue != null;
-    final restSeconds = restTimerValue ?? 0;
-    final timerDone = restActive && restSeconds == 0;
-
-    return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (timerDone)
-              Icon(AppIcons.bell, size: 48, color: context.coralColor)
-            else if (restActive)
-              Text(
-                '${(restSeconds ~/ 60).toString().padLeft(2, '0')}:${(restSeconds % 60).toString().padLeft(2, '0')}',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.w700,
-                  color: context.primaryColor,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              )
-            else
-              Text(
-                session.workoutName,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: context.foreground),
-                textAlign: TextAlign.center,
-              ),
-            const SizedBox(height: 8),
-            Text(
-              restActive ? (timerDone ? 'Rest Complete!' : 'Rest') : 'In Progress',
-              style: TextStyle(fontSize: 14, color: context.mutedForeground),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 Widget _expandedNavItem(IconData icon, String label, bool isActive, VoidCallback onTap, bool isDark) {

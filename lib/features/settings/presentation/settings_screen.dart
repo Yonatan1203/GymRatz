@@ -67,6 +67,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                   ),
                   SizedBox(height: AppSpacing.sectionGap),
+                  _sectionTitle(context, 'UNITS'),
+                  CustomCard(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(AppIcons.scale, size: 20.r, color: context.mutedForeground),
+                            SizedBox(width: 12.w),
+                            Text('Measurement System', style: AppTextStyles.body.copyWith(color: context.foreground)),
+                          ],
+                        ),
+                        SizedBox(height: 12.h),
+                        _buildUnitSelector(ref, isDark),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.sectionGap),
                   _sectionTitle(context, 'NOTIFICATIONS'),
                   CustomCard(
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -339,6 +358,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           decoration: BoxDecoration(
             color: isSelected
                 ? context.primaryColor.withValues(alpha:0.12)
+                : context.mutedColor,
+            borderRadius: BorderRadius.circular(8.r),
+            border: Border.all(
+              color: isSelected ? context.primaryColor : Colors.transparent,
+              width: 1.5,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: isSelected ? context.primaryColor : context.mutedForeground,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUnitSelector(WidgetRef ref, bool isDark) {
+    final currentUnit = ref.watch(userProfileProvider).valueOrNull?.unit ?? 'kg';
+
+    return Row(
+      children: [
+        _unitOption(ref, 'Metric (kg)', 'kg', currentUnit),
+        SizedBox(width: 8.w),
+        _unitOption(ref, 'Imperial (lbs)', 'lbs', currentUnit),
+      ],
+    );
+  }
+
+  Widget _unitOption(WidgetRef ref, String label, String value, String current) {
+    final isSelected = current == value;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          final uid = ref.read(currentUidProvider);
+          if (uid != null) {
+            ref.read(userRepositoryProvider).updateUser(uid, {'unit': value});
+          }
+        },
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 10.h),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? context.primaryColor.withValues(alpha: 0.12)
                 : context.mutedColor,
             borderRadius: BorderRadius.circular(8.r),
             border: Border.all(

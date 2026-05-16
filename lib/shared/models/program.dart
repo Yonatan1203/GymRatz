@@ -12,6 +12,7 @@ class Program {
   final bool isActive;
   final bool prefillWeights;
   final DateTime? createdAt;
+  final DateTime? activatedAt;
   final bool assignedByCoach;
   final String? coachId;
 
@@ -27,6 +28,7 @@ class Program {
     this.isActive = false,
     this.prefillWeights = true,
     this.createdAt,
+    this.activatedAt,
     this.assignedByCoach = false,
     this.coachId,
   });
@@ -43,6 +45,7 @@ class Program {
         'isActive': isActive,
         'prefillWeights': prefillWeights,
         'createdAt': createdAt?.toIso8601String(),
+        'activatedAt': activatedAt?.toIso8601String(),
         'assignedByCoach': assignedByCoach,
         'coachId': coachId,
       };
@@ -64,6 +67,9 @@ class Program {
         createdAt: json['createdAt'] != null
             ? DateTime.tryParse(json['createdAt'] as String)
             : null,
+        activatedAt: json['activatedAt'] != null
+            ? DateTime.tryParse(json['activatedAt'] as String)
+            : null,
         assignedByCoach: json['assignedByCoach'] as bool? ?? false,
         coachId: json['coachId'] as String?,
       );
@@ -80,6 +86,7 @@ class Program {
     bool? isActive,
     bool? prefillWeights,
     DateTime? createdAt,
+    DateTime? activatedAt,
     bool? assignedByCoach,
     String? coachId,
   }) =>
@@ -95,6 +102,7 @@ class Program {
         isActive: isActive ?? this.isActive,
         prefillWeights: prefillWeights ?? this.prefillWeights,
         createdAt: createdAt ?? this.createdAt,
+        activatedAt: activatedAt ?? this.activatedAt,
         assignedByCoach: assignedByCoach ?? this.assignedByCoach,
         coachId: coachId ?? this.coachId,
       );

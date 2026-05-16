@@ -228,7 +228,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Widget _buildCalendarGrid(BuildContext context, bool isDark) {
-    final dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     final calendarAsync = ref.watch(calendarMonthProvider('$_currentYear-$_currentMonth'));
 
     return Column(
@@ -255,8 +255,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget _buildCalendarDays(BuildContext context, bool isDark, Map<int, WorkoutStatus> calendarData) {
     final now = DateTime.now();
     final daysInMonth = DateTime(_currentYear, _currentMonth + 1, 0).day;
-    final firstWeekday = DateTime(_currentYear, _currentMonth, 1).weekday;
-    final totalCells = firstWeekday - 1 + daysInMonth;
+    final firstWeekdayMon = DateTime(_currentYear, _currentMonth, 1).weekday; // 1=Mon, 7=Sun
+    final firstWeekday = firstWeekdayMon % 7; // Convert: Sun=0, Mon=1, ..., Sat=6
+    final totalCells = firstWeekday + daysInMonth;
 
     return GridView.builder(
       shrinkWrap: true,
@@ -268,7 +269,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       ),
       itemCount: totalCells,
       itemBuilder: (context, index) {
-        final dayNumber = index - (firstWeekday - 2);
+        final dayNumber = index - firstWeekday + 1;
         if (dayNumber < 1 || dayNumber > daysInMonth) return const SizedBox();
 
         final isToday = _currentYear == now.year && _currentMonth == now.month && dayNumber == now.day;
@@ -551,17 +552,53 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             children: entries.take(5).map((e) => Padding(
               padding: EdgeInsets.only(bottom: AppSpacing.md),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '${e.date.month}/${e.date.day}/${e.date.year}',
-                    style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
+                  Expanded(
+                    child: Text(
+                      '${e.date.month}/${e.date.day}/${e.date.year}',
+                      style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
+                    ),
                   ),
                   Text(
                     '${e.weight} ${e.unit}',
                     style: AppTextStyles.bodySmall.copyWith(
                       color: context.primaryColor,
                       fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(width: AppSpacing.sm),
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      iconSize: 16,
+                      icon: Icon(Icons.close, size: 16, color: context.mutedForeground),
+                      onPressed: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Delete Entry'),
+                            content: const Text('Are you sure you want to delete this weight entry?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(true),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirmed == true) {
+                          final uid = ref.read(currentUidProvider);
+                          if (uid != null) {
+                            await ref.read(weightEntryRepositoryProvider).deleteWeightEntry(uid, e.id);
+                          }
+                        }
+                      },
                     ),
                   ),
                 ],

@@ -178,7 +178,14 @@ final calendarMonthProvider = FutureProvider.family<Map<int, WorkoutStatus>, Str
       if (scheduledDays.contains(dayName)) {
         // Future/today → scheduled, past → missed
         if (date.isBefore(todayMidnight)) {
-          result[d] = WorkoutStatus.missed;
+          final activatedAt = activeProgram.activatedAt;
+          final activationDate = activatedAt != null
+              ? DateTime(activatedAt.year, activatedAt.month, activatedAt.day)
+              : null;
+          // Only mark as missed if after the program was activated
+          if (activationDate == null || !date.isBefore(activationDate)) {
+            result[d] = WorkoutStatus.missed;
+          }
         } else {
           result[d] = WorkoutStatus.scheduled;
         }

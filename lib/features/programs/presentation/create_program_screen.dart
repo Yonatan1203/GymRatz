@@ -87,6 +87,15 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
     });
   }
 
+  void _addCardioDay() {
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    final name = 'Cardio';
+    setState(() {
+      _workoutDays.add(_WorkoutDay(id: id, name: name, dayOfWeek: 'Monday', exercises: [], isCardio: true));
+      _dayNameControllers[id] = TextEditingController(text: name);
+    });
+  }
+
   void _removeWorkoutDay(String id) {
     setState(() {
       _workoutDays.removeWhere((d) => d.id == id);
@@ -98,19 +107,30 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
   void _addExerciseFromLibrary(String dayId, Exercise exercise) {
     setState(() {
       final day = _workoutDays.firstWhere((d) => d.id == dayId);
-      day.exercises.add(_ExerciseConfig(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: exercise.name,
-        category: exercise.category,
-        equipment: exercise.equipment,
-        equipmentType: exercise.equipmentType,
-        sets: 3,
-        repMin: 8,
-        repMax: 12,
-        targetRir: 2,
-        restSeconds: 120,
-        progressionType: ProgressionMode.hypertrophy,
-      ));
+      if (day.isCardio) {
+        day.exercises.add(_ExerciseConfig(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          name: exercise.name,
+          category: exercise.category,
+          equipment: exercise.equipment,
+          equipmentType: exercise.equipmentType,
+          durationMinutes: 30,
+        ));
+      } else {
+        day.exercises.add(_ExerciseConfig(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          name: exercise.name,
+          category: exercise.category,
+          equipment: exercise.equipment,
+          equipmentType: exercise.equipmentType,
+          sets: 3,
+          repMin: 8,
+          repMax: 12,
+          targetRir: 2,
+          restSeconds: 120,
+          progressionType: ProgressionMode.hypertrophy,
+        ));
+      }
       _pickerOpenForDay = null;
       _exerciseSearchQuery = '';
       _selectedCategory = null;
@@ -183,6 +203,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
           id: day.id,
           name: day.name,
           dayOfWeek: day.dayOfWeek,
+          isCardio: day.isCardio,
           exercises: day.exercises.map((ex) {
             return ProgramExercise(
               id: ex.id,
@@ -196,6 +217,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
               category: ex.category,
               equipment: ex.equipment,
               equipmentType: ex.equipmentType,
+              durationMinutes: ex.durationMinutes,
             );
           }).toList(),
         );
@@ -287,11 +309,26 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                 SizedBox(height: AppSpacing.sectionGap),
                 ..._workoutDays.map((day) => _buildWorkoutDayCard(context, context.isDark, day)),
                 SizedBox(height: 16.h),
-                CustomButton(
-                  text: '+ Add Workout Day',
-                  variant: ButtonVariant.dashed,
-                  icon: AppIcons.plus,
-                  onPressed: _addWorkoutDay,
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomButton(
+                        text: '+ Workout Day',
+                        variant: ButtonVariant.dashed,
+                        icon: AppIcons.plus,
+                        onPressed: _addWorkoutDay,
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: CustomButton(
+                        text: '+ Cardio Day',
+                        variant: ButtonVariant.dashed,
+                        icon: AppIcons.heart,
+                        onPressed: _addCardioDay,
+                      ),
+                    ),
+                  ],
                 ),
                 SizedBox(height: 16.h),
               ],
@@ -592,44 +629,54 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
               ],
             ),
             SizedBox(height: 12.h),
-            Row(
-              children: [
-                _configSheetField(context, ex, 'Sets', '${ex.sets}', 60.w),
-                SizedBox(width: 8.w),
-                _configSheetField(context, ex, 'Rep Range', '${ex.repMin}-${ex.repMax}', 80.w),
-                SizedBox(width: 8.w),
-                _configSheetField(context, ex, 'RIR', '${ex.targetRir}', 50.w),
-                SizedBox(width: 8.w),
-                _configSheetField(context, ex, 'Rest', '${ex.restSeconds}s', 60.w),
-              ],
-            ),
-            SizedBox(height: 8.h),
-            GestureDetector(
-              onTap: () => _showConfigSheet(
-                context,
-                'Progression Type',
-                ex.progressionType.label,
-                ProgressionMode.values.map((m) => m.label).toList(),
-                (v) => setState(() => ex.progressionType = ProgressionMode.values.firstWhere((m) => m.label == v)),
-              ),
-              child: Row(
+            if (ex.durationMinutes != null)
+              // Cardio exercise: show duration
+              Row(
                 children: [
-                  Text(
-                    'Progression: ',
-                    style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
-                  ),
-                  Text(
-                    ex.progressionType.label,
-                    style: AppTextStyles.caption.copyWith(
-                      color: context.primaryColor,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  SizedBox(width: 4.w),
-                  Icon(AppIcons.edit, size: 12.r, color: context.primaryColor),
+                  _configSheetField(context, ex, 'Duration', '${ex.durationMinutes} min', 100.w),
+                ],
+              )
+            else ...[
+              // Strength exercise: show sets/reps/rir/rest
+              Row(
+                children: [
+                  _configSheetField(context, ex, 'Sets', '${ex.sets}', 60.w),
+                  SizedBox(width: 8.w),
+                  _configSheetField(context, ex, 'Rep Range', '${ex.repMin}-${ex.repMax}', 80.w),
+                  SizedBox(width: 8.w),
+                  _configSheetField(context, ex, 'RIR', '${ex.targetRir}', 50.w),
+                  SizedBox(width: 8.w),
+                  _configSheetField(context, ex, 'Rest', '${ex.restSeconds}s', 60.w),
                 ],
               ),
-            ),
+              SizedBox(height: 8.h),
+              GestureDetector(
+                onTap: () => _showConfigSheet(
+                  context,
+                  'Progression Type',
+                  ex.progressionType.label,
+                  ProgressionMode.values.map((m) => m.label).toList(),
+                  (v) => setState(() => ex.progressionType = ProgressionMode.values.firstWhere((m) => m.label == v)),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      'Progression: ',
+                      style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+                    ),
+                    Text(
+                      ex.progressionType.label,
+                      style: AppTextStyles.caption.copyWith(
+                        color: context.primaryColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(width: 4.w),
+                    Icon(AppIcons.edit, size: 12.r, color: context.primaryColor),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -720,6 +767,13 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
           const ['30', '45', '60', '90', '120', '150', '180', '240', '300'],
           (v) => setState(() => ex.restSeconds = int.parse(v)),
           displayTransform: (v) => '${v}s',
+        );
+      case 'Duration':
+        _showConfigSheet(
+          context, 'Duration (minutes)', '${ex.durationMinutes} min',
+          const ['10', '15', '20', '25', '30', '35', '40', '45', '50', '60', '75', '90'],
+          (v) => setState(() => ex.durationMinutes = int.parse(v)),
+          displayTransform: (v) => '$v min',
         );
     }
   }
@@ -1236,6 +1290,7 @@ class _WorkoutDay {
   final String id;
   String name;
   String dayOfWeek;
+  bool isCardio;
   final List<_ExerciseConfig> exercises;
 
   _WorkoutDay({
@@ -1243,6 +1298,7 @@ class _WorkoutDay {
     required this.name,
     required this.dayOfWeek,
     required this.exercises,
+    this.isCardio = false,
   });
 }
 
@@ -1258,6 +1314,8 @@ class _ExerciseConfig {
   int targetRir;
   int restSeconds;
   ProgressionMode progressionType;
+  /// Duration in minutes for cardio exercises.
+  int? durationMinutes;
 
   _ExerciseConfig({
     required this.id,
@@ -1271,5 +1329,6 @@ class _ExerciseConfig {
     this.targetRir = 2,
     this.restSeconds = 120,
     this.progressionType = ProgressionMode.hypertrophy,
+    this.durationMinutes,
   });
 }

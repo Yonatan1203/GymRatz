@@ -40,11 +40,9 @@ class ProgramService {
   /// Get today's workout day from the active program.
   WorkoutDay? getTodaysWorkout(Program program) {
     if (program.days.isEmpty) return null;
-    final dayIndex = DateTime.now().weekday - 1; // 0 = Monday
-    if (dayIndex < program.days.length) {
-      return program.days[dayIndex];
-    }
-    return program.days.first;
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final todayName = dayNames[DateTime.now().weekday - 1];
+    return program.days.where((d) => d.dayOfWeek == todayName).firstOrNull;
   }
 
   Future<void> updateProgramProgress(

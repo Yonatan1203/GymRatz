@@ -14,6 +14,10 @@ class WeightEntryRepository {
     await _entries(uid).doc(entry.id).set(entry.toJson());
   }
 
+  Future<void> deleteWeightEntry(String uid, String entryId) async {
+    await _entries(uid).doc(entryId).delete();
+  }
+
   Stream<List<WeightEntry>> watchWeightEntries(String uid, {int limit = 30}) {
     return _entries(uid)
         .orderBy('date', descending: true)

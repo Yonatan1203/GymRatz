@@ -43,7 +43,10 @@ class ProgramRepository {
     }
 
     // Activate the selected one
-    batch.update(_programs(uid).doc(programId), {'isActive': true});
+    batch.update(_programs(uid).doc(programId), {
+      'isActive': true,
+      'activatedAt': DateTime.now().toIso8601String(),
+    });
     await batch.commit();
   }
 
