@@ -8,8 +8,9 @@ import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
 import '../data/entitlement_repository.dart' show SubscriptionState;
 
-/// Wraps a child widget and blocks interaction when subscription is expired.
-/// Shows a banner at the top directing user to subscribe.
+/// Wraps a child widget and shows a banner when subscription is expired.
+/// Users can still navigate (to access settings, log out, etc.) but see
+/// a visual cue that their subscription has ended.
 class SubscriptionGate extends ConsumerWidget {
   final Widget child;
 
@@ -25,7 +26,7 @@ class SubscriptionGate extends ConsumerWidget {
           return Column(
             children: [
               _ExpiredBanner(),
-              Expanded(child: AbsorbPointer(child: Opacity(opacity: 0.6, child: child))),
+              Expanded(child: child),
             ],
           );
         }
