@@ -295,12 +295,16 @@ class _NavItemState extends State<_NavItem>
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              widget.label,
-              style: TextStyle(
-                fontSize: 10,
-                color: widget.isActive ? activeColor : inactiveColor,
-                fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w400,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                widget.label,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: widget.isActive ? activeColor : inactiveColor,
+                  fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w400,
+                ),
+                maxLines: 1,
               ),
             ),
           ],

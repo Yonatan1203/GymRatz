@@ -197,7 +197,20 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       return CustomButton(
         text: 'Start Free Trial',
         variant: ButtonVariant.gradient,
-        onPressed: () {},
+        isLoading: _loading,
+        onPressed: () async {
+          setState(() => _loading = true);
+          await _loadOfferings();
+          if (_offerings?.current?.availablePackages.isNotEmpty == true) {
+            // Offerings loaded — UI will rebuild with pricing cards
+            return;
+          }
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Unable to load subscription options. Please check your connection and try again.')),
+            );
+          }
+        },
       );
     }
 
