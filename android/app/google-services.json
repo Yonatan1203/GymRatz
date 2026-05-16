@@ -1,0 +1,106 @@
+{
+  "project_info": {
+    "project_number": "901059241616",
+    "project_id": "gymratz-b1a32",
+    "storage_bucket": "gymratz-b1a32.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:901059241616:android:18b9153783b8bb65539a15",
+        "android_client_info": {
+          "package_name": "Gym.Ratz_123"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "901059241616-5oprpiu75k3irggoj1cpf59pomnph3hf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAUyAXQURDg1TuULeEG2BB7ZCtqi4AENEQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "901059241616-5oprpiu75k3irggoj1cpf59pomnph3hf.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "901059241616-co7rjlr3qmfv9lmojn8n8ae5i2a43eh1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.gymratz.gymratz"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:901059241616:android:85c4d3b55f3cfeba539a15",
+        "android_client_info": {
+          "package_name": "com.gymratz.gymratz"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "901059241616-koh2jhbh1uitd3k2dina0ph0ubfnd8v1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gymratz.gymratz",
+            "certificate_hash": "110bddacba1630dfdb8650bf713d6b121bbf9bcc"
+          }
+        },
+        {
+          "client_id": "901059241616-ncbqj1u33n9om0ch2f3an7p4nqiciulq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gymratz.gymratz",
+            "certificate_hash": "81c2fb9c2e911709d896ac71500ff77dfddf85f8"
+          }
+        },
+        {
+          "client_id": "901059241616-qfvbf6cbgk8t7clu8hm9k2a6tsl8fbm7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gymratz.gymratz",
+            "certificate_hash": "f0afb52f9fc94a618906d9e6776c9edc6882e344"
+          }
+        },
+        {
+          "client_id": "901059241616-5oprpiu75k3irggoj1cpf59pomnph3hf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAUyAXQURDg1TuULeEG2BB7ZCtqi4AENEQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "901059241616-5oprpiu75k3irggoj1cpf59pomnph3hf.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "901059241616-co7rjlr3qmfv9lmojn8n8ae5i2a43eh1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.gymratz.gymratz"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
