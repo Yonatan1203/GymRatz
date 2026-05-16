@@ -108,7 +108,13 @@ Future<void> _initDeferredServices() async {
 
 Future<void> _initRevenueCat() async {
   try {
-    await EntitlementRepository().initialize();
+    final repo = EntitlementRepository();
+    await repo.initialize();
+    // If user is already signed in, link them with RevenueCat
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await repo.login(user.uid);
+    }
   } catch (e) {
     debugPrint('RevenueCat init skipped: $e');
   }
