@@ -56,6 +56,9 @@ Future<void> main() async {
     debugPrint('Firebase init skipped: $e');
   }
 
+  // Initialize RevenueCat before runApp so subscription providers work immediately.
+  await _initRevenueCat();
+
   // Defer non-critical init to after first frame to avoid ANR.
   WidgetsBinding.instance.addPostFrameCallback((_) {
     _initDeferredServices();
@@ -97,10 +100,9 @@ Future<void> main() async {
   runApp(const ProviderScope(child: GymRatzApp()));
 }
 
-/// Initialize RevenueCat and notifications after the first frame.
+/// Initialize notifications and PiP after the first frame.
 Future<void> _initDeferredServices() async {
   await Future.wait([
-    _initRevenueCat(),
     _initNotifications(),
     _initPip(),
   ]);

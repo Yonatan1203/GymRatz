@@ -39,8 +39,8 @@ class SubscriptionGate extends ConsumerWidget {
         }
         return child;
       },
-      loading: () => child,
-      error: (e, st) => child, // Fail open — don't block on error
+      loading: () => child, // Brief pass-through while RevenueCat resolves
+      error: (_, __) => child, // Fail open — don't block on error
     );
   }
 }
