@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 
 import '../../../app/providers.dart';
+import '../../../core/constants.dart';
 import '../../../shared/utils/extensions.dart';
 import '../../../shared/widgets/custom_card.dart';
 import '../../../shared/widgets/gradient_header.dart';
@@ -167,7 +168,7 @@ class CoachSettingsScreen extends ConsumerWidget {
                   ),
                   SizedBox(height: 24.h),
                   Center(
-                    child: Text('GymRatz v1.0.0',
+                    child: Text('GymRatz v${AppConstants.appVersion}',
                         style: AppTextStyles.caption
                             .copyWith(color: context.mutedForeground)),
                   ),

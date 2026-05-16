@@ -36,7 +36,7 @@ class AppConstants {
   }
 
   // App info
-  static const String appVersion = '1.0.0';
+  static const String appVersion = '1.1.0';
   static const String privacyPolicyUrl = 'https://yonatan1203.github.io/GymRatz/legal/privacy.html';
   static const String termsOfServiceUrl = 'https://yonatan1203.github.io/GymRatz/legal/terms.html';
 }

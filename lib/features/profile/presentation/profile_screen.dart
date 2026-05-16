@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/constants.dart';
 import '../../../theme/app_icons.dart';
 
 import '../../../theme/app_spacing.dart';
@@ -54,7 +55,7 @@ class ProfileScreen extends ConsumerWidget {
                     _buildSignOut(context, ref),
                     SizedBox(height: AppSpacing.xxl),
                     Center(
-                      child: Text('GymRatz v1.0.0', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                      child: Text('GymRatz v${AppConstants.appVersion}', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
                     ),
                     SizedBox(height: AppSpacing.xxl),
                   ],
