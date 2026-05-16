@@ -14,6 +14,8 @@ import '../../../shared/widgets/custom_toggle.dart';
 import '../../../shared/widgets/onboarding_progress_bar.dart';
 import '../../../shared/widgets/onboarding_bottom_button.dart';
 import '../../../shared/widgets/staggered_list.dart';
+import '../../auth/presentation/widgets/social_auth_buttons.dart';
+import '../../../app/providers/auth_providers.dart';
 import '../providers/onboarding_provider.dart';
 
 class OnboardingEmailScreen extends ConsumerStatefulWidget {
@@ -30,6 +32,7 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _notificationsEnabled = true;
+  bool _isSocialLoading = false;
 
   @override
   void dispose() {
@@ -44,6 +47,38 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
       _emailController.text.contains('@') && _emailController.text.contains('.');
   bool get _passwordValid => _passwordController.text.length >= 6;
   bool get _isValid => _nameValid && _emailValid && _passwordValid;
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isSocialLoading = true);
+    try {
+      await ref.read(authServiceProvider).signInWithGoogle();
+      if (mounted) context.go('/home');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sign in failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSocialLoading = false);
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    setState(() => _isSocialLoading = true);
+    try {
+      await ref.read(authServiceProvider).signInWithApple();
+      if (mounted) context.go('/home');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sign in failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSocialLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -173,6 +208,12 @@ class _OnboardingEmailScreenState extends ConsumerState<OnboardingEmailScreen> {
                         ),
                       ],
                     ),
+                  ),
+                  SizedBox(height: AppSpacing.lg),
+                  SocialAuthButtons(
+                    onGooglePressed: _signInWithGoogle,
+                    onApplePressed: _signInWithApple,
+                    isLoading: _isSocialLoading,
                   ),
                   SizedBox(height: AppSpacing.lg),
                 ],
