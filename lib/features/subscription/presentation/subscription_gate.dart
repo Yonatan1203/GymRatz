@@ -7,8 +7,9 @@ import '../../../theme/app_icons.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
 
-/// Wraps a child widget and shows a banner when subscription is expired.
+/// Wraps a child widget and blocks interaction when subscription is expired.
 /// Uses isProProvider which checks RevenueCat, admin role, and coach-sponsored access.
+/// The Profile tab (index 4) remains accessible so users can log out and manage settings.
 class SubscriptionGate extends ConsumerWidget {
   final Widget child;
 
@@ -21,10 +22,18 @@ class SubscriptionGate extends ConsumerWidget {
     return isPro.when(
       data: (pro) {
         if (!pro) {
+          // Check if we're on the Profile tab (index 4) — allow interaction there
+          final shell = StatefulNavigationShell.maybeOf(context);
+          final isProfileTab = shell != null && shell.currentIndex == 4;
+
           return Column(
             children: [
               _ExpiredBanner(),
-              Expanded(child: child),
+              Expanded(
+                child: isProfileTab
+                    ? child
+                    : AbsorbPointer(child: Opacity(opacity: 0.6, child: child)),
+              ),
             ],
           );
         }
