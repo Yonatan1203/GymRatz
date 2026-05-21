@@ -2,12 +2,22 @@ import 'dart:math';
 
 import '../../../shared/models/enums.dart';
 
+enum RoundMode { nearest, down, up }
+
 class LoadQuantizer {
   /// Snap a target weight to the nearest achievable increment for the equipment.
-  static double snap(double target, EquipmentType equipment, String unit) {
+  static double snap(double target, EquipmentType equipment, String unit,
+      {RoundMode mode = RoundMode.nearest}) {
     final increment = minIncrement(equipment, unit);
     if (increment <= 0) return target;
-    return (target / increment).round() * increment;
+    switch (mode) {
+      case RoundMode.nearest:
+        return (target / increment).round() * increment;
+      case RoundMode.down:
+        return (target / increment).floor() * increment;
+      case RoundMode.up:
+        return (target / increment).ceil() * increment;
+    }
   }
 
   /// Minimum weight increment for the equipment type.

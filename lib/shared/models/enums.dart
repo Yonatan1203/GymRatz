@@ -1,3 +1,18 @@
+/// Whether an exercise is measured by reps or by time.
+enum ExerciseType {
+  reps,
+  timed;
+
+  String get label {
+    switch (this) {
+      case reps:
+        return 'Reps';
+      case timed:
+        return 'Timed';
+    }
+  }
+}
+
 /// Equipment categories that drive progression rules and load snapping.
 enum EquipmentType {
   barbell,
