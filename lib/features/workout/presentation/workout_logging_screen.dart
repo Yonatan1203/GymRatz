@@ -57,6 +57,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   String _workoutName = 'Workout';
   bool _initialized = false;
   bool _loadingExercises = false;
+  bool _showFirstTimeTips = false;
   late DateTime _startTime;
   WorkoutSummary? _workoutSummary;
   static const _workoutCacheKeyPrefix = 'in_progress_workout';
@@ -297,6 +298,15 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
 
     _rebuildAllControllers();
 
+    // Show first-time tips if user hasn't completed a workout before.
+    if (existingSession == null) {
+      SharedPreferences.getInstance().then((prefs) {
+        if (mounted && !(prefs.getBool('has_completed_workout') ?? false)) {
+          setState(() => _showFirstTimeTips = true);
+        }
+      });
+    }
+
     _durationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _elapsedSeconds++);
     });
@@ -503,6 +513,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
         final summary = await ref.read(workoutServiceProvider).completeWorkout(uid, workout, unit);
         if (mounted) {
           PlatformAdapter.hapticMedium();
+          SharedPreferences.getInstance().then((p) => p.setBool('has_completed_workout', true));
           setState(() {
             _workoutSummary = summary;
             _completed = true;
@@ -698,6 +709,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                         : AppSpacing.screenPadding,
                   ),
                   children: [
+                    if (_showFirstTimeTips) _buildFirstTimeTips(context, isDark),
                     ...List.generate(exercises.length, (i) => _buildExerciseCard(context, isDark, i, exercises[i])),
                     CustomCard(
                       child: Column(
@@ -819,6 +831,62 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildFirstTimeTips(BuildContext context, bool isDark) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12.h),
+      child: CustomCard(
+        padding: EdgeInsets.all(16.r),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(AppIcons.info, size: 18.r, color: context.primaryColor),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    'Quick Start Guide',
+                    style: AppTextStyles.h4.copyWith(
+                      color: context.foreground,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => setState(() => _showFirstTimeTips = false),
+                  child: Icon(AppIcons.x, size: 18.r, color: context.mutedForeground),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
+            _tipRow(context, AppIcons.check, 'Tap the circle to complete a set'),
+            SizedBox(height: 8.h),
+            _tipRow(context, AppIcons.edit, 'Edit weight, reps, and RIR for each set'),
+            SizedBox(height: 8.h),
+            _tipRow(context, AppIcons.timer, 'Rest timer starts automatically after each set'),
+            SizedBox(height: 8.h),
+            _tipRow(context, AppIcons.trendingUp, 'Weights auto-adjust next session based on performance'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _tipRow(BuildContext context, IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 14.r, color: context.primaryColor),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: Text(
+            text,
+            style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
+          ),
+        ),
+      ],
     );
   }
 
