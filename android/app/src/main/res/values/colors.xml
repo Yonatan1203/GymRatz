@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">transparent</color>
+    <color name="ic_launcher_background">#00000000</color>
+    <!-- Override appcompat colors that trigger AAPT2 compilation bug -->
+    <color name="highlighted_text_material_light">#009688</color>
+    <color name="highlighted_text_material_dark">#80cbc4</color>
 </resources>

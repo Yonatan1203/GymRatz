@@ -71,6 +71,16 @@ android {
     }
 }
 
+// Pin androidx deps to versions compatible with AGP 8.7.3
+// (AGP 8.9+ has an AAPT2 bug with appcompat color resources)
+configurations.all {
+    resolutionStrategy {
+        force("androidx.core:core:1.16.0")
+        force("androidx.core:core-ktx:1.16.0")
+        force("androidx.browser:browser:1.8.0")
+    }
+}
+
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
