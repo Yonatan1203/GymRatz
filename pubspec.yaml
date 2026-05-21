@@ -34,6 +34,7 @@ dependencies:
   timezone: ^0.9.4
   url_launcher: ^6.3.1
   purchases_ui_flutter: ^8.11.0
+  add_2_calendar: ^3.0.1
 
 dev_dependencies:
   flutter_test:

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
+import '../../../core/calendar_sync_service.dart';
 import '../../../theme/app_gradients.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
@@ -214,6 +215,7 @@ class WorkoutScreen extends ConsumerWidget {
             dayShort: dayShort,
             dayName: dayName,
             dateNum: date.day,
+            date: date,
             isToday: isToday,
             isPast: isPast,
             workoutDay: scheduledDay,
@@ -240,6 +242,7 @@ class WorkoutScreen extends ConsumerWidget {
     required String dayShort,
     required String dayName,
     required int dateNum,
+    required DateTime date,
     required bool isToday,
     required bool isPast,
     required WorkoutDay? workoutDay,
@@ -248,7 +251,19 @@ class WorkoutScreen extends ConsumerWidget {
     final isRestDay = workoutDay == null;
     final isMissed = isPast && !isRestDay && !isCompleted;
 
-    return ScaleTap(
+    return GestureDetector(
+      onLongPress: workoutDay == null
+          ? null
+          : () {
+              CalendarSyncService.addWorkoutToCalendar(
+                day: workoutDay,
+                date: date,
+              );
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Opening calendar...')),
+              );
+            },
+      child: ScaleTap(
       onTap: isRestDay
           ? null
           : () => _onDayTapped(context, dayName, isToday, workoutDay),
@@ -315,6 +330,7 @@ class WorkoutScreen extends ConsumerWidget {
               _buildStatusBadge(context, isCompleted: isCompleted, isMissed: isMissed, isToday: isToday),
           ],
         ),
+      ),
       ),
     );
   }
