@@ -8,6 +8,7 @@ class Exercise {
   final String muscle;
   final String equipment;
   final EquipmentType equipmentType;
+  final ExerciseType exerciseType;
   final String difficulty;
   final bool isFavorite;
   final List<String> muscleGroups;
@@ -23,6 +24,7 @@ class Exercise {
     required this.muscle,
     required this.equipment,
     this.equipmentType = EquipmentType.barbell,
+    this.exerciseType = ExerciseType.reps,
     required this.difficulty,
     this.isFavorite = false,
     this.muscleGroups = const [],
@@ -39,6 +41,7 @@ class Exercise {
         'muscle': muscle,
         'equipment': equipment,
         'equipmentType': equipmentType.name,
+        if (exerciseType != ExerciseType.reps) 'exerciseType': exerciseType.name,
         'difficulty': difficulty,
         'isFavorite': isFavorite,
         'muscleGroups': muscleGroups,
@@ -57,6 +60,10 @@ class Exercise {
         equipmentType: EquipmentType.values.firstWhere(
           (e) => e.name == json['equipmentType'],
           orElse: () => EquipmentType.barbell,
+        ),
+        exerciseType: ExerciseType.values.firstWhere(
+          (e) => e.name == json['exerciseType'],
+          orElse: () => ExerciseType.reps,
         ),
         difficulty: json['difficulty'] as String? ?? '',
         isFavorite: json['isFavorite'] as bool? ?? false,
@@ -77,6 +84,7 @@ class Exercise {
     String? muscle,
     String? equipment,
     EquipmentType? equipmentType,
+    ExerciseType? exerciseType,
     String? difficulty,
     bool? isFavorite,
     List<String>? muscleGroups,
@@ -92,6 +100,7 @@ class Exercise {
         muscle: muscle ?? this.muscle,
         equipment: equipment ?? this.equipment,
         equipmentType: equipmentType ?? this.equipmentType,
+        exerciseType: exerciseType ?? this.exerciseType,
         difficulty: difficulty ?? this.difficulty,
         isFavorite: isFavorite ?? this.isFavorite,
         muscleGroups: muscleGroups ?? this.muscleGroups,

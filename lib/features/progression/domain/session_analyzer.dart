@@ -43,7 +43,8 @@ class SessionAnalyzer {
     }
 
     final reps = workingSets.map((s) => s.reps).toList();
-    final rirs = workingSets.map((s) => s.rir).toList();
+    // Use effective RIR: default to 2 if null.
+    final rirs = workingSets.map((s) => s.rir ?? 2).toList();
     final weights = workingSets.map((s) => s.weight).toList();
 
     final repsMinVal = reps.reduce((a, b) => a < b ? a : b);

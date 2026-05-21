@@ -10,6 +10,7 @@ final workoutServiceProvider = Provider<WorkoutService>((ref) {
   return WorkoutService(
     ref.watch(workoutRepositoryProvider),
     ref.watch(prRepositoryProvider),
+    ref.watch(progressionRepositoryProvider),
   );
 });
 

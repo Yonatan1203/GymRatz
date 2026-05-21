@@ -5,6 +5,7 @@ import '../../features/calendar/data/weight_entry_repository.dart';
 import '../../features/programs/data/program_repository.dart';
 import '../../features/progress/data/pr_repository.dart';
 import '../../features/user/data/user_repository.dart';
+import '../../features/progression/data/progression_repository.dart';
 import '../../features/workout/data/workout_repository.dart';
 import 'auth_providers.dart';
 
@@ -34,4 +35,8 @@ final achievementRepositoryProvider = Provider<AchievementRepository>((ref) {
 
 final weightEntryRepositoryProvider = Provider<WeightEntryRepository>((ref) {
   return WeightEntryRepository(ref.watch(firestoreProvider)!);
+});
+
+final progressionRepositoryProvider = Provider<ProgressionRepository>((ref) {
+  return ProgressionRepository(ref.watch(firestoreProvider)!);
 });

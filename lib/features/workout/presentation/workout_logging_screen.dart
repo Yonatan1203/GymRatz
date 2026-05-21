@@ -56,6 +56,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   String _notes = '';
   String _workoutName = 'Workout';
   bool _initialized = false;
+  bool _loadingExercises = false;
   late DateTime _startTime;
   WorkoutSummary? _workoutSummary;
   static const _workoutCacheKeyPrefix = 'in_progress_workout';
@@ -155,7 +156,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
         final s = _sets[exIdx][setIdx];
         _getController(exIdx, setIdx, 'reps', s.reps > 0 ? '${s.reps}' : '');
         _getController(exIdx, setIdx, 'weight', s.weight > 0 ? '${s.weight.toInt()}' : '');
-        _getController(exIdx, setIdx, 'rir', s.rir > 0 ? '${s.rir}' : '');
+        _getController(exIdx, setIdx, 'rir', (s.rir ?? 0) > 0 ? '${s.rir}' : '');
       }
     }
   }
@@ -226,6 +227,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       if (matchingDay != null && matchingDay.isNotEmpty) {
         final day = matchingDay.first;
         _workoutName = day.name;
+        // Start with template defaults synchronously (weight=0).
         _exercises = day.exercises.map((pe) => WorkoutExercise(
           name: pe.name,
           equipment: pe.equipment ?? 'Barbell',
@@ -236,20 +238,61 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
           sets: List.generate(pe.sets, (_) => const WorkoutSet()),
         )).toList();
         _sets = _exercises.map((e) => List<WorkoutSet>.from(e.sets)).toList();
+
+        // Async: load PO-prefilled exercises from WorkoutService.
+        final uid = ref.read(currentUidProvider);
+        if (uid != null) {
+          _loadingExercises = true;
+          Future(() async {
+            try {
+              final workout = await ref.read(workoutServiceProvider).startWorkout(
+                uid: uid,
+                program: activeProgram!,
+                day: day,
+              );
+              if (mounted) {
+                setState(() {
+                  _exercises = List.from(workout.exercises);
+                  _sets = _exercises.map((e) => List<WorkoutSet>.from(e.sets)).toList();
+                  _loadingExercises = false;
+                  _rebuildAllControllers();
+                });
+                ref.read(activeWorkoutSessionProvider.notifier).startSession(
+                  dayId: widget.dayId,
+                  workoutName: _workoutName,
+                  exercises: _exercises,
+                  sets: _sets,
+                );
+              }
+            } catch (_) {
+              // PO prefill failed — keep template defaults already set above.
+              if (mounted) {
+                setState(() => _loadingExercises = false);
+                ref.read(activeWorkoutSessionProvider.notifier).startSession(
+                  dayId: widget.dayId,
+                  workoutName: _workoutName,
+                  exercises: _exercises,
+                  sets: _sets,
+                );
+              }
+            }
+          });
+        } else {
+          // No uid — use template defaults.
+          Future(() {
+            ref.read(activeWorkoutSessionProvider.notifier).startSession(
+              dayId: widget.dayId,
+              workoutName: _workoutName,
+              exercises: _exercises,
+              sets: _sets,
+            );
+          });
+        }
       } else {
         _exercises = [];
         _sets = [];
       }
       _expanded = {0};
-
-      Future(() {
-        ref.read(activeWorkoutSessionProvider.notifier).startSession(
-          dayId: widget.dayId,
-          workoutName: _workoutName,
-          exercises: _exercises,
-          sets: _sets,
-        );
-      });
     }
 
     _rebuildAllControllers();
@@ -603,6 +646,11 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   Widget build(BuildContext context) {
     _initFromProvider();
     if (_completed) return _buildCompletionScreen(context);
+    if (_loadingExercises) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     final isDark = context.isDark;
     final exercises = _exercises;
@@ -1014,7 +1062,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
           ? (_sets[exIdx][setIdx].reps > 0 ? '${_sets[exIdx][setIdx].reps}' : '')
           : field == 'weight'
               ? (_sets[exIdx][setIdx].weight > 0 ? '${_sets[exIdx][setIdx].weight.toInt()}' : '')
-              : (_sets[exIdx][setIdx].rir > 0 ? '${_sets[exIdx][setIdx].rir}' : ''),
+              : ((_sets[exIdx][setIdx].rir ?? 0) > 0 ? '${_sets[exIdx][setIdx].rir}' : ''),
     );
 
     return SizedBox(
