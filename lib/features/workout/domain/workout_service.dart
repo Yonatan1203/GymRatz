@@ -118,6 +118,7 @@ class WorkoutService {
       repRange: '${pe.repMin}-${pe.repMax}',
       targetRir: pe.targetRir,
       progressionMode: pe.progressionMode,
+      restSeconds: pe.restSeconds,
       sets: List.generate(
         numSets,
         (i) {
