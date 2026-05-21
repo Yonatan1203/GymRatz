@@ -216,7 +216,9 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
         '${program.workouts} workouts/week \u2022 ${program.weeks} weeks';
     final totalWorkouts = program.workouts * program.weeks;
 
-    return SingleChildScrollView(
+    return SafeArea(
+      top: false,
+      child: SingleChildScrollView(
       child: Column(
         children: [
           GradientHeader(
@@ -319,6 +321,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

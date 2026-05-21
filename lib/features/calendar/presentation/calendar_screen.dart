@@ -228,7 +228,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Widget _buildCalendarGrid(BuildContext context, bool isDark) {
-    final dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    final startsOnMonday = ref.watch(weekStartsOnMondayProvider);
+    final dayHeaders = startsOnMonday
+        ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     final calendarAsync = ref.watch(calendarMonthProvider('$_currentYear-$_currentMonth'));
 
     return Column(
@@ -253,10 +256,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Widget _buildCalendarDays(BuildContext context, bool isDark, Map<int, WorkoutStatus> calendarData) {
+    final startsOnMonday = ref.watch(weekStartsOnMondayProvider);
     final now = DateTime.now();
     final daysInMonth = DateTime(_currentYear, _currentMonth + 1, 0).day;
-    final firstWeekdayMon = DateTime(_currentYear, _currentMonth, 1).weekday; // 1=Mon, 7=Sun
-    final firstWeekday = firstWeekdayMon % 7; // Convert: Sun=0, Mon=1, ..., Sat=6
+    final int firstWeekday;
+    if (startsOnMonday) {
+      firstWeekday = DateTime(_currentYear, _currentMonth, 1).weekday - 1; // Mon=0, Sun=6
+    } else {
+      firstWeekday = DateTime(_currentYear, _currentMonth, 1).weekday % 7; // Sun=0, Sat=6
+    }
     final totalCells = firstWeekday + daysInMonth;
 
     return GridView.builder(

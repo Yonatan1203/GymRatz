@@ -86,6 +86,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                   ),
                   SizedBox(height: AppSpacing.sectionGap),
+                  _sectionTitle(context, 'WEEK START'),
+                  CustomCard(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(AppIcons.calendar, size: 20.r, color: context.mutedForeground),
+                            SizedBox(width: 12.w),
+                            Text('Week starts on', style: AppTextStyles.body.copyWith(color: context.foreground)),
+                          ],
+                        ),
+                        SizedBox(height: 12.h),
+                        _buildWeekStartSelector(ref),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.sectionGap),
                   _sectionTitle(context, 'NOTIFICATIONS'),
                   CustomCard(
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -190,7 +209,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
                         MenuItemWidget(icon: AppIcons.fileText, label: 'Terms of Service', onTap: () => launchUrl(Uri.parse(AppConstants.termsOfServiceUrl))),
                         Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
-                        MenuItemWidget(icon: AppIcons.info, label: 'About', onTap: () {}),
+                        MenuItemWidget(icon: AppIcons.info, label: 'About', onTap: () => context.push('/about')),
                       ],
                     ),
                   ),
@@ -397,9 +416,93 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Expanded(
       child: GestureDetector(
         onTap: () {
+          if (value == current) return;
+          final uid = ref.read(currentUidProvider);
+          if (uid == null) return;
+          final profile = ref.read(userProfileProvider).valueOrNull;
+          final updates = <String, dynamic>{'unit': value};
+
+          // Convert height
+          if (profile != null) {
+            final h = profile.height;
+            if (value == 'kg' && !h.contains('cm')) {
+              // Imperial → Metric
+              final match = RegExp(r"(\d+)'?\s*(\d+)?").firstMatch(h);
+              if (match != null) {
+                final feet = int.tryParse(match.group(1)!) ?? 0;
+                final inches = int.tryParse(match.group(2) ?? '0') ?? 0;
+                final cm = ((feet * 12 + inches) * 2.54).round();
+                updates['height'] = '$cm cm';
+              }
+            } else if (value == 'lbs' && h.contains('cm')) {
+              // Metric → Imperial
+              final cmMatch = RegExp(r'(\d+\.?\d*)').firstMatch(h);
+              if (cmMatch != null) {
+                final cm = double.tryParse(cmMatch.group(1)!) ?? 170;
+                final totalInches = (cm / 2.54).round();
+                final feet = totalInches ~/ 12;
+                final inches = totalInches % 12;
+                updates['height'] = "$feet'$inches\"";
+              }
+            }
+
+            // Convert weight
+            if (value == 'kg' && current == 'lbs') {
+              updates['weight'] = double.parse((profile.weight * 0.453592).toStringAsFixed(1));
+            } else if (value == 'lbs' && current == 'kg') {
+              updates['weight'] = double.parse((profile.weight * 2.20462).toStringAsFixed(1));
+            }
+          }
+
+          ref.read(userRepositoryProvider).updateUser(uid, updates);
+        },
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 10.h),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? context.primaryColor.withValues(alpha: 0.12)
+                : context.mutedColor,
+            borderRadius: BorderRadius.circular(8.r),
+            border: Border.all(
+              color: isSelected ? context.primaryColor : Colors.transparent,
+              width: 1.5,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: isSelected ? context.primaryColor : context.mutedForeground,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeekStartSelector(WidgetRef ref) {
+    final startsOnMonday = ref.watch(userProfileProvider).valueOrNull?.weekStartsOnMonday ?? true;
+
+    return Row(
+      children: [
+        _weekStartOption(ref, 'Monday', true, startsOnMonday),
+        SizedBox(width: 8.w),
+        _weekStartOption(ref, 'Sunday', false, startsOnMonday),
+      ],
+    );
+  }
+
+  Widget _weekStartOption(WidgetRef ref, String label, bool value, bool current) {
+    final isSelected = current == value;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
           final uid = ref.read(currentUidProvider);
           if (uid != null) {
-            ref.read(userRepositoryProvider).updateUser(uid, {'unit': value});
+            ref.read(userRepositoryProvider).updateUser(uid, {'weekStartsOnMonday': value});
           }
         },
         child: Container(

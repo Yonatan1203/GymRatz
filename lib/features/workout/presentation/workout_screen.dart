@@ -22,8 +22,10 @@ import '../../../shared/widgets/staggered_list.dart';
 class WorkoutScreen extends ConsumerWidget {
   const WorkoutScreen({super.key});
 
-  static const _weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  static const _weekDaysShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  static const _weekDaysMon = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  static const _weekDaysShortMon = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  static const _weekDaysSun = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  static const _weekDaysShortSun = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   static const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   @override
@@ -36,7 +38,7 @@ class WorkoutScreen extends ConsumerWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildHeader(context),
+            _buildHeader(context, ref),
             activeProgramAsync.when(
               loading: () => _buildLoadingBody(context),
               error: (e, _) => _buildErrorBody(context, ref, e),
@@ -46,7 +48,7 @@ class WorkoutScreen extends ConsumerWidget {
                   return _buildEmptyBody(context, isDark);
                 }
                 final recentWorkouts = recentWorkoutsAsync.valueOrNull ?? [];
-                return _buildWeeklyBody(context, isDark, days, recentWorkouts);
+                return _buildWeeklyBody(context, isDark, ref, days, recentWorkouts, activatedAt: activeProgram?.activatedAt);
               },
             ),
           ],
@@ -55,13 +57,19 @@ class WorkoutScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, WidgetRef ref) {
+    final startsOnMonday = ref.watch(weekStartsOnMondayProvider);
     final now = DateTime.now();
-    final mondayOffset = now.weekday - 1;
-    final monday = DateTime(now.year, now.month, now.day).subtract(Duration(days: mondayOffset));
-    final sunday = monday.add(const Duration(days: 6));
+    final int offset;
+    if (startsOnMonday) {
+      offset = now.weekday - 1; // Mon=0
+    } else {
+      offset = now.weekday % 7; // Sun=0
+    }
+    final weekStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: offset));
+    final weekEnd = weekStart.add(const Duration(days: 6));
 
-    final dateRange = '${_months[monday.month - 1]} ${monday.day} - ${_months[sunday.month - 1]} ${sunday.day}';
+    final dateRange = '${_months[weekStart.month - 1]} ${weekStart.day} - ${_months[weekEnd.month - 1]} ${weekEnd.day}';
 
     return GradientHeader(
       child: Column(
@@ -148,12 +156,24 @@ class WorkoutScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildWeeklyBody(BuildContext context, bool isDark, List<WorkoutDay> days, List<Workout> recentWorkouts) {
+  Widget _buildWeeklyBody(BuildContext context, bool isDark, WidgetRef ref, List<WorkoutDay> days, List<Workout> recentWorkouts, {DateTime? activatedAt}) {
+    final startsOnMonday = ref.watch(weekStartsOnMondayProvider);
+    final weekDays = startsOnMonday ? _weekDaysMon : _weekDaysSun;
+    final weekDaysShort = startsOnMonday ? _weekDaysShortMon : _weekDaysShortSun;
+
     final now = DateTime.now();
-    final mondayOffset = now.weekday - 1;
+    final int offset;
+    if (startsOnMonday) {
+      offset = now.weekday - 1;
+    } else {
+      offset = now.weekday % 7;
+    }
     // Normalize to midnight to avoid time-of-day comparison issues
-    final monday = DateTime(now.year, now.month, now.day).subtract(Duration(days: mondayOffset));
-    final sundayEnd = monday.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+    final weekStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: offset));
+    final weekEnd = weekStart.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+    final activationDate = activatedAt != null
+        ? DateTime(activatedAt.year, activatedAt.month, activatedAt.day)
+        : null;
 
     // Map dayOfWeek string to WorkoutDay
     final dayMap = <String, WorkoutDay>{};
@@ -165,8 +185,7 @@ class WorkoutScreen extends ConsumerWidget {
     final completedDayIds = <String>{};
     for (final workout in recentWorkouts) {
       if (workout.status == WorkoutStatus.completed && workout.workoutDayId != null) {
-        // Check if the workout date is within this week (Monday to Sunday)
-        if (!workout.date.isBefore(monday) && !workout.date.isAfter(sundayEnd)) {
+        if (!workout.date.isBefore(weekStart) && !workout.date.isAfter(weekEnd)) {
           completedDayIds.add(workout.workoutDayId!);
         }
       }
@@ -174,15 +193,17 @@ class WorkoutScreen extends ConsumerWidget {
 
     final dayRows = <Widget>[];
     for (int i = 0; i < 7; i++) {
-      final date = monday.add(Duration(days: i));
-      final dayName = _weekDays[i];
-      final dayShort = _weekDaysShort[i];
+      final date = weekStart.add(Duration(days: i));
+      final dayName = weekDays[i];
+      final dayShort = weekDaysShort[i];
       final isToday = date.day == now.day && date.month == now.month && date.year == now.year;
       final scheduledDay = dayMap[dayName];
       // Skip rest days (days with no scheduled workout)
       if (scheduledDay == null) continue;
       final isCompleted = completedDayIds.contains(scheduledDay.id);
-      final isPast = date.isBefore(DateTime(now.year, now.month, now.day)) && !isToday;
+      // Only mark as past/missed if date is after program activation
+      final isPast = date.isBefore(DateTime(now.year, now.month, now.day)) && !isToday
+          && (activationDate != null && !date.isBefore(activationDate));
 
       dayRows.add(
         Padding(

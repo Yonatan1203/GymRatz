@@ -23,6 +23,7 @@ class UserProfile {
   final DateTime? coachLinkedAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final bool weekStartsOnMonday;
 
   const UserProfile({
     this.uid,
@@ -47,6 +48,7 @@ class UserProfile {
     this.coachLinkedAt,
     this.createdAt,
     this.updatedAt,
+    this.weekStartsOnMonday = true,
   });
 
   Map<String, dynamic> toJson() => {
@@ -72,6 +74,7 @@ class UserProfile {
         'coachLinkedAt': coachLinkedAt?.toIso8601String(),
         'createdAt': createdAt?.toIso8601String(),
         'updatedAt': updatedAt?.toIso8601String(),
+        'weekStartsOnMonday': weekStartsOnMonday,
       };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -112,6 +115,7 @@ class UserProfile {
         updatedAt: json['updatedAt'] != null
             ? DateTime.tryParse(json['updatedAt'] as String)
             : null,
+        weekStartsOnMonday: json['weekStartsOnMonday'] as bool? ?? true,
       );
 
   UserProfile copyWith({
@@ -137,6 +141,7 @@ class UserProfile {
     DateTime? coachLinkedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? weekStartsOnMonday,
   }) =>
       UserProfile(
         uid: uid ?? this.uid,
@@ -161,5 +166,6 @@ class UserProfile {
         coachLinkedAt: coachLinkedAt ?? this.coachLinkedAt,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
+        weekStartsOnMonday: weekStartsOnMonday ?? this.weekStartsOnMonday,
       );
 }

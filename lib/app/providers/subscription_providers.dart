@@ -17,34 +17,31 @@ final entitlementServiceProvider = Provider<EntitlementService>((ref) {
 
 /// Resolves pro access: own sub OR admin role OR coach-sponsored.
 final isProProvider = StreamProvider<bool>((ref) async* {
-  // 1. Check RevenueCat subscription
+  // Watch profile so we re-evaluate when it loads/changes
+  final profile = ref.watch(userProfileProvider).valueOrNull;
+
+  // 1. Check role-based pro (admin_user or admin_coach) — fast path
+  if (profile != null && EntitlementService.isRoleBasedPro(profile.role)) {
+    yield true;
+    return;
+  }
+
+  // 2. Check coach-sponsored pro
+  if (profile != null && profile.coachId != null) {
+    final coachHasPlan = await _coachHasActivePlan(
+      ref.read(firestoreProvider),
+      profile.coachId!,
+    );
+    if (coachHasPlan) {
+      yield true;
+      return;
+    }
+  }
+
+  // 3. Check RevenueCat subscription
   final rcStream = ref.watch(entitlementServiceProvider).isProStream();
   await for (final rcPro in rcStream) {
-    if (rcPro) {
-      yield true;
-      continue;
-    }
-
-    // 2. Check role-based pro (admin)
-    final profile = ref.read(userProfileProvider).valueOrNull;
-    if (profile != null && EntitlementService.isRoleBasedPro(profile.role)) {
-      yield true;
-      continue;
-    }
-
-    // 3. Check coach-sponsored pro
-    if (profile != null && profile.coachId != null) {
-      final coachHasPlan = await _coachHasActivePlan(
-        ref.read(firestoreProvider),
-        profile.coachId!,
-      );
-      if (coachHasPlan) {
-        yield true;
-        continue;
-      }
-    }
-
-    yield false;
+    yield rcPro;
   }
 });
 

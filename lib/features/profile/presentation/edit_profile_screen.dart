@@ -59,8 +59,35 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _emailController = TextEditingController(text: user.email);
     _weightController = TextEditingController(text: '${user.weight}');
     _ageController = TextEditingController(text: '${user.age}');
-    _heightController = TextEditingController(text: user.height);
+    _heightController = TextEditingController(text: _formatHeightForUnit(user.height, user.unit));
     _notifications = user.notificationsEnabled;
+  }
+
+  /// Display height in the correct unit format
+  String _formatHeightForUnit(String stored, String unit) {
+    if (unit == 'kg') {
+      // Metric: should display as cm. If stored in imperial format, convert.
+      final cm = _parseToCm(stored);
+      if (cm != null) return '${cm.round()} cm';
+    }
+    // Imperial: keep as-is (e.g., "5'10\"")
+    return stored;
+  }
+
+  /// Parse height string to cm (handles both "170 cm" and "5'10\"" formats)
+  double? _parseToCm(String h) {
+    final trimmed = h.trim().toLowerCase();
+    // Already cm format
+    final cmMatch = RegExp(r'^(\d+\.?\d*)\s*cm$').firstMatch(trimmed);
+    if (cmMatch != null) return double.tryParse(cmMatch.group(1)!);
+    // Imperial format: X'Y" or X' Y"
+    final impMatch = RegExp(r"(\d+)['\s]+(\d+)?").firstMatch(trimmed);
+    if (impMatch != null) {
+      final feet = int.tryParse(impMatch.group(1)!) ?? 0;
+      final inches = int.tryParse(impMatch.group(2) ?? '0') ?? 0;
+      return (feet * 12 + inches) * 2.54;
+    }
+    return null;
   }
 
   String? _validate() {
@@ -156,9 +183,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final isDark = context.isDark;
 
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
             GradientHeader(
               showBackButton: true,
               child: Text('Edit Profile', style: AppTextStyles.h1.copyWith(color: context.foreground)),
@@ -226,7 +255,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     children: [
                       Expanded(child: CustomInput(controller: _ageController, label: 'Age', keyboardType: TextInputType.number)),
                       SizedBox(width: AppSpacing.lg),
-                      Expanded(child: CustomInput(controller: _heightController, label: 'Height')),
+                      Expanded(child: CustomInput(
+                        controller: _heightController,
+                        label: "Height (${user.unit == 'kg' ? 'cm' : "ft'in"})",
+                        keyboardType: TextInputType.text,
+                      )),
                     ],
                   ),
                   SizedBox(height: AppSpacing.xxxl),
@@ -269,6 +302,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

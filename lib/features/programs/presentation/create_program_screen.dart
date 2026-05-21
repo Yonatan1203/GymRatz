@@ -298,43 +298,46 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.all(AppSpacing.screenPadding),
-              children: [
-                _buildProgramInfoSection(context),
-                SizedBox(height: AppSpacing.sectionGap),
-                ..._workoutDays.map((day) => _buildWorkoutDayCard(context, context.isDark, day)),
-                SizedBox(height: 16.h),
-                Row(
-                  children: [
-                    Expanded(
-                      child: CustomButton(
-                        text: '+ Workout Day',
-                        variant: ButtonVariant.dashed,
-                        icon: AppIcons.plus,
-                        onPressed: _addWorkoutDay,
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            _buildHeader(context),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.all(AppSpacing.screenPadding),
+                children: [
+                  _buildProgramInfoSection(context),
+                  SizedBox(height: AppSpacing.sectionGap),
+                  ..._workoutDays.map((day) => _buildWorkoutDayCard(context, context.isDark, day)),
+                  SizedBox(height: 16.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CustomButton(
+                          text: '+ Workout Day',
+                          variant: ButtonVariant.dashed,
+                          icon: AppIcons.plus,
+                          onPressed: _addWorkoutDay,
+                        ),
                       ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: CustomButton(
-                        text: '+ Cardio Day',
-                        variant: ButtonVariant.dashed,
-                        icon: AppIcons.heart,
-                        onPressed: _addCardioDay,
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: CustomButton(
+                          text: '+ Cardio Day',
+                          variant: ButtonVariant.dashed,
+                          icon: AppIcons.heart,
+                          onPressed: _addCardioDay,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16.h),
-              ],
+                    ],
+                  ),
+                  SizedBox(height: 16.h),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

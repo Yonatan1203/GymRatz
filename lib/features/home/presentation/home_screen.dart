@@ -55,22 +55,31 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context, bool isDark, WidgetRef ref) {
-    final weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    final dayAbbrev = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     final now = DateTime.now();
-    // Get Sunday of this week (Sunday-first)
-    final sundayOffset = now.weekday % 7; // Sunday=7%7=0, Monday=1, etc.
-    final weekStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: sundayOffset));
+    final today = DateTime(now.year, now.month, now.day);
 
-    // Get completed workout dates this week
+    // Show 21 days: 10 before today, today, 10 after
+    const totalDays = 21;
+    const centerIndex = 10;
+    final startDate = today.subtract(const Duration(days: centerIndex));
+
+    // Get active program's scheduled days
+    final activeProgram = ref.watch(activeProgramProvider).valueOrNull;
+    final scheduledDayNames = <String>{};
+    if (activeProgram != null) {
+      for (final day in activeProgram.days) {
+        scheduledDayNames.add(day.dayOfWeek);
+      }
+    }
+
+    // Get completed workout dates
     final recentWorkouts = ref.watch(recentWorkoutsProvider).valueOrNull ?? [];
-    final completedDatesThisWeek = <int>{};
+    final completedDates = <DateTime>{};
     for (final workout in recentWorkouts) {
       if (workout.status == WorkoutStatus.completed) {
-        final wDate = DateTime(workout.date.year, workout.date.month, workout.date.day);
-        if (!wDate.isBefore(weekStart) && wDate.isBefore(weekStart.add(const Duration(days: 7)))) {
-          // day index within the week (0=Sun, 6=Sat)
-          completedDatesThisWeek.add(wDate.difference(weekStart).inDays);
-        }
+        completedDates.add(DateTime(workout.date.year, workout.date.month, workout.date.day));
       }
     }
 
@@ -80,6 +89,11 @@ class HomeScreen extends ConsumerWidget {
     final firstName = userProfile?.name.split(' ').first ?? 'there';
     final initials = userProfile?.initials ?? '--';
     final streak = stats?['streak'] as int? ?? 0;
+
+    // ScrollController to center today
+    final scrollController = ScrollController(
+      initialScrollOffset: centerIndex * (56.w + AppSpacing.md) - (MediaQuery.of(context).size.width / 2) + 28.w,
+    );
 
     return GradientHeader(
       child: Column(
@@ -152,34 +166,64 @@ class HomeScreen extends ConsumerWidget {
           SizedBox(
             height: 80.h,
             child: ListView.separated(
+              controller: scrollController,
               scrollDirection: Axis.horizontal,
-              itemCount: weekDays.length,
+              itemCount: totalDays,
               separatorBuilder: (_, __) => SizedBox(width: AppSpacing.md),
               itemBuilder: (context, index) {
-                final date = weekStart.add(Duration(days: index));
-                final isToday = date.day == now.day && date.month == now.month && date.year == now.year;
-                final hasCompleted = completedDatesThisWeek.contains(index);
+                final date = startDate.add(Duration(days: index));
+                final isToday = date == today;
+                final hasCompleted = completedDates.contains(date);
+                final dayName = dayNames[date.weekday - 1];
+                final isScheduled = scheduledDayNames.contains(dayName);
+                final isMissed = !hasCompleted && isScheduled && date.isBefore(today);
+
+                // Color logic: completed=green, missed=red, scheduled(future)=primary, rest=muted
+                Color bgColor;
+                Color textColor;
+                Color dayTextColor;
+                Border? border;
+
+                if (isToday) {
+                  bgColor = context.primaryColor.withValues(alpha: 0.15);
+                  textColor = context.primaryColor;
+                  dayTextColor = context.primaryColor;
+                  border = Border.all(color: context.primaryColor.withValues(alpha: 0.4), width: 1.5);
+                } else if (hasCompleted) {
+                  bgColor = Colors.green.withValues(alpha: 0.12);
+                  textColor = Colors.green;
+                  dayTextColor = Colors.green;
+                  border = null;
+                } else if (isMissed) {
+                  bgColor = context.destructiveColor.withValues(alpha: 0.08);
+                  textColor = context.destructiveColor.withValues(alpha: 0.7);
+                  dayTextColor = context.destructiveColor.withValues(alpha: 0.7);
+                  border = null;
+                } else if (isScheduled) {
+                  bgColor = context.primaryColor.withValues(alpha: 0.08);
+                  textColor = context.foreground;
+                  dayTextColor = context.mutedForeground;
+                  border = null;
+                } else {
+                  bgColor = context.primaryColor.withValues(alpha: 0.04);
+                  textColor = context.foreground.withValues(alpha: 0.5);
+                  dayTextColor = context.mutedForeground.withValues(alpha: 0.6);
+                  border = null;
+                }
+
                 return Container(
                   width: 56.w,
                   decoration: BoxDecoration(
-                    color: isToday
-                        ? context.primaryColor.withValues(alpha:0.15)
-                        : context.primaryColor.withValues(alpha:0.06),
+                    color: bgColor,
                     borderRadius: AppRadius.borderLg,
-                    border: isToday
-                        ? Border.all(color: context.primaryColor.withValues(alpha:0.3))
-                        : null,
+                    border: border,
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        weekDays[index],
-                        style: AppTextStyles.caption.copyWith(
-                          color: isToday
-                              ? context.primaryColor
-                              : context.mutedForeground,
-                        ),
+                        dayAbbrev[date.weekday - 1],
+                        style: AppTextStyles.caption.copyWith(color: dayTextColor),
                       ),
                       SizedBox(height: AppSpacing.sm),
                       Text(
@@ -187,9 +231,7 @@ class HomeScreen extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w600,
-                          color: isToday
-                              ? context.primaryColor
-                              : context.foreground,
+                          color: textColor,
                         ),
                       ),
                       if (hasCompleted) ...[
@@ -197,8 +239,18 @@ class HomeScreen extends ConsumerWidget {
                         Container(
                           width: 6.r,
                           height: 6.r,
+                          decoration: const BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ] else if (isScheduled && !isMissed && !isToday) ...[
+                        SizedBox(height: AppSpacing.sm),
+                        Container(
+                          width: 6.r,
+                          height: 6.r,
                           decoration: BoxDecoration(
-                            color: context.primaryColor,
+                            color: context.primaryColor.withValues(alpha: 0.4),
                             shape: BoxShape.circle,
                           ),
                         ),

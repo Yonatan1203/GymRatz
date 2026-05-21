@@ -1,7 +1,7 @@
 name: gymratz
 description: "GymRatz - Track workouts, smash PRs, level up your fitness"
 publish_to: 'none'
-version: 1.1.0+13
+version: 1.1.0+15
 
 environment:
   sdk: ^3.10.8
@@ -53,8 +53,9 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon/app_icon.png"
-  adaptive_icon_background: "#003A6B"
-  adaptive_icon_foreground: "assets/icon/app_icon.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "transparent"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
 
 flutter_native_splash:
   color: "#003A6B"

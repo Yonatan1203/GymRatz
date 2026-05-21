@@ -13,6 +13,7 @@ class Exercise {
   final List<String> muscleGroups;
   final String? instructions;
   final bool isDefault;
+  final bool isCardio;
 
   const Exercise({
     required this.id,
@@ -27,6 +28,7 @@ class Exercise {
     this.muscleGroups = const [],
     this.instructions,
     this.isDefault = true,
+    this.isCardio = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -42,6 +44,7 @@ class Exercise {
         'muscleGroups': muscleGroups,
         'instructions': instructions,
         'isDefault': isDefault,
+        if (isCardio) 'isCardio': true,
       };
 
   factory Exercise.fromJson(Map<String, dynamic> json) => Exercise(
@@ -63,6 +66,7 @@ class Exercise {
             const [],
         instructions: json['instructions'] as String?,
         isDefault: json['isDefault'] as bool? ?? true,
+        isCardio: json['isCardio'] as bool? ?? false,
       );
 
   Exercise copyWith({
@@ -78,6 +82,7 @@ class Exercise {
     List<String>? muscleGroups,
     String? instructions,
     bool? isDefault,
+    bool? isCardio,
   }) =>
       Exercise(
         id: id ?? this.id,
@@ -92,5 +97,6 @@ class Exercise {
         muscleGroups: muscleGroups ?? this.muscleGroups,
         instructions: instructions ?? this.instructions,
         isDefault: isDefault ?? this.isDefault,
+        isCardio: isCardio ?? this.isCardio,
       );
 }

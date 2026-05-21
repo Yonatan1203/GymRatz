@@ -25,6 +25,11 @@ final userRoleProvider = Provider<UserRole>((ref) {
   return ref.watch(userProfileProvider).valueOrNull?.role ?? UserRole.user;
 });
 
+/// Whether the user's week starts on Monday (true) or Sunday (false).
+final weekStartsOnMondayProvider = Provider<bool>((ref) {
+  return ref.watch(userProfileProvider).valueOrNull?.weekStartsOnMonday ?? true;
+});
+
 // ─── Active Program ───
 final activeProgramProvider = StreamProvider<Program?>((ref) {
   final uid = ref.watch(currentUidProvider);
@@ -179,11 +184,10 @@ final calendarMonthProvider = FutureProvider.family<Map<int, WorkoutStatus>, Str
         // Future/today → scheduled, past → missed
         if (date.isBefore(todayMidnight)) {
           final activatedAt = activeProgram.activatedAt;
-          final activationDate = activatedAt != null
-              ? DateTime(activatedAt.year, activatedAt.month, activatedAt.day)
-              : null;
-          // Only mark as missed if after the program was activated
-          if (activationDate == null || !date.isBefore(activationDate)) {
+          if (activatedAt == null) continue; // No activation date — don't mark as missed
+          final activationDate = DateTime(activatedAt.year, activatedAt.month, activatedAt.day);
+          // Only mark as missed if on or after the program was activated
+          if (!date.isBefore(activationDate)) {
             result[d] = WorkoutStatus.missed;
           }
         } else {
