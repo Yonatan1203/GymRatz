@@ -1,3 +1,3 @@
 app_identifier("com.gymratz.gymratz")
-# apple_id("your-apple-id@email.com")  # Uncomment and set your Apple ID
-# team_id("XXXXXXXXXX")  # Uncomment and set your Team ID
+apple_id("gymratz369@gmail.com")
+team_id("T3M64VVNLY")
