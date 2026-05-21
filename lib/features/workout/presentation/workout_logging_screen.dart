@@ -438,6 +438,15 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
         _showRestTimer();
         _beginCountdown();
       }
+      // Auto-advance: if all sets of this exercise are done, expand the next one.
+      final allDone = _sets[exIdx].every((s) => s.completed);
+      if (allDone && exIdx + 1 < _exercises.length) {
+        setState(() {
+          _expanded.clear();
+          _expanded.add(exIdx + 1);
+        });
+        _syncToProvider();
+      }
     } else {
       // Uncompleting — just sync
       _syncToProvider();
