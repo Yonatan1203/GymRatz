@@ -305,9 +305,16 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                 if (isUserProgram) _buildUserActions(context, program),
                 if (!isUserProgram) _buildExploreActions(context, program),
                 SizedBox(height: AppSpacing.sectionGap),
-                Text(
-                  program.days.isNotEmpty ? 'Workout Days' : 'Weekly Breakdown',
-                  style: AppTextStyles.h2.copyWith(color: context.foreground),
+                Row(
+                  children: [
+                    Text(
+                      program.days.isNotEmpty ? 'Workout Days' : 'Weekly Breakdown',
+                      style: AppTextStyles.h2.copyWith(color: context.foreground),
+                    ),
+                    const Spacer(),
+                    if (program.isActive && program.activatedAt != null && program.weeks > 0)
+                      _buildWeekBadge(context, program),
+                  ],
                 ),
                 SizedBox(height: AppSpacing.lg),
                 if (program.days.isNotEmpty)
@@ -559,6 +566,26 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
         );
       }
     }
+  }
+
+  Widget _buildWeekBadge(BuildContext context, Program program) {
+    final daysSinceActivation = DateTime.now().difference(program.activatedAt!).inDays;
+    final currentWeek = (daysSinceActivation ~/ 7) + 1;
+    final clampedWeek = currentWeek.clamp(1, program.weeks);
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: context.primaryColor.withValues(alpha: 0.12),
+        borderRadius: AppRadius.borderFull,
+      ),
+      child: Text(
+        'Week $clampedWeek of ${program.weeks}',
+        style: AppTextStyles.caption.copyWith(
+          color: context.primaryColor,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 
   // ─── Days List ───
