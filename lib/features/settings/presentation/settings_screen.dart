@@ -28,7 +28,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _pushNotifications = true;
   bool _workoutReminders = true;
-  bool _restTimerSound = false;
   bool _isDeletingAccount = false;
 
   @override
@@ -131,7 +130,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           }
                         }),
                         Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
-                        _toggleRow('Rest Timer Sound', _restTimerSound, (v) => setState(() => _restTimerSound = v)),
+                        _toggleRow(
+                          'Rest Timer Sound',
+                          ref.watch(timerSettingsProvider).soundEnabled,
+                          (v) => ref.read(timerSettingsProvider.notifier).setSoundEnabled(v),
+                        ),
+                        Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
+                        _toggleRow(
+                          'Auto-Start Rest Timer',
+                          ref.watch(timerSettingsProvider).autoStartOnSetComplete,
+                          (v) => ref.read(timerSettingsProvider.notifier).setAutoStartOnSetComplete(v),
+                        ),
                       ],
                     ),
                   ),

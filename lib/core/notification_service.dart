@@ -142,7 +142,10 @@ class NotificationService {
           importance: Importance.high,
           priority: Priority.high,
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentSound: true,
+        ),
       ),
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.wallClockTime,
@@ -154,6 +157,36 @@ class NotificationService {
   Future<void> cancelRestTimerNotification() async {
     await _plugin.cancel(_restTimerNotifId);
     await _plugin.cancel(_restDoneNotifId);
+  }
+
+  /// Fire the "Rest Complete" notification immediately (for foreground completion).
+  /// This ensures the user gets an audible alert even when the app is in the foreground.
+  Future<void> showRestCompleteNow() async {
+    await _plugin.cancel(_restTimerNotifId); // Remove ongoing timer notif
+    await _plugin.cancel(_restDoneNotifId); // Cancel scheduled one
+    await _plugin.show(
+      _restDoneNotifId,
+      'Rest Complete!',
+      'Time to get back to work!',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'rest_timer_done',
+          'Rest Timer Done',
+          channelDescription: 'Notification when rest timer completes',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentSound: true,
+        ),
+      ),
+    );
+  }
+
+  /// Cancel only the ongoing timer notification (keep the scheduled completion).
+  Future<void> cancelOngoingTimerNotification() async {
+    await _plugin.cancel(_restTimerNotifId);
   }
 
   tz.TZDateTime _nextInstanceOfDayTime(int weekday, int hour, int minute) {

@@ -400,12 +400,21 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       } else {
         t.cancel();
         PlatformAdapter.hapticSelection();
-        NotificationService().cancelRestTimerNotification();
+        // Sound: fire immediate notification with sound instead of silently canceling.
+        final soundEnabled = ref.read(timerSettingsProvider).soundEnabled;
+        if (soundEnabled) {
+          NotificationService().showRestCompleteNow();
+        } else {
+          NotificationService().cancelRestTimerNotification();
+        }
         // Keep restActive true briefly so banner/PiP can show the bell icon
         Future.delayed(const Duration(seconds: 2), () {
           if (!mounted) return;
           setState(() { _restActive = false; _timerRunning = false; });
           _syncToProvider();
+          if (soundEnabled) {
+            NotificationService().cancelRestTimerNotification();
+          }
         });
       }
     });
@@ -421,8 +430,14 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     });
 
     if (!wasCompleted) {
-      // Completing a set — just sync, user can manually start rest timer
+      // Completing a set — auto-start rest timer if enabled.
       _syncToProvider();
+      _saveWorkoutState();
+      final autoStart = ref.read(timerSettingsProvider).autoStartOnSetComplete;
+      if (autoStart && !_restActive) {
+        _showRestTimer();
+        _beginCountdown();
+      }
     } else {
       // Uncompleting — just sync
       _syncToProvider();
