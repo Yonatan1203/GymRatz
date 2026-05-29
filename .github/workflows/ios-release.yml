@@ -96,10 +96,14 @@ jobs:
             -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
 
       - name: Upload to TestFlight
+        # The exported IPA is named after the app's product name (e.g. gymratz.ipa),
+        # not Runner.ipa, so resolve it with a glob instead of hardcoding.
         run: |
+          IPA_PATH="$(ls build/ios/ipa/*.ipa | head -n1)"
+          echo "Uploading: $IPA_PATH"
           xcrun altool --upload-app \
             --type ios \
-            --file build/ios/ipa/Runner.ipa \
+            --file "$IPA_PATH" \
             --apiKey ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
             --apiIssuer ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
 
