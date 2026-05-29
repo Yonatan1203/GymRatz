@@ -183,9 +183,12 @@ class EnduranceStrategy extends ProgressionStrategy {
     required SessionMetrics metrics,
     required ProgressionHistory history,
   }) {
-    // Plateau: density doesn't improve for 3 exposures.
-    // density_t <= max(density_(t-1..t-3)) + 1%
-    return history.isDensityPlateaued;
+    // Deload on plateau: either the general plateau (no smoothed-e1RM
+    // improvement for >= 3 exposures) or a density plateau (density_t <=
+    // max(density_(t-1..t-3)) + 1%). The general plateau matches PO_Systems.md
+    // ("after 2-3 poor sessions: deload") and applies even before enough density
+    // history exists to evaluate isDensityPlateaued (which needs >= 4 samples).
+    return history.isPlateaued || history.isDensityPlateaued;
   }
 
   @override
@@ -342,9 +345,11 @@ class EnduranceStrategy extends ProgressionStrategy {
       );
     }
 
-    // Rule B: Add reps -- min(reps) >= r_min AND RIR_last >= 2
+    // Rule B: Add reps -- min(reps) >= r_min AND RIR_last >= 2.
+    // Add +1 to the lowest set (consistent with the hypertrophy strategy's
+    // double-progression rep bump), capped at repMax.
     if (minReps >= repMin && lastSetRir >= 2) {
-      final targetRep = min(minReps + 2, repMax);
+      final targetRep = min(minReps + 1, repMax);
       return ProgressionSuggestion(
         suggestedWeight: currentWeight,
         suggestedReps: targetRep,
