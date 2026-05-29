@@ -119,10 +119,14 @@ class StrengthStrategy extends ProgressionStrategy {
   }) {
     final baseline = history.baselineE1RM;
 
-    // Plateau + avg RIR <= 1 for last 2 sessions.
-    // Plateau = no increase in smoothed e1RM for >= 3 exposures
-    // (smoothed_t <= max(smoothed_(t-1..t-3)) + 0.25%).
-    if (history.isPlateaued && _avgRirLastNSessions(history, 2) <= 1) {
+    // Plateau + low effort. Plateau = no increase in smoothed e1RM for >= 3
+    // exposures (smoothed_t <= max(smoothed_(t-1..t-3)) + 0.25%). Low effort =
+    // the current session ground out (top-set RIR <= 1) OR avg RIR <= 1 over the
+    // last 2 sessions. The current-session signal matters when there isn't yet
+    // enough score history for _avgRirLastNSessions to be meaningful.
+    final lowEffort =
+        metrics.topSetRir <= 1 || _avgRirLastNSessions(history, 2) <= 1;
+    if (history.isPlateaued && lowEffort) {
       return true;
     }
 

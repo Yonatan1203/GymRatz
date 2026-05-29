@@ -12,13 +12,18 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          # Pin to the same Flutter the release builds use, so the gate is
+          # reproducible and matches what actually ships (the unpinned `stable`
+          # channel drifted to 3.44 and changed analyzer output).
+          flutter-version: '3.41.2'
           cache: true
 
       - run: flutter pub get
 
       - name: Analyze
-        run: flutter analyze
+        # --no-fatal-infos matches release.yml: fail on errors/warnings, not on
+        # pre-existing info-level lints.
+        run: flutter analyze --no-fatal-infos
 
       - name: Test
         run: flutter test

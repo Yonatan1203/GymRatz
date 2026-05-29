@@ -10,12 +10,22 @@ on:
 
 jobs:
   build-ios:
-    runs-on: macos-latest
+    # macos-26 ships Xcode 26 / iOS 26 SDK, which Apple now requires for App Store
+    # Connect uploads ("built with the iOS 18.5 SDK ... must be built with the iOS 26
+    # SDK or later"). macos-latest still defaulted to Xcode 16.4.
+    runs-on: macos-26
     timeout-minutes: 60
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
+
+      - name: Select Xcode 26 (Apple requires the iOS 26 SDK for uploads)
+        run: |
+          echo "Available Xcodes:"; ls -d /Applications/Xcode*.app 2>/dev/null || true
+          XC="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)"
+          if [ -n "$XC" ]; then sudo xcode-select -s "$XC/Contents/Developer"; fi
+          xcodebuild -version
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -32,8 +42,10 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_KEY_BASE64 }}
         run: |
-          mkdir -p ~/.private_keys
+          mkdir -p ~/.private_keys ~/.appstoreconnect/private_keys
           echo "$APP_STORE_CONNECT_KEY_BASE64" | base64 --decode > ~/.private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
+          # altool/notarytool also look here for the key; copy so discovery cannot fail
+          cp ~/.private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8 ~/.appstoreconnect/private_keys/
           # Create API key JSON for xcodebuild
           cat > ~/.private_keys/api_key.json << EOJSON
           {
@@ -61,6 +73,16 @@ jobs:
             --no-codesign
 
       - name: Create unsigned archive
+        # Archive WITHOUT code signing. All signing (Runner app + embedded pod
+        # frameworks) happens at *export* time with the App Store distribution
+        # profile, which the App Store Connect API key + -allowProvisioningUpdates
+        # creates on the Export step. Signing at archive time fails on CI because:
+        #   - passing CODE_SIGN_IDENTITY="Apple Distribution" globally poisons the
+        #     CocoaPods targets (xcodebuild exit 65, "conflicting provisioning"); and
+        #   - leaving the Runner target's automatic signing on makes Xcode try to
+        #     create an "iOS App Development" profile, which needs registered devices
+        #     the CI team doesn't have ("no devices ... no profiles for ...").
+        # Distribution (app-store) profiles need no devices, so we defer to export.
         run: |
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner \
@@ -69,30 +91,42 @@ jobs:
             -destination generic/platform=iOS \
             -archivePath build/ios/Runner.xcarchive \
             archive \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath ~/.private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 \
-            -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
-            -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }} \
-            CODE_SIGN_STYLE=Automatic \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            DEVELOPMENT_TEAM=T3M64VVNLY
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
 
       - name: Export IPA
+        # Export signs the app + embedded frameworks for app-store distribution using
+        # the API key (-allowProvisioningUpdates creates the distribution cert/profile).
+        # This contacts App Store Connect, which intermittently returns -1009
+        # "Internet connection appears to be offline" — retry a few times before failing.
         run: |
-          xcodebuild -exportArchive \
-            -archivePath build/ios/Runner.xcarchive \
-            -exportPath build/ios/ipa \
-            -exportOptionsPlist ios/ExportOptions.plist \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath ~/.private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 \
-            -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
-            -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          for attempt in 1 2 3 4; do
+            echo "::group::Export attempt $attempt"
+            if xcodebuild -exportArchive \
+              -archivePath build/ios/Runner.xcarchive \
+              -exportPath build/ios/ipa \
+              -exportOptionsPlist ios/ExportOptions.plist \
+              -allowProvisioningUpdates \
+              -authenticationKeyPath ~/.private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 \
+              -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
+              -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}; then
+              echo "::endgroup::"; echo "Export succeeded on attempt $attempt"; exit 0
+            fi
+            echo "::endgroup::"; echo "Export attempt $attempt failed; retrying in 25s..."
+            rm -rf build/ios/ipa
+            sleep 25
+          done
+          echo "Export failed after 4 attempts"; exit 1
 
       - name: Upload to TestFlight
+        # The exported IPA is named after the app's product name (e.g. gymratz.ipa),
+        # not Runner.ipa, so resolve it with a glob instead of hardcoding.
         run: |
+          IPA_PATH="$(ls build/ios/ipa/*.ipa | head -n1)"
+          echo "Uploading: $IPA_PATH"
           xcrun altool --upload-app \
             --type ios \
-            --file build/ios/ipa/Runner.ipa \
+            --file "$IPA_PATH" \
             --apiKey ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
             --apiIssuer ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
 
