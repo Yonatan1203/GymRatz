@@ -1,29 +1,29 @@
 default_platform(:ios)
 
 platform :ios do
-  desc "Build and upload to TestFlight"
-  lane :beta do
-    setup_ci if ENV["CI"]
-
-    # Install provisioning profiles via match
-    match(
-      type: "appstore",
-      app_identifier: "com.gymratz.gymratz",
-      readonly: true,
-    )
-
-    # Build the IPA
-    sh("cd ../.. && flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --dart-define=RC_APPLE_KEY=#{ENV['RC_APPLE_KEY']}")
-
-    # Upload to TestFlight
-    upload_to_testflight(
-      ipa: "../../build/ios/ipa/GymRatz.ipa",
-      skip_waiting_for_build_processing: true,
-      apple_id: ENV["APPLE_APP_ID"],
+  # App Store Connect API key from CI secrets — no Apple ID login, no `match`.
+  # Uses the same APP_STORE_CONNECT_* secrets the build/export already use.
+  def asc_api_key
+    app_store_connect_api_key(
+      key_id: ENV.fetch("APP_STORE_CONNECT_KEY_ID"),
+      issuer_id: ENV.fetch("APP_STORE_CONNECT_ISSUER_ID"),
+      key_content: ENV.fetch("APP_STORE_CONNECT_KEY_BASE64"),
+      is_key_content_base64: true,
+      in_house: false,
     )
   end
 
-  desc "Build IPA only (no upload)"
+  desc "Upload an already-built IPA to TestFlight (pass ipa:/abs/path.ipa)"
+  lane :upload_testflight do |options|
+    upload_to_testflight(
+      api_key: asc_api_key,
+      ipa: options.fetch(:ipa),
+      skip_waiting_for_build_processing: true,
+      skip_submission: true,
+    )
+  end
+
+  desc "Build IPA only via Flutter (no upload)"
   lane :build do
     sh("cd ../.. && flutter build ipa --release --export-options-plist=ios/ExportOptions.plist --dart-define=RC_APPLE_KEY=#{ENV['RC_APPLE_KEY']}")
   end
