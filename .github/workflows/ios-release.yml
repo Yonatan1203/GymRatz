@@ -10,12 +10,22 @@ on:
 
 jobs:
   build-ios:
-    runs-on: macos-latest
+    # macos-26 ships Xcode 26 / iOS 26 SDK, which Apple now requires for App Store
+    # Connect uploads ("built with the iOS 18.5 SDK ... must be built with the iOS 26
+    # SDK or later"). macos-latest still defaulted to Xcode 16.4.
+    runs-on: macos-26
     timeout-minutes: 60
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
+
+      - name: Select Xcode 26 (Apple requires the iOS 26 SDK for uploads)
+        run: |
+          echo "Available Xcodes:"; ls -d /Applications/Xcode*.app 2>/dev/null || true
+          XC="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)"
+          if [ -n "$XC" ]; then sudo xcode-select -s "$XC/Contents/Developer"; fi
+          xcodebuild -version
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
