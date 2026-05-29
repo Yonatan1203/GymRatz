@@ -62,14 +62,17 @@ jobs:
             --dart-define=ENV=prod \
             --no-codesign
 
-      - name: Create signed archive
-        # Do NOT pass CODE_SIGN_IDENTITY / CODE_SIGN_STYLE / DEVELOPMENT_TEAM on the
-        # command line: those apply to every target, including CocoaPods, forcing the
-        # "Apple Distribution" identity onto pods that are auto-signed for development
-        # (xcodebuild exit 65: "conflicting provisioning settings"). The Runner target
-        # already has CODE_SIGN_STYLE=Automatic + DEVELOPMENT_TEAM=T3M64VVNLY in the
-        # project, so automatic signing + the API key resolve a distribution profile
-        # for Runner only. The Export step re-signs for app-store via ExportOptions.plist.
+      - name: Create unsigned archive
+        # Archive WITHOUT code signing. All signing (Runner app + embedded pod
+        # frameworks) happens at *export* time with the App Store distribution
+        # profile, which the App Store Connect API key + -allowProvisioningUpdates
+        # creates on the Export step. Signing at archive time fails on CI because:
+        #   - passing CODE_SIGN_IDENTITY="Apple Distribution" globally poisons the
+        #     CocoaPods targets (xcodebuild exit 65, "conflicting provisioning"); and
+        #   - leaving the Runner target's automatic signing on makes Xcode try to
+        #     create an "iOS App Development" profile, which needs registered devices
+        #     the CI team doesn't have ("no devices ... no profiles for ...").
+        # Distribution (app-store) profiles need no devices, so we defer to export.
         run: |
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner \
@@ -78,10 +81,8 @@ jobs:
             -destination generic/platform=iOS \
             -archivePath build/ios/Runner.xcarchive \
             archive \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath ~/.private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 \
-            -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
-            -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
 
       - name: Export IPA
         run: |
