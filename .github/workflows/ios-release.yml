@@ -95,15 +95,28 @@ jobs:
             CODE_SIGNING_REQUIRED=NO
 
       - name: Export IPA
+        # Export signs the app + embedded frameworks for app-store distribution using
+        # the API key (-allowProvisioningUpdates creates the distribution cert/profile).
+        # This contacts App Store Connect, which intermittently returns -1009
+        # "Internet connection appears to be offline" — retry a few times before failing.
         run: |
-          xcodebuild -exportArchive \
-            -archivePath build/ios/Runner.xcarchive \
-            -exportPath build/ios/ipa \
-            -exportOptionsPlist ios/ExportOptions.plist \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath ~/.private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 \
-            -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
-            -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          for attempt in 1 2 3 4; do
+            echo "::group::Export attempt $attempt"
+            if xcodebuild -exportArchive \
+              -archivePath build/ios/Runner.xcarchive \
+              -exportPath build/ios/ipa \
+              -exportOptionsPlist ios/ExportOptions.plist \
+              -allowProvisioningUpdates \
+              -authenticationKeyPath ~/.private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 \
+              -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
+              -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}; then
+              echo "::endgroup::"; echo "Export succeeded on attempt $attempt"; exit 0
+            fi
+            echo "::endgroup::"; echo "Export attempt $attempt failed; retrying in 25s..."
+            rm -rf build/ios/ipa
+            sleep 25
+          done
+          echo "Export failed after 4 attempts"; exit 1
 
       - name: Upload to TestFlight
         # The exported IPA is named after the app's product name (e.g. gymratz.ipa),
