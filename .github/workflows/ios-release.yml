@@ -32,8 +32,10 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_KEY_BASE64 }}
         run: |
-          mkdir -p ~/.private_keys
+          mkdir -p ~/.private_keys ~/.appstoreconnect/private_keys
           echo "$APP_STORE_CONNECT_KEY_BASE64" | base64 --decode > ~/.private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
+          # altool/notarytool also look here for the key; copy so discovery cannot fail
+          cp ~/.private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8 ~/.appstoreconnect/private_keys/
           # Create API key JSON for xcodebuild
           cat > ~/.private_keys/api_key.json << EOJSON
           {
@@ -60,7 +62,14 @@ jobs:
             --dart-define=ENV=prod \
             --no-codesign
 
-      - name: Create unsigned archive
+      - name: Create signed archive
+        # Do NOT pass CODE_SIGN_IDENTITY / CODE_SIGN_STYLE / DEVELOPMENT_TEAM on the
+        # command line: those apply to every target, including CocoaPods, forcing the
+        # "Apple Distribution" identity onto pods that are auto-signed for development
+        # (xcodebuild exit 65: "conflicting provisioning settings"). The Runner target
+        # already has CODE_SIGN_STYLE=Automatic + DEVELOPMENT_TEAM=T3M64VVNLY in the
+        # project, so automatic signing + the API key resolve a distribution profile
+        # for Runner only. The Export step re-signs for app-store via ExportOptions.plist.
         run: |
           xcodebuild -workspace ios/Runner.xcworkspace \
             -scheme Runner \
@@ -72,10 +81,7 @@ jobs:
             -allowProvisioningUpdates \
             -authenticationKeyPath ~/.private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 \
             -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
-            -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }} \
-            CODE_SIGN_STYLE=Automatic \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            DEVELOPMENT_TEAM=T3M64VVNLY
+            -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
 
       - name: Export IPA
         run: |
