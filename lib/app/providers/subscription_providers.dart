@@ -15,13 +15,13 @@ final entitlementServiceProvider = Provider<EntitlementService>((ref) {
   return EntitlementService(ref.watch(entitlementRepositoryProvider));
 });
 
-/// Resolves pro access: own sub OR admin role OR coach-sponsored.
+/// Resolves pro access: own sub OR admin role OR complimentary grant OR coach-sponsored.
 final isProProvider = StreamProvider<bool>((ref) async* {
   // Watch profile so we re-evaluate when it loads/changes
   final profile = ref.watch(userProfileProvider).valueOrNull;
 
-  // 1. Check role-based pro (admin_user or admin_coach) — fast path
-  if (profile != null && EntitlementService.isRoleBasedPro(profile.role)) {
+  // 1. Check non-purchased pro (admin role or complimentary grant) — fast path
+  if (profile != null && EntitlementService.hasComplimentaryPro(profile)) {
     yield true;
     return;
   }
@@ -66,9 +66,9 @@ final subscriptionStateProvider = StreamProvider<SubscriptionState>((ref) {
 /// Call before any write action. Throws [SubscriptionExpiredException] if expired.
 final subscriptionGuardProvider = Provider<Future<void> Function()>((ref) {
   return () async {
-    // Admin bypass
+    // Non-purchased pro bypass (admin role or complimentary grant)
     final profile = ref.read(userProfileProvider).valueOrNull;
-    if (profile != null && EntitlementService.isRoleBasedPro(profile.role)) {
+    if (profile != null && EntitlementService.hasComplimentaryPro(profile)) {
       return;
     }
 
