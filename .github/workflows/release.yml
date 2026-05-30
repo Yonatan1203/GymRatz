@@ -11,6 +11,10 @@ on:
           - android
           - ios
           - both
+      build_number:
+        description: 'Android version code — must be higher than the last uploaded (e.g. 17). Leave blank to use pubspec.'
+        required: false
+        type: string
   push:
     tags:
       - 'v*'
@@ -60,8 +64,18 @@ jobs:
             > android/key.properties
 
       - name: Build AAB
-        # RC_APPLE_KEY secret name is RC_APPLE_KEY (REVENUECAT_APPLE_KEY is not configured)
-        run: flutter build appbundle --release --dart-define=RC_GOOGLE_KEY=${{ secrets.REVENUECAT_GOOGLE_KEY }} --dart-define=RC_APPLE_KEY=${{ secrets.RC_APPLE_KEY }}
+        # RC_APPLE_KEY secret name is RC_APPLE_KEY (REVENUECAT_APPLE_KEY is not configured).
+        # build_number (when provided via dispatch) overrides the pubspec version
+        # code so each Play upload gets a unique, higher code. Tag-push builds
+        # leave it blank and fall back to pubspec.
+        env:
+          BUILD_NUMBER: ${{ inputs.build_number }}
+        run: |
+          ARGS=""
+          if [ -n "$BUILD_NUMBER" ]; then ARGS="--build-number=$BUILD_NUMBER"; fi
+          flutter build appbundle --release $ARGS \
+            --dart-define=RC_GOOGLE_KEY=${{ secrets.REVENUECAT_GOOGLE_KEY }} \
+            --dart-define=RC_APPLE_KEY=${{ secrets.RC_APPLE_KEY }}
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
