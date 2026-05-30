@@ -118,4 +118,12 @@ jobs:
           IPA_PATH="$(ls "$GITHUB_WORKSPACE"/build/ios/ipa/*.ipa | head -n1)"
           echo "Uploading: $IPA_PATH"
           cd ios
-          BUNDLE_GEMFILE="$GITHUB_WORKSPACE/Gemfile" bundle exec fastlane ios upload_testflight ipa:"$IPA_PATH"
+          for attempt in 1 2 3; do
+            echo "Upload attempt $attempt"
+            if BUNDLE_GEMFILE="$GITHUB_WORKSPACE/Gemfile" bundle exec fastlane ios upload_testflight ipa:"$IPA_PATH"; then
+              echo "Upload succeeded on attempt $attempt"; exit 0
+            fi
+            echo "Upload attempt $attempt failed; retrying in 30s..."
+            sleep 30
+          done
+          echo "Upload failed after 3 attempts"; exit 1
