@@ -1,0 +1,121 @@
+name: Release to Testing
+
+# New canonical "build + ship to internal testing" workflow.
+# iOS uses the proven unsigned-archive -> signed-export path (same as
+# ios-release.yml) and uploads via fastlane (App Store Connect API key) instead
+# of the deprecated altool. The old ios-release.yml is kept until this is proven,
+# then retired. Android is added in Phase 2 (needs the Play service account).
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to release to testing'
+        type: choice
+        options: [ios]
+        default: ios
+      build_number:
+        description: 'Build number (e.g. 25)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    if: ${{ inputs.platform == 'ios' }}
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      BUNDLE_FROZEN: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 26 (Apple requires the iOS 26 SDK for uploads)
+        run: |
+          XC="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)"
+          if [ -n "$XC" ]; then sudo xcode-select -s "$XC/Contents/Developer"; fi
+          xcodebuild -version
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.2'
+          cache: true
+
+      - name: Set up Ruby + fastlane (bundler-cache uses the committed Gemfile.lock)
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Set up App Store Connect API key
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_KEY_BASE64 }}
+        run: |
+          mkdir -p ~/.private_keys ~/.appstoreconnect/private_keys
+          echo "$APP_STORE_CONNECT_KEY_BASE64" | base64 --decode > ~/.private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
+          cp ~/.private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8 ~/.appstoreconnect/private_keys/
+
+      - name: Restore GoogleService-Info.plist
+        env:
+          GOOGLE_SERVICE_INFO_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_BASE64 }}
+        run: echo "$GOOGLE_SERVICE_INFO_BASE64" | base64 --decode > ios/Runner/GoogleService-Info.plist
+
+      - name: Build Flutter iOS (no codesign)
+        env:
+          RC_APPLE_KEY: ${{ secrets.RC_APPLE_KEY }}
+        run: |
+          flutter build ios --release \
+            --build-number=${{ inputs.build_number }} \
+            --dart-define=RC_APPLE_KEY=$RC_APPLE_KEY \
+            --dart-define=ENV=prod \
+            --no-codesign
+
+      - name: Create unsigned archive
+        run: |
+          xcodebuild -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination generic/platform=iOS \
+            -archivePath build/ios/Runner.xcarchive \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Export IPA (signed for app-store, with retry)
+        run: |
+          for attempt in 1 2 3 4; do
+            echo "::group::Export attempt $attempt"
+            if xcodebuild -exportArchive \
+              -archivePath build/ios/Runner.xcarchive \
+              -exportPath build/ios/ipa \
+              -exportOptionsPlist ios/ExportOptions.plist \
+              -allowProvisioningUpdates \
+              -authenticationKeyPath ~/.private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 \
+              -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
+              -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}; then
+              echo "::endgroup::"; echo "Export succeeded on attempt $attempt"; exit 0
+            fi
+            echo "::endgroup::"; echo "Export attempt $attempt failed; retrying in 25s..."
+            rm -rf build/ios/ipa
+            sleep 25
+          done
+          echo "Export failed after 4 attempts"; exit 1
+
+      - name: Upload to TestFlight (fastlane, App Store Connect API key)
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_KEY_BASE64 }}
+        run: |
+          IPA_PATH="$(ls "$GITHUB_WORKSPACE"/build/ios/ipa/*.ipa | head -n1)"
+          echo "Uploading: $IPA_PATH"
+          cd ios
+          BUNDLE_GEMFILE="$GITHUB_WORKSPACE/Gemfile" bundle exec fastlane ios upload_testflight ipa:"$IPA_PATH"
