@@ -96,8 +96,114 @@ jobs:
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
           track: internal
 
-  # iOS release is handled by the dedicated `ios-release.yml` workflow, which uses the
-  # App Store Connect API key (the secrets that are actually configured). The previous
-  # build-ios job here relied on a manual cert/profile keychain flow with secrets that
-  # do not exist (APPLE_CERTIFICATE_*, APPLE_API_KEY_P8) and used `secrets` in `if:`,
-  # which made this workflow fail to validate. Removed to consolidate on one iOS pipeline.
+  build-ios:
+    needs: analyze
+    if: ${{ github.event_name == 'push' || github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both' }}
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      BUNDLE_FROZEN: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 26
+        run: |
+          XC="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)"
+          if [ -n "$XC" ]; then sudo xcode-select -s "$XC/Contents/Developer"; fi
+          xcodebuild -version
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.2'
+          cache: true
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - run: flutter pub get
+
+      - name: Set up App Store Connect API key
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_KEY_BASE64 }}
+        run: |
+          mkdir -p ~/.private_keys ~/.appstoreconnect/private_keys
+          echo "$APP_STORE_CONNECT_KEY_BASE64" | base64 --decode > ~/.private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
+          cp ~/.private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8 ~/.appstoreconnect/private_keys/
+
+      - name: Restore GoogleService-Info.plist
+        env:
+          GOOGLE_SERVICE_INFO_BASE64: ${{ secrets.GOOGLE_SERVICE_INFO_BASE64 }}
+        run: echo "$GOOGLE_SERVICE_INFO_BASE64" | base64 --decode > ios/Runner/GoogleService-Info.plist
+
+      - name: Build Flutter iOS (no codesign)
+        env:
+          RC_APPLE_KEY: ${{ secrets.RC_APPLE_KEY }}
+        run: |
+          BUILD_NUMBER="${{ inputs.build_number }}"
+          ARGS=""
+          if [ -n "$BUILD_NUMBER" ]; then ARGS="--build-number=$BUILD_NUMBER"; fi
+          flutter build ios --release $ARGS \
+            --dart-define=RC_APPLE_KEY=$RC_APPLE_KEY \
+            --no-codesign
+
+      - name: Create unsigned archive
+        run: |
+          xcodebuild -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination generic/platform=iOS \
+            -archivePath build/ios/Runner.xcarchive \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Export IPA (signed, with retry)
+        run: |
+          for attempt in 1 2 3 4; do
+            echo "::group::Export attempt $attempt"
+            if xcodebuild -exportArchive \
+              -archivePath build/ios/Runner.xcarchive \
+              -exportPath build/ios/ipa \
+              -exportOptionsPlist ios/ExportOptions.plist \
+              -allowProvisioningUpdates \
+              -authenticationKeyPath ~/.private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 \
+              -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
+              -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}; then
+              echo "::endgroup::"; echo "Export succeeded on attempt $attempt"; exit 0
+            fi
+            echo "::endgroup::"; echo "Export attempt $attempt failed; retrying in 25s..."
+            rm -rf build/ios/ipa
+            sleep 25
+          done
+          echo "Export failed after 4 attempts"; exit 1
+
+      - name: Upload to TestFlight (fastlane, with retry)
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_KEY_BASE64 }}
+        run: |
+          IPA_PATH="$(ls "$GITHUB_WORKSPACE"/build/ios/ipa/*.ipa | head -n1)"
+          echo "Uploading: $IPA_PATH"
+          cd ios
+          for attempt in 1 2 3; do
+            echo "Upload attempt $attempt"
+            if BUNDLE_GEMFILE="$GITHUB_WORKSPACE/Gemfile" bundle exec fastlane ios upload_testflight ipa:"$IPA_PATH"; then
+              echo "Upload succeeded on attempt $attempt"; exit 0
+            fi
+            echo "Upload attempt $attempt failed; retrying in 30s..."
+            sleep 30
+          done
+          echo "Upload failed after 3 attempts"; exit 1
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gymratz-ios-release
+          path: build/ios/ipa/*.ipa
