@@ -19,6 +19,11 @@ class UserProfile {
   final List<String> favoriteExerciseIds;
   final List<String> favoriteProgramIds;
   final UserRole role;
+
+  /// Complimentary Pro access (e.g. for testers/comps), decoupled from admin
+  /// roles so it grants full feature access WITHOUT admin privileges or the
+  /// coach experience. Set on the user's Firestore doc to true to grant.
+  final bool complimentaryPro;
   final String? coachId;
   final DateTime? coachLinkedAt;
   final DateTime? createdAt;
@@ -44,6 +49,7 @@ class UserProfile {
     this.favoriteExerciseIds = const [],
     this.favoriteProgramIds = const [],
     this.role = UserRole.user,
+    this.complimentaryPro = false,
     this.coachId,
     this.coachLinkedAt,
     this.createdAt,
@@ -70,6 +76,7 @@ class UserProfile {
         'favoriteExerciseIds': favoriteExerciseIds,
         'favoriteProgramIds': favoriteProgramIds,
         'role': role.value,
+        'complimentaryPro': complimentaryPro,
         'coachId': coachId,
         'coachLinkedAt': coachLinkedAt?.toIso8601String(),
         'createdAt': createdAt?.toIso8601String(),
@@ -105,6 +112,7 @@ class UserProfile {
                 .toList() ??
             [],
         role: UserRole.fromString(json['role'] as String?),
+        complimentaryPro: json['complimentaryPro'] as bool? ?? false,
         coachId: json['coachId'] as String?,
         coachLinkedAt: json['coachLinkedAt'] != null
             ? DateTime.tryParse(json['coachLinkedAt'] as String)
@@ -137,6 +145,7 @@ class UserProfile {
     List<String>? favoriteExerciseIds,
     List<String>? favoriteProgramIds,
     UserRole? role,
+    bool? complimentaryPro,
     String? coachId,
     DateTime? coachLinkedAt,
     DateTime? createdAt,
@@ -162,6 +171,7 @@ class UserProfile {
         favoriteExerciseIds: favoriteExerciseIds ?? this.favoriteExerciseIds,
         favoriteProgramIds: favoriteProgramIds ?? this.favoriteProgramIds,
         role: role ?? this.role,
+        complimentaryPro: complimentaryPro ?? this.complimentaryPro,
         coachId: coachId ?? this.coachId,
         coachLinkedAt: coachLinkedAt ?? this.coachLinkedAt,
         createdAt: createdAt ?? this.createdAt,
