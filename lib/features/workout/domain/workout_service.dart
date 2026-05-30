@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../shared/models/enums.dart';
@@ -40,8 +41,11 @@ class WorkoutService {
         uid,
         exerciseNames,
       );
-    } catch (_) {
-      // Non-fatal: proceed without PO prefill.
+    } catch (e) {
+      // Non-fatal: proceed without PO prefill. Logged so a failing read
+      // (e.g. a missing Firestore index) is visible instead of silently
+      // leaving the weights empty.
+      debugPrint('startWorkout: failed to load PO suggestions: $e');
     }
 
     // Also load last completed workout for fallback.
@@ -55,8 +59,11 @@ class WorkoutService {
           for (final e in recentWorkouts.first.exercises) e.name: e
         };
       }
-    } catch (_) {
-      // Non-fatal: proceed without fallback.
+    } catch (e) {
+      // Non-fatal: proceed without fallback. The day-scoped query needs a
+      // composite index (programId, workoutDayId, status, date); log so a
+      // missing index surfaces instead of silently disabling prefill.
+      debugPrint('startWorkout: failed to load last workout for fallback: $e');
     }
 
     final exercises = day.exercises.map((pe) {
@@ -235,8 +242,11 @@ class WorkoutService {
             history: updatedHistory,
             suggestion: namedSuggestion,
           );
-        } catch (_) {
-          // Non-fatal: PO data will just not persist this session.
+        } catch (e) {
+          // Non-fatal: PO data will just not persist this session. Logged so
+          // a failing write doesn't silently break next-session prefill.
+          debugPrint('completeWorkout: failed to persist PO data for '
+              '${exercise.name}: $e');
         }
       }
     }
