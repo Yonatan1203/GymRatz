@@ -45,18 +45,20 @@ jobs:
               attr = a['attributes']
               print(f"  {attr['name']} | {attr['bundleId']} | {a['id']}")
 
-          # List recent builds
-          r2 = requests.get(f'{BASE}/builds', headers=HDR,
-            params={'limit': 10, 'sort': '-uploadedDate',
-                    'fields[builds]': 'version,uploadedDate,processingState,bundleId'})
-          print('\n=== RECENT BUILDS ===')
-          if r2.status_code != 200:
-            print('ERROR', r2.status_code, r2.text)
-          else:
-            builds = r2.json().get('data', [])
-            if not builds:
-              print('NO BUILDS FOUND')
-            for b in builds:
-              attr = b['attributes']
-              print(f"  build {attr.get('version')} | {attr.get('processingState')} | {attr.get('uploadedDate','')[:10]}")
+          # List recent builds for this specific app
+          app_id = apps[0]['id'] if apps else None
+          if app_id:
+            r2 = requests.get(f'{BASE}/builds', headers=HDR,
+              params={'filter[app]': app_id, 'limit': 10, 'sort': '-uploadedDate',
+                      'fields[builds]': 'version,uploadedDate,processingState,minOsVersion'})
+            print('\n=== RECENT BUILDS ===')
+            if r2.status_code != 200:
+              print('ERROR', r2.status_code, r2.text)
+            else:
+              builds = r2.json().get('data', [])
+              if not builds:
+                print('NO BUILDS FOUND for this app')
+              for b in builds:
+                attr = b['attributes']
+                print(f"  build {attr.get('version')} | {attr.get('processingState')} | {attr.get('uploadedDate','')[:10]}")
           EOF
