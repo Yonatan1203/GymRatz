@@ -64,6 +64,7 @@ class DefaultFirebaseOptions {
     projectId: 'gymratz-b1a32',
     storageBucket: 'gymratz-b1a32.firebasestorage.app',
     iosBundleId: 'com.gymratz.gymratz',
+    iosClientId: '__IOS_CLIENT_ID__', // injected at CI build time from GoogleService-Info.plist
   );
 
 }
