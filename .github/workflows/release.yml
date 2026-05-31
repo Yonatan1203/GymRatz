@@ -7,12 +7,13 @@ on:
         description: 'Platform to build'
         required: true
         type: choice
+        default: both
         options:
+          - both
           - android
           - ios
-          - both
       build_number:
-        description: 'Android version code — must be higher than the last uploaded (e.g. 17). Leave blank to use pubspec.'
+        description: 'Build number — must be higher than last upload (e.g. 28). Leave blank to use pubspec.'
         required: false
         type: string
   push:
