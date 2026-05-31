@@ -119,16 +119,26 @@ jobs:
           echo "Export failed after 4 attempts"; exit 1
 
       - name: Upload to TestFlight
-        # The exported IPA is named after the app's product name (e.g. gymratz.ipa),
-        # not Runner.ipa, so resolve it with a glob instead of hardcoding.
+        # altool is deprecated/broken in Xcode 26 -- silently reports success
+        # but builds never land in App Store Connect. xcodebuild -exportArchive
+        # with destination:upload is Apple's supported replacement.
         run: |
-          IPA_PATH="$(ls build/ios/ipa/*.ipa | head -n1)"
-          echo "Uploading: $IPA_PATH"
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$IPA_PATH" \
-            --apiKey ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
-            --apiIssuer ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          for attempt in 1 2 3 4; do
+            echo "::group::Upload attempt $attempt"
+            if xcodebuild -exportArchive \
+              -archivePath build/ios/Runner.xcarchive \
+              -exportPath build/ios/upload \
+              -exportOptionsPlist ios/ExportOptionsUpload.plist \
+              -allowProvisioningUpdates \
+              -authenticationKeyPath ~/.private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 \
+              -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
+              -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}; then
+              echo "::endgroup::"; echo "Upload succeeded on attempt $attempt"; exit 0
+            fi
+            echo "::endgroup::"; echo "Upload attempt $attempt failed; retrying in 25s..."
+            sleep 25
+          done
+          echo "Upload failed after 4 attempts"; exit 1
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
