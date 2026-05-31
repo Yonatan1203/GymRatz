@@ -8,6 +8,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../core/exceptions.dart';
+import '../../../firebase_options.dart';
 
 class AuthRepository {
   final FirebaseAuth _auth;
@@ -78,7 +79,9 @@ class AuthRepository {
 
   Future<UserCredential> signInWithGoogle() async {
     try {
-      final googleUser = await GoogleSignIn().signIn();
+      final googleUser = await GoogleSignIn(
+        clientId: DefaultFirebaseOptions.currentPlatform.iosClientId,
+      ).signIn();
       if (googleUser == null) {
         throw AuthException('Google sign-in was cancelled');
       }

@@ -34,7 +34,7 @@ class _CustomScaffoldState extends ConsumerState<CustomScaffold> {
         children: [
           Column(
             children: [
-              const OfflineBanner(),
+              const SafeArea(bottom: false, child: OfflineBanner()),
               Expanded(
                 child: SubscriptionGate(
                   currentIndex: widget.navigationShell.currentIndex,
