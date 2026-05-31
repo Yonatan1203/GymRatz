@@ -27,8 +27,7 @@ const PROJECT_ID = 'gymratz-b1a32';
 // Add any new tester emails here
 const TESTER_EMAILS = [
   'yonatanglav67@gmail.com',
-  // Add more testers below:
-  // 'tester2@example.com',
+  'danielkefinance@gmail.com',
 ];
 
 // ── Init ──────────────────────────────────────────────────────────────────────
