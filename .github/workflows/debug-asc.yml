@@ -1,0 +1,62 @@
+name: Debug App Store Connect
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: macos-latest
+    timeout-minutes: 5
+    steps:
+      - name: Query App Store Connect API
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_KEY_BASE64 }}
+        run: |
+          pip3 install PyJWT cryptography requests --quiet
+
+          python3 << 'EOF'
+          import jwt, time, base64, os, json, requests
+
+          key_id    = os.environ['APP_STORE_CONNECT_KEY_ID']
+          issuer_id = os.environ['APP_STORE_CONNECT_ISSUER_ID']
+          key_b64   = os.environ['APP_STORE_CONNECT_KEY_BASE64']
+          private_key = base64.b64decode(key_b64).decode('utf-8')
+
+          token = jwt.encode(
+            {'iss': issuer_id, 'exp': int(time.time()) + 600, 'aud': 'appstoreconnect-v1'},
+            private_key, algorithm='ES256', headers={'kid': key_id}
+          )
+
+          BASE = 'https://api.appstoreconnect.apple.com/v1'
+          HDR  = {'Authorization': f'Bearer {token}'}
+
+          # List apps this key can see
+          r = requests.get(f'{BASE}/apps', headers=HDR, params={'limit': 20})
+          print('=== APPS VISIBLE TO THIS KEY ===')
+          if r.status_code != 200:
+            print('ERROR', r.status_code, r.text)
+          else:
+            apps = r.json().get('data', [])
+            if not apps:
+              print('NO APPS FOUND — key belongs to an account with no apps')
+            for a in apps:
+              attr = a['attributes']
+              print(f"  {attr['name']} | {attr['bundleId']} | {a['id']}")
+
+          # List recent builds
+          r2 = requests.get(f'{BASE}/builds', headers=HDR,
+            params={'limit': 10, 'sort': '-uploadedDate',
+                    'fields[builds]': 'version,uploadedDate,processingState,bundleId'})
+          print('\n=== RECENT BUILDS ===')
+          if r2.status_code != 200:
+            print('ERROR', r2.status_code, r2.text)
+          else:
+            builds = r2.json().get('data', [])
+            if not builds:
+              print('NO BUILDS FOUND')
+            for b in builds:
+              attr = b['attributes']
+              print(f"  build {attr.get('version')} | {attr.get('processingState')} | {attr.get('uploadedDate','')[:10]}")
+          EOF
