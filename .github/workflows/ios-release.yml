@@ -68,12 +68,7 @@ jobs:
           REVERSED_CLIENT_ID=$(plutil -extract REVERSED_CLIENT_ID raw ios/Runner/GoogleService-Info.plist)
           plutil -replace GIDClientID -string "$CLIENT_ID" ios/Runner/Info.plist
           plutil -replace CFBundleURLTypes -json "[{\"CFBundleTypeRole\":\"Editor\",\"CFBundleURLSchemes\":[\"$REVERSED_CLIENT_ID\"]}]" ios/Runner/Info.plist
-          python3 -c "
-import sys
-with open('lib/firebase_options.dart','r') as f: c=f.read()
-c=c.replace('__IOS_CLIENT_ID__', sys.argv[1])
-with open('lib/firebase_options.dart','w') as f: f.write(c)
-" "$CLIENT_ID"
+          sed -i '' "s|__IOS_CLIENT_ID__|$CLIENT_ID|g" lib/firebase_options.dart
           echo "Injected CLIENT_ID and REVERSED_CLIENT_ID"
 
       - name: Build Flutter iOS (no codesign)
