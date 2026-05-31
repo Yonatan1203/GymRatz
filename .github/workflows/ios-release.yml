@@ -119,7 +119,7 @@ jobs:
           echo "Export failed after 4 attempts"; exit 1
 
       - name: Install Fastlane
-        run: bundle install --frozen
+        run: bundle install
 
       - name: Upload to TestFlight via Fastlane
         env:
