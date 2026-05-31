@@ -127,9 +127,9 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_KEY_BASE64 }}
         run: |
-          IPA_PATH="$(ls build/ios/ipa/*.ipa | head -n1)"
+          IPA_PATH="$(pwd)/$(ls build/ios/ipa/*.ipa | head -n1)"
           echo "Uploading: $IPA_PATH"
-          bundle exec fastlane ios upload_testflight ipa:"$IPA_PATH"
+          cd ios && bundle exec fastlane ios upload_testflight ipa:"$IPA_PATH"
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
