@@ -39,7 +39,7 @@ class NotificationService {
     if (Platform.isIOS) {
       final result = await _plugin
           .resolvePlatformSpecificImplementation<
-              FlutterLocalNotificationsDarwinPlugin>()
+              IOSFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(alert: true, badge: true, sound: true);
       return result ?? false;
     }
