@@ -85,6 +85,18 @@ class CoachRepository {
 
   Future<CoachInvite> createInvite(
       String coachUid, {String? clientEmail}) async {
+    // Rate limit: max 5 pending invites per day.
+    final todayStart = DateTime.now()
+        .copyWith(hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0);
+    final pendingToday = await _invites(coachUid)
+        .where('status', isEqualTo: 'pending')
+        .where('createdAt', isGreaterThanOrEqualTo: todayStart.toIso8601String())
+        .limit(5)
+        .get();
+    if (pendingToday.docs.length >= 5) {
+      throw Exception('Daily invite limit reached (5 per day). Revoke an existing invite to create a new one.');
+    }
+
     final code = generateInviteCode();
     final now = DateTime.now();
     final invite = CoachInvite(
@@ -164,6 +176,12 @@ class CoachRepository {
     required String displayName,
     required String reason,
   }) async {
+    // Prevent duplicate submissions: block if a pending application exists.
+    final existing = await _coachApplications.doc(uid).get();
+    if (existing.exists && existing.data()?['status'] == 'pending') {
+      throw Exception('A pending coach application already exists for this account.');
+    }
+
     await _coachApplications.doc(uid).set({
       'email': email,
       'displayName': displayName,

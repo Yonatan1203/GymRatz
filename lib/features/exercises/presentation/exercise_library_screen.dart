@@ -6,6 +6,7 @@ import '../../../theme/app_icons.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
 
 import '../../../app/providers.dart';
+import '../../../shared/models/enums.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
@@ -87,6 +88,11 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
     final nonFavorites = filtered.where((e) => !e.isFavorite).toList();
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showCreateExerciseSheet(context),
+        tooltip: 'Create custom exercise',
+        child: const Icon(Icons.add),
+      ),
       body: Column(
         children: [
           _buildStickyHeader(context),
@@ -322,6 +328,94 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
       icon: AppIcons.search,
       title: 'No exercises found',
       subtitle: 'Try adjusting your search or filters',
+    );
+  }
+
+  void _showCreateExerciseSheet(BuildContext context) {
+    final nameCtrl = TextEditingController();
+    String category = 'Chest';
+    String equipment = 'Barbell';
+    final categories = const ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core', 'Other'];
+    final equipmentOptions = const ['Barbell', 'Dumbbell', 'Machine', 'Body Weight', 'Cable', 'Other'];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.screenPadding,
+            AppSpacing.xl,
+            AppSpacing.screenPadding,
+            MediaQuery.of(ctx).viewInsets.bottom + AppSpacing.xl,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Create Custom Exercise', style: AppTextStyles.h2.copyWith(color: context.foreground)),
+              SizedBox(height: AppSpacing.lg),
+              TextField(
+                controller: nameCtrl,
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  labelText: 'Exercise name',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                ),
+              ),
+              SizedBox(height: AppSpacing.md),
+              DropdownButtonFormField<String>(
+                value: category,
+                decoration: InputDecoration(
+                  labelText: 'Category',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                ),
+                items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                onChanged: (v) => setSheetState(() => category = v ?? category),
+              ),
+              SizedBox(height: AppSpacing.md),
+              DropdownButtonFormField<String>(
+                value: equipment,
+                decoration: InputDecoration(
+                  labelText: 'Equipment',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                ),
+                items: equipmentOptions.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                onChanged: (v) => setSheetState(() => equipment = v ?? equipment),
+              ),
+              SizedBox(height: AppSpacing.xl),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final name = nameCtrl.text.trim();
+                    if (name.isEmpty) return;
+                    final uid = ref.read(currentUidProvider);
+                    if (uid == null) return;
+                    final exercise = Exercise(
+                      id: '${uid}_${DateTime.now().millisecondsSinceEpoch}',
+                      name: name,
+                      category: category,
+                      muscle: category,
+                      equipment: equipment,
+                      equipmentType: EquipmentType.barbell,
+                      isDefault: false,
+                    );
+                    await ref.read(exerciseRepositoryProvider).createExercise(uid, exercise);
+                    if (ctx.mounted) Navigator.of(ctx).pop();
+                  },
+                  child: const Text('Save Exercise'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
