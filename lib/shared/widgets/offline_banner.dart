@@ -3,12 +3,15 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class OfflineBanner extends StatelessWidget {
-  const OfflineBanner({super.key});
+  /// Overrides the connectivity stream — intended for tests only.
+  final Stream<List<ConnectivityResult>>? connectivityStream;
+
+  const OfflineBanner({super.key, this.connectivityStream});
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<ConnectivityResult>>(
-      stream: Connectivity().onConnectivityChanged,
+      stream: connectivityStream ?? Connectivity().onConnectivityChanged,
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox.shrink();
         final results = snapshot.data!;
@@ -23,12 +26,16 @@ class OfflineBanner extends StatelessWidget {
           color: Colors.orange.shade800,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.cloud_off, size: 14.sp, color: Colors.white),
               SizedBox(width: 8.w),
-              Text(
-                'You\'re offline \u2014 data will sync when connected',
-                style: TextStyle(color: Colors.white, fontSize: 12.sp),
+              Flexible(
+                child: Text(
+                  'You\'re offline \u2014 data will sync when connected',
+                  style: TextStyle(color: Colors.white, fontSize: 12.sp),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
