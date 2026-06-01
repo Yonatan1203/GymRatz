@@ -9,15 +9,16 @@ import 'package:gymratz/shared/widgets/offline_banner.dart';
 Widget _wrap(Stream<List<ConnectivityResult>> stream) => ScreenUtilInit(
       designSize: const Size(390, 844),
       builder: (_, __) => MaterialApp(
-        home: Scaffold(
-          // Bounded width prevents RenderFlex overflow in headless tests.
-          body: SizedBox(
-            width: 390,
-            child: OfflineBanner(connectivityStream: stream),
-          ),
-        ),
+        home: Scaffold(body: OfflineBanner(connectivityStream: stream)),
       ),
     );
+
+Future<void> _setUp(WidgetTester tester) async {
+  // Pin the test surface to match the ScreenUtil design size to prevent
+  // RenderFlex overflow in headless environments.
+  await tester.binding.setSurfaceSize(const Size(390, 844));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+}
 
 void main() {
   group('OfflineBanner', () {
@@ -30,6 +31,7 @@ void main() {
 
     testWidgets('visible when stream emits [ConnectivityResult.none]',
         (tester) async {
+      await _setUp(tester);
       final ctrl = StreamController<List<ConnectivityResult>>.broadcast();
       await tester.pumpWidget(_wrap(ctrl.stream));
 
@@ -54,6 +56,7 @@ void main() {
 
     testWidgets('visible when stream emits empty list (treated as offline)',
         (tester) async {
+      await _setUp(tester);
       final ctrl = StreamController<List<ConnectivityResult>>.broadcast();
       await tester.pumpWidget(_wrap(ctrl.stream));
 
