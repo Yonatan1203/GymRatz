@@ -33,6 +33,14 @@ class Program {
     this.coachId,
   });
 
+  /// Date (time-truncated) from which this program counts for schedule/missed
+  /// calculations: explicit [activatedAt], else [createdAt] for legacy programs.
+  /// Null only when both are absent — callers should then skip "missed" marking.
+  DateTime? get activationFloor {
+    final raw = activatedAt ?? createdAt;
+    return raw == null ? null : DateTime(raw.year, raw.month, raw.day);
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,

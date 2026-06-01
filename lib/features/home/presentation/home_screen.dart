@@ -110,6 +110,7 @@ class HomeScreen extends ConsumerWidget {
         scheduledDayNames.add(day.dayOfWeek);
       }
     }
+    final activationFloor = activeProgram?.activationFloor;
 
     // Get completed workout dates
     final recentWorkouts = ref.watch(recentWorkoutsProvider).valueOrNull ?? [];
@@ -213,7 +214,12 @@ class HomeScreen extends ConsumerWidget {
                 final hasCompleted = completedDates.contains(date);
                 final dayName = dayNames[date.weekday - 1];
                 final isScheduled = scheduledDayNames.contains(dayName);
-                final isMissed = !hasCompleted && isScheduled && date.isBefore(today);
+                final afterActivation =
+                    activationFloor != null && !date.isBefore(activationFloor);
+                final isMissed = !hasCompleted &&
+                    isScheduled &&
+                    date.isBefore(today) &&
+                    afterActivation;
 
                 // Color logic: completed=green, missed=red, scheduled(future)=primary, rest=muted
                 Color bgColor;
