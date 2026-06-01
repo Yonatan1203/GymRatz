@@ -68,14 +68,24 @@ jobs:
 
       - name: Build AAB
         # RC_APPLE_KEY secret name is RC_APPLE_KEY (REVENUECAT_APPLE_KEY is not configured).
-        # build_number (when provided via dispatch) overrides the pubspec version
-        # code so each Play upload gets a unique, higher code. Tag-push builds
-        # leave it blank and fall back to pubspec.
+        # Build number resolution:
+        #  - manual dispatch with build_number → use it verbatim
+        #  - otherwise (push to main / tag) → derive a unique, monotonically
+        #    increasing number from github.run_number. The +1000 offset keeps it
+        #    safely above the last manual upload (39) and the pubspec value (18),
+        #    while staying far below Android's versionCode cap (2,100,000,000).
+        #    Without this, every push reused the static pubspec build number and
+        #    the store rejected the duplicate.
         env:
           BUILD_NUMBER: ${{ inputs.build_number }}
+          RUN_NUMBER: ${{ github.run_number }}
         run: |
-          ARGS=""
-          if [ -n "$BUILD_NUMBER" ]; then ARGS="--build-number=$BUILD_NUMBER"; fi
+          if [ -n "$BUILD_NUMBER" ]; then
+            ARGS="--build-number=$BUILD_NUMBER"
+          else
+            ARGS="--build-number=$((1000 + RUN_NUMBER))"
+          fi
+          echo "Using $ARGS"
           flutter build appbundle --release $ARGS \
             --dart-define=RC_GOOGLE_KEY=${{ secrets.REVENUECAT_GOOGLE_KEY }} \
             --dart-define=RC_APPLE_KEY=${{ secrets.RC_APPLE_KEY }}
@@ -152,12 +162,21 @@ jobs:
           echo "Injected CLIENT_ID and REVERSED_CLIENT_ID"
 
       - name: Build Flutter iOS (no codesign)
+        # Build number resolution mirrors the Android job: explicit dispatch
+        # value, else a unique monotonic number from github.run_number (+1000
+        # offset) so push builds are always higher than the last TestFlight
+        # upload (39). Both platforms use the same number per run to stay in sync.
         env:
           RC_APPLE_KEY: ${{ secrets.RC_APPLE_KEY }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
+          RUN_NUMBER: ${{ github.run_number }}
         run: |
-          BUILD_NUMBER="${{ inputs.build_number }}"
-          ARGS=""
-          if [ -n "$BUILD_NUMBER" ]; then ARGS="--build-number=$BUILD_NUMBER"; fi
+          if [ -n "$BUILD_NUMBER" ]; then
+            ARGS="--build-number=$BUILD_NUMBER"
+          else
+            ARGS="--build-number=$((1000 + RUN_NUMBER))"
+          fi
+          echo "Using $ARGS"
           flutter build ios --release $ARGS \
             --dart-define=RC_APPLE_KEY=$RC_APPLE_KEY \
             --no-codesign
