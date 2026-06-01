@@ -13,6 +13,7 @@ import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/progress_bar_widget.dart';
 import '../../../shared/widgets/scale_tap.dart';
 import '../../../shared/widgets/section_header.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 import '../../../shared/widgets/staggered_list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
@@ -276,17 +277,27 @@ class ProgramsScreen extends ConsumerWidget {
   }
 
   Widget _buildLoadingState(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: AppSpacing.xxxl),
-      child: Center(
-        child: SizedBox(
-          width: 24.r,
-          height: 24.r,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: context.primaryColor,
+    return SkeletonLoader(
+      child: Column(
+        children: List.generate(3, (_) => Padding(
+          padding: EdgeInsets.only(bottom: AppSpacing.md),
+          child: SkeletonCard(
+            height: 120,
+            child: Padding(
+              padding: EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SkeletonLine(width: 160, height: 16),
+                  SizedBox(height: AppSpacing.sm),
+                  const SkeletonLine(width: 100, height: 12),
+                  SizedBox(height: AppSpacing.lg),
+                  const SkeletonLine(height: 8),
+                ],
+              ),
+            ),
           ),
-        ),
+        )),
       ),
     );
   }
