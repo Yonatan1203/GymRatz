@@ -27,6 +27,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = context.isDark;
+    final userProfile = ref.watch(userProfileProvider).valueOrNull;
 
     return Scaffold(
       body: RefreshIndicator(
@@ -39,6 +40,8 @@ class HomeScreen extends ConsumerWidget {
           child: Column(
             children: [
               _buildHeader(context, isDark, ref),
+              if (userProfile != null && !userProfile.isProfileComplete)
+                _buildProfileCompleteBanner(context),
               Padding(
                 padding: EdgeInsets.all(AppSpacing.screenPadding),
                 child: StaggeredList(
@@ -54,6 +57,33 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileCompleteBanner(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push('/onboarding/goal'),
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+          color: context.primaryColor.withValues(alpha: 0.12),
+          child: Row(
+            children: [
+              Icon(Icons.person_outline_rounded, size: 18.r, color: context.primaryColor),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Text(
+                  'Complete your profile to get personalised suggestions',
+                  style: AppTextStyles.bodySmall.copyWith(color: context.primaryColor, fontWeight: FontWeight.w500),
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, size: 18.r, color: context.primaryColor),
             ],
           ),
         ),
