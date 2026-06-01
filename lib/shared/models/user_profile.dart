@@ -126,6 +126,23 @@ class UserProfile {
         weekStartsOnMonday: json['weekStartsOnMonday'] as bool? ?? true,
       );
 
+  /// Maps the user's onboarding `primaryGoal` to a default `ProgressionMode`
+  /// for new programs. Unknown/future goal strings fall back to hypertrophy.
+  ProgressionMode get defaultProgressionMode {
+    switch (primaryGoal) {
+      case 'Get Stronger':
+        return ProgressionMode.strength;
+      case 'Improve Endurance':
+        return ProgressionMode.endurance;
+      case 'Lose Fat':
+        // Fat-loss users still benefit from hypertrophy-style training for
+        // muscle preservation; endurance mode would under-load them.
+        return ProgressionMode.hypertrophy;
+      default: // 'Build Muscle' and any future goals
+        return ProgressionMode.hypertrophy;
+    }
+  }
+
   UserProfile copyWith({
     String? uid,
     String? name,
