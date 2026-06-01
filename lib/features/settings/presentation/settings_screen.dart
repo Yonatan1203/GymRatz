@@ -86,6 +86,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  void _showComingSoon(String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$feature is coming soon!')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDark;
@@ -272,7 +278,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       children: [
                         MenuItemWidget(icon: AppIcons.user, label: 'Edit Profile', onTap: () => context.push('/profile/edit')),
                         Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
-                        MenuItemWidget(icon: AppIcons.shield, label: 'Privacy & Security', onTap: () {}),
+                        MenuItemWidget(icon: AppIcons.shield, label: 'Privacy & Security', onTap: () => _showComingSoon('Privacy & Security')),
                       ],
                     ),
                   ),
@@ -285,7 +291,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: Column(
                       children: [
-                        MenuItemWidget(icon: AppIcons.download, label: 'Export Data', onTap: () {}),
+                        MenuItemWidget(icon: AppIcons.download, label: 'Export Data', onTap: () => _showComingSoon('Data export')),
                         Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
                         MenuItemWidget(
                           icon: AppIcons.trash2,
