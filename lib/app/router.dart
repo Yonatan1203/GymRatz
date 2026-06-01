@@ -28,6 +28,7 @@ import '../features/exercises/presentation/exercise_library_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/settings/presentation/faq_screen.dart';
 import '../features/settings/presentation/about_screen.dart';
+import '../features/settings/presentation/progression_settings_screen.dart';
 import '../features/achievements/presentation/achievements_screen.dart';
 import '../features/favorites/presentation/favorites_screen.dart';
 import '../features/subscription/presentation/paywall_screen.dart';
@@ -377,6 +378,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => slideTransitionPage(
           state: state,
           child: const SettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/progression',
+        name: 'progression-settings',
+        pageBuilder: (context, state) => slideTransitionPage(
+          state: state,
+          child: const ProgressionSettingsScreen(),
         ),
       ),
       GoRoute(
