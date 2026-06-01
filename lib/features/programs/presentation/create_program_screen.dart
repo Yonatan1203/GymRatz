@@ -43,6 +43,10 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
   String? _selectedCategory;
   String _difficulty = 'Intermediate';
 
+  /// Normalized names of custom exercises already persisted this session —
+  /// guards against duplicate writes from rapid double-taps before the
+  /// Firestore-backed library provider reflects the new entry.
+  final Set<String> _persistedExerciseNames = {};
 
   final _customName = TextEditingController();
   String _customCategory = 'Chest';
@@ -139,15 +143,19 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
   }
 
   void _addCustomExercise(String dayId) {
-    if (_customName.text.trim().isEmpty) return;
+    final name = _customName.text.trim();
+    if (name.isEmpty) return;
+    final category = _customCategory;
+    final equipment = _customEquipment;
+    final equipmentType = _mapEquipmentType(_customEquipment);
     setState(() {
       final day = _workoutDays.firstWhere((d) => d.id == dayId);
       day.exercises.add(_ExerciseConfig(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: _customName.text.trim(),
-        category: _customCategory,
-        equipment: _customEquipment,
-        equipmentType: _mapEquipmentType(_customEquipment),
+        name: name,
+        category: category,
+        equipment: equipment,
+        equipmentType: equipmentType,
         sets: 3,
         repMin: 8,
         repMax: 12,
@@ -159,6 +167,45 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
       _customName.clear();
       _customFormOpenForDay = null;
     });
+    // Also persist to the user's exercise library so it is reusable (GYM-123).
+    _persistCustomExercise(name, category, equipment, equipmentType);
+  }
+
+  /// Saves an inline-created custom exercise to the user's exercise library,
+  /// skipping if an exercise with the same normalized name already exists.
+  Future<void> _persistCustomExercise(
+    String name,
+    String category,
+    String equipment,
+    EquipmentType equipmentType,
+  ) async {
+    final uid = ref.read(currentUidProvider);
+    if (uid == null) return;
+    final normalized = name.toLowerCase().trim();
+    if (!_persistedExerciseNames.add(normalized)) return;
+    final existing = ref.read(exerciseLibraryProvider);
+    if (existing.any((e) => e.name.toLowerCase().trim() == normalized)) {
+      return;
+    }
+    final exercise = Exercise(
+      id: '${uid}_${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
+      category: category,
+      type: 'Strength',
+      muscle: category,
+      equipment: equipment,
+      equipmentType: equipmentType,
+      difficulty: 'Intermediate',
+      isDefault: false,
+    );
+    try {
+      await ref.read(exerciseRepositoryProvider).createExercise(uid, exercise);
+    } catch (e) {
+      // Non-fatal — exercise is already in the program; library sync can be
+      // retried manually. Drop the session guard so a retry is possible.
+      _persistedExerciseNames.remove(normalized);
+      debugPrint('Failed to persist custom exercise to library: $e');
+    }
   }
 
   void _removeExercise(String dayId, String exId) {
