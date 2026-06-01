@@ -1,22 +1,33 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 
 class AnalyticsService {
-  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+  /// Optional override — pass a real or fake instance in tests to avoid
+  /// requiring Firebase initialization at object-construction time.
+  final FirebaseAnalytics? _override;
+
+  /// Returns the injected instance, or the Firebase singleton lazily.
+  FirebaseAnalytics get _a => _override ?? FirebaseAnalytics.instance;
+
+  AnalyticsService([this._override]);
 
   FirebaseAnalyticsObserver get observer =>
-      FirebaseAnalyticsObserver(analytics: _analytics);
+      FirebaseAnalyticsObserver(analytics: _a);
 
-  Future<void> logSignUp(String method) =>
-      _analytics.logSignUp(signUpMethod: method);
+  // All methods are async so synchronous Firebase exceptions (e.g. Firebase
+  // not initialized in tests) are wrapped in Futures and discarded by callers
+  // using .ignore().
 
-  Future<void> logLogin(String method) =>
-      _analytics.logLogin(loginMethod: method);
+  Future<void> logSignUp(String method) async =>
+      _a.logSignUp(signUpMethod: method);
+
+  Future<void> logLogin(String method) async =>
+      _a.logLogin(loginMethod: method);
 
   Future<void> logWorkoutStarted({
     required String programId,
     required String workoutDayId,
-  }) =>
-      _analytics.logEvent(name: 'workout_started', parameters: {
+  }) async =>
+      _a.logEvent(name: 'workout_started', parameters: {
         'program_id': programId,
         'workout_day_id': workoutDayId,
       });
@@ -26,41 +37,41 @@ class AnalyticsService {
     required int exerciseCount,
     required int totalSets,
     required double totalVolume,
-  }) =>
-      _analytics.logEvent(name: 'workout_completed', parameters: {
+  }) async =>
+      _a.logEvent(name: 'workout_completed', parameters: {
         'duration_seconds': durationSeconds,
         'exercise_count': exerciseCount,
         'total_sets': totalSets,
         'total_volume': totalVolume,
       });
 
-  Future<void> logProgramCreated(String programName) =>
-      _analytics.logEvent(name: 'program_created', parameters: {
+  Future<void> logProgramCreated(String programName) async =>
+      _a.logEvent(name: 'program_created', parameters: {
         'program_name': programName,
       });
 
-  Future<void> logAchievementUnlocked(String achievementId) =>
-      _analytics.logEvent(name: 'achievement_unlocked', parameters: {
+  Future<void> logAchievementUnlocked(String achievementId) async =>
+      _a.logEvent(name: 'achievement_unlocked', parameters: {
         'achievement_id': achievementId,
       });
 
-  Future<void> logSubscriptionStarted(String planId) =>
-      _analytics.logEvent(name: 'subscription_started', parameters: {
+  Future<void> logSubscriptionStarted(String planId) async =>
+      _a.logEvent(name: 'subscription_started', parameters: {
         'plan_id': planId,
       });
 
-  Future<void> logSubscriptionRestored() =>
-      _analytics.logEvent(name: 'subscription_restored');
+  Future<void> logSubscriptionRestored() async =>
+      _a.logEvent(name: 'subscription_restored');
 
-  Future<void> logOnboardingCompleted(int stepCount) =>
-      _analytics.logEvent(name: 'onboarding_completed', parameters: {
+  Future<void> logOnboardingCompleted(int stepCount) async =>
+      _a.logEvent(name: 'onboarding_completed', parameters: {
         'step_count': stepCount,
       });
 
-  Future<void> logOnboardingAbandoned(int lastStep) =>
-      _analytics.logEvent(name: 'onboarding_abandoned', parameters: {
+  Future<void> logOnboardingAbandoned(int lastStep) async =>
+      _a.logEvent(name: 'onboarding_abandoned', parameters: {
         'last_step': lastStep,
       });
 
-  Future<void> setUserId(String? uid) => _analytics.setUserId(id: uid);
+  Future<void> setUserId(String? uid) async => _a.setUserId(id: uid);
 }
