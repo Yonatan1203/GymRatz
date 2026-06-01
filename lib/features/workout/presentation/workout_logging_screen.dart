@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -265,8 +266,16 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                   sets: _sets,
                 );
               }
-            } catch (_) {
+            } catch (e, st) {
               // PO prefill failed — keep template defaults already set above.
+              // Log so a failing read (e.g. a missing Firestore index) is
+              // visible instead of silently leaving weights empty.
+              debugPrint('startWorkout prefill failed, using template defaults: $e');
+              FirebaseCrashlytics.instance.recordError(
+                e, st,
+                reason: 'workout weight prefill failed',
+                fatal: false,
+              );
               if (mounted) {
                 setState(() => _loadingExercises = false);
                 ref.read(activeWorkoutSessionProvider.notifier).startSession(
