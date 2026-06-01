@@ -8,6 +8,7 @@ import '../../../app/providers.dart';
 import '../../../shared/models/enums.dart';
 import '../../../shared/models/weight_entry.dart';
 import '../../../shared/utils/extensions.dart';
+import '../../../shared/utils/platform_adapter.dart';
 import '../../../shared/widgets/custom_card.dart';
 import '../../../shared/widgets/custom_input.dart';
 import '../../../shared/widgets/gradient_header.dart';
@@ -332,6 +333,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
         return ScaleTap(
           onTap: () {
+            PlatformAdapter.hapticSelection();
             setState(() {
               _selectedDay = _selectedDay == dayNumber ? null : dayNumber;
             });
