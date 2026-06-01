@@ -236,7 +236,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
           name: pe.name,
           equipment: pe.equipment ?? 'Barbell',
           equipmentType: pe.equipmentType,
-          repRange: '${pe.repMin}-${pe.repMax}',
+          repRange: Formatters.reps(pe.repMin, pe.repMax),
           targetRir: pe.targetRir,
           restSeconds: pe.restSeconds,
           sets: List.generate(pe.sets, (_) => const WorkoutSet()),

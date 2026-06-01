@@ -1,6 +1,10 @@
 class Formatters {
   Formatters._();
 
+  /// Formats a rep target: a single number when min == max (exact), else a
+  /// range "min-max". Keeps exact/range display consistent across the app.
+  static String reps(int min, int max) => min == max ? '$min' : '$min-$max';
+
   static String volume(double value) {
     if (value >= 1000) {
       return '${(value / 1000).toStringAsFixed(1)}k';

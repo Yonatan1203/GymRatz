@@ -14,6 +14,7 @@ import '../../../theme/app_shadows.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
+import '../../../shared/utils/formatters.dart';
 import '../../../shared/widgets/custom_badge.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_card.dart';
@@ -706,7 +707,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                                 ),
                                 SizedBox(height: AppSpacing.xs),
                                 Text(
-                                  '${ex.sets} sets \u2022 ${ex.repMin}-${ex.repMax} reps \u2022 RIR ${ex.targetRir}',
+                                  '${ex.sets} sets \u2022 ${Formatters.reps(ex.repMin, ex.repMax)} reps \u2022 RIR ${ex.targetRir}',
                                   style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
                                 ),
                               ],
