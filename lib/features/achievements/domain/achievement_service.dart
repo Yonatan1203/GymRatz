@@ -32,6 +32,8 @@ class AchievementService {
     required int streak,
     required double totalVolume,
     required int prCount,
+    int weeklyWorkouts = 0,
+    bool programCompleted = false,
   }) async {
     final unlocked = <String>[];
 
@@ -42,6 +44,8 @@ class AchievementService {
       'consistency': streak ~/ 7,
       'volume_king': totalVolume.toInt(),
       'pr_machine': prCount,
+      'week_warrior': weeklyWorkouts,
+      'program_complete': programCompleted ? 1 : 0,
     };
 
     for (final entry in checks.entries) {

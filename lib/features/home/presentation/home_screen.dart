@@ -29,7 +29,13 @@ class HomeScreen extends ConsumerWidget {
     final isDark = context.isDark;
 
     return Scaffold(
-      body: SingleChildScrollView(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(recentWorkoutsProvider);
+          ref.invalidate(workoutStatsProvider);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
               _buildHeader(context, isDark, ref),
@@ -50,6 +56,7 @@ class HomeScreen extends ConsumerWidget {
               ),
             ],
           ),
+        ),
       ),
     );
   }

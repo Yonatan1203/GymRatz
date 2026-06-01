@@ -72,8 +72,35 @@ class AuthRepository {
 
   Future<void> deleteAccount() async {
     final user = _auth.currentUser;
-    if (user != null) {
+    if (user == null) return;
+    try {
       await user.delete();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        // Token is stale — attempt silent re-auth via the same provider, then retry.
+        await _reauthenticate(user);
+        await user.delete();
+      } else {
+        rethrow;
+      }
+    }
+  }
+
+  /// Silently re-authenticates the current user using the same sign-in provider.
+  Future<void> _reauthenticate(User user) async {
+    final providerIds = user.providerData.map((p) => p.providerId).toList();
+    if (providerIds.contains('google.com')) {
+      final cred = await signInWithGoogle();
+      await user.reauthenticateWithCredential(cred.credential!);
+    } else if (providerIds.contains('apple.com')) {
+      final cred = await signInWithApple();
+      await user.reauthenticateWithCredential(cred.credential!);
+    } else {
+      // Email/password: cannot silently re-auth — throw so caller can prompt.
+      throw FirebaseAuthException(
+        code: 'requires-recent-login',
+        message: 'Please sign out and sign back in before deleting your account.',
+      );
     }
   }
 

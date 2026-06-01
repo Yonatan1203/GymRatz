@@ -42,9 +42,16 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     final prCount = prs?.length ?? 0;
 
     return Scaffold(
-      body: SingleChildScrollView(
-        physics: PlatformAdapter.scrollPhysics,
-        child: Column(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(workoutStatsProvider);
+          ref.invalidate(personalRecordsProvider);
+          ref.invalidate(weeklyVolumeProvider);
+          ref.invalidate(recentWorkoutsProvider);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
           children: [
             GradientHeader(
               showBackButton: true,
@@ -98,6 +105,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 ),
               ),
           ],
+        ),
         ),
       ),
     );
