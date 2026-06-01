@@ -144,7 +144,7 @@ class ProfileScreen extends ConsumerWidget {
         ...prList.map((pr) => Padding(
           padding: EdgeInsets.only(bottom: AppSpacing.md),
           child: ScaleTap(
-            onTap: () {},
+            onTap: () => context.go('/progress'),
             child: CustomCard(
               variant: CardVariant.standard,
               padding: EdgeInsets.all(AppSpacing.lg),

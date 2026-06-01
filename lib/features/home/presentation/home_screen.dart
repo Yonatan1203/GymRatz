@@ -522,7 +522,7 @@ class HomeScreen extends ConsumerWidget {
 
     return Column(
       children: [
-        SectionHeader(title: 'Recent Activity', actionText: 'See All', onAction: () {}),
+        SectionHeader(title: 'Recent Activity', actionText: 'See All', onAction: () => context.go('/calendar')),
         SizedBox(height: AppSpacing.lg),
         recentWorkouts.when(
           data: (workouts) {
