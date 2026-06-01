@@ -143,6 +143,11 @@ class UserProfile {
     }
   }
 
+  /// True when the user has completed onboarding and set their key stats.
+  /// Weight == 0 or height at the factory default indicates skipped onboarding.
+  bool get isProfileComplete =>
+      weight > 0 && height.isNotEmpty && height != '5\'10"';
+
   UserProfile copyWith({
     String? uid,
     String? name,
