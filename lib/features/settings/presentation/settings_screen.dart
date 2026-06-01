@@ -145,6 +145,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                   ),
                   SizedBox(height: AppSpacing.sectionGap),
+                  _sectionTitle(context, 'TRAINING'),
+                  CustomCard(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: MenuItemWidget(
+                      icon: AppIcons.trendingUp,
+                      label: 'Progression Settings',
+                      onTap: () => context.push('/settings/progression'),
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.sectionGap),
                   _sectionTitle(context, 'ACCOUNT'),
                   CustomCard(
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
