@@ -370,7 +370,7 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
               ),
               SizedBox(height: AppSpacing.md),
               DropdownButtonFormField<String>(
-                value: category,
+                initialValue: category,
                 decoration: InputDecoration(
                   labelText: 'Category',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
@@ -380,7 +380,7 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
               ),
               SizedBox(height: AppSpacing.md),
               DropdownButtonFormField<String>(
-                value: equipment,
+                initialValue: equipment,
                 decoration: InputDecoration(
                   labelText: 'Equipment',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
@@ -401,8 +401,10 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
                       id: '${uid}_${DateTime.now().millisecondsSinceEpoch}',
                       name: name,
                       category: category,
+                      type: 'Strength',
                       muscle: category,
                       equipment: equipment,
+                      difficulty: 'Intermediate',
                       equipmentType: EquipmentType.barbell,
                       isDefault: false,
                     );
