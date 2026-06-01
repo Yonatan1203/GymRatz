@@ -26,12 +26,16 @@ class OfflineBanner extends StatelessWidget {
           color: Colors.orange.shade800,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.cloud_off, size: 14.sp, color: Colors.white),
               SizedBox(width: 8.w),
-              Text(
-                'You\'re offline \u2014 data will sync when connected',
-                style: TextStyle(color: Colors.white, fontSize: 12.sp),
+              Flexible(
+                child: Text(
+                  'You\'re offline \u2014 data will sync when connected',
+                  style: TextStyle(color: Colors.white, fontSize: 12.sp),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
