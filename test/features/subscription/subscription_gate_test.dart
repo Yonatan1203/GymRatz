@@ -35,10 +35,14 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Your trial has ended. Subscribe to continue.'), findsOneWidget);
-      expect(find.byType(AbsorbPointer), findsOneWidget);
+      // Verify there is an AbsorbPointer that is actually absorbing (absorbing: true)
+      expect(
+        find.byWidgetPredicate((w) => w is AbsorbPointer && w.absorbing),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('profile tab (index 4) shows banner but NOT AbsorbPointer', (tester) async {
+    testWidgets('profile tab (index 4) shows banner but NOT absorbing AbsorbPointer', (tester) async {
       await tester.pumpWidget(_testApp(
         SubscriptionGate(currentIndex: 4, child: const Text('Profile')),
         isProOverride: _proOverride(false),
@@ -46,7 +50,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Your trial has ended. Subscribe to continue.'), findsOneWidget);
-      expect(find.byType(AbsorbPointer), findsNothing);
+      expect(
+        find.byWidgetPredicate((w) => w is AbsorbPointer && w.absorbing),
+        findsNothing,
+      );
       expect(find.text('Profile'), findsOneWidget);
     });
   });
@@ -61,7 +68,10 @@ void main() {
 
       expect(find.text('Your trial has ended. Subscribe to continue.'), findsNothing);
       expect(find.text('Content'), findsOneWidget);
-      expect(find.byType(AbsorbPointer), findsNothing);
+      expect(
+        find.byWidgetPredicate((w) => w is AbsorbPointer && w.absorbing),
+        findsNothing,
+      );
     });
   });
 }
