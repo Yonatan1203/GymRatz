@@ -46,6 +46,8 @@ void main() {
             name: 'Squat',
             equipment: 'Barbell',
             equipmentType: EquipmentType.barbell,
+            repRange: '3-5',
+            targetRir: 2,
             sets: [
               const WorkoutSet(weight: 100, reps: 5, rir: 2, completed: true),
               const WorkoutSet(weight: 100, reps: 5, rir: 2, completed: true),
