@@ -74,16 +74,20 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                         'No clients match your search. Try a different name.',
                   );
                 }
-                return ListView.separated(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.screenPadding,
-                    vertical: AppSpacing.lg,
+                return RefreshIndicator(
+                  onRefresh: () async => ref.invalidate(coachClientsProvider),
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.screenPadding,
+                      vertical: AppSpacing.lg,
+                    ),
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) =>
+                        SizedBox(height: AppSpacing.md),
+                    itemBuilder: (context, index) =>
+                        _buildClientCard(context, filtered[index]),
                   ),
-                  itemCount: filtered.length,
-                  separatorBuilder: (_, __) =>
-                      SizedBox(height: AppSpacing.md),
-                  itemBuilder: (context, index) =>
-                      _buildClientCard(context, filtered[index]),
                 );
               },
               loading: () =>

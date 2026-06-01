@@ -22,10 +22,17 @@ class CoachDashboardScreen extends ConsumerWidget {
     final isDark = context.isDark;
 
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(context, isDark, ref),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(coachProfileProvider);
+          ref.invalidate(coachClientsProvider);
+          ref.invalidate(coachInvitesProvider);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              _buildHeader(context, isDark, ref),
             Padding(
               padding: EdgeInsets.all(AppSpacing.screenPadding),
               child: StaggeredList(
@@ -40,6 +47,7 @@ class CoachDashboardScreen extends ConsumerWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );
