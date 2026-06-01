@@ -120,6 +120,14 @@ class CoachRepository {
     if (!snap.exists || snap.data() == null) return null;
     final data = snap.data()!;
     if (data['status'] != 'pending') return null;
+    final expiresAtRaw = data['expiresAt'];
+    if (expiresAtRaw != null) {
+      final expiresAt = expiresAtRaw is Timestamp
+          ? expiresAtRaw.toDate()
+          : DateTime.tryParse(expiresAtRaw.toString());
+      // Fail-closed: unrecognised or expired format → reject the code.
+      if (expiresAt == null || DateTime.now().isAfter(expiresAt)) return null;
+    }
     return data;
   }
 

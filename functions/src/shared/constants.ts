@@ -6,6 +6,8 @@ export const COLLECTIONS = {
   PRS: "prs",
   ACHIEVEMENTS: "achievements",
   WEIGHT_ENTRIES: "weightEntries",
+  EXERCISES: "exercises",
+  PROGRESSION: "progression",
 } as const;
 
 /** RevenueCat entitlement ID. */
@@ -18,4 +20,6 @@ export const USER_SUBCOLLECTIONS = [
   COLLECTIONS.PRS,
   COLLECTIONS.ACHIEVEMENTS,
   COLLECTIONS.WEIGHT_ENTRIES,
+  COLLECTIONS.EXERCISES,
+  COLLECTIONS.PROGRESSION,
 ] as const;
