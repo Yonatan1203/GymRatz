@@ -1,12 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/analytics_service.dart';
 import '../../../shared/models/enums.dart';
 import '../../../shared/models/program.dart';
 import '../../../shared/models/workout.dart';
 import '../../../shared/models/workout_day.dart';
 import '../../../shared/models/workout_exercise.dart';
 import '../../../shared/models/workout_set.dart';
+import '../../achievements/domain/achievement_service.dart';
 import '../../progression/data/progression_repository.dart';
 import '../../progression/domain/progression_engine.dart';
 import '../../progression/domain/progression_suggestion.dart';
@@ -19,9 +21,17 @@ class WorkoutService {
   final WorkoutRepository _workoutRepo;
   final PrRepository _prRepo;
   final ProgressionRepository _progressionRepo;
+  final AchievementService _achievementService;
+  final AnalyticsService _analyticsService;
   static const _uuid = Uuid();
 
-  WorkoutService(this._workoutRepo, this._prRepo, this._progressionRepo);
+  WorkoutService(
+    this._workoutRepo,
+    this._prRepo,
+    this._progressionRepo,
+    this._achievementService,
+    this._analyticsService,
+  );
 
   /// Create a new workout from a program day template.
   ///
@@ -74,7 +84,7 @@ class WorkoutService {
       return _buildExerciseFromTemplate(pe, suggestion, lastExercise);
     }).toList();
 
-    return Workout(
+    final workout = Workout(
       id: _uuid.v4(),
       programId: program.id,
       workoutDayId: day.id,
@@ -82,6 +92,12 @@ class WorkoutService {
       status: WorkoutStatus.inProgress,
       exercises: exercises,
     );
+
+    _analyticsService
+        .logWorkoutStarted(programId: program.id, workoutDayId: day.id)
+        .ignore();
+
+    return workout;
   }
 
   /// Build a WorkoutExercise from a program template, using PO suggestions
@@ -264,6 +280,34 @@ class WorkoutService {
     );
     await _workoutRepo.completeWorkout(uid, completed);
 
+    // Best-effort achievement check after save. Uses month-scoped workout count
+    // and per-session volume/PRs — cumulative stats require a future dedicated
+    // stats document (tracked separately). Non-fatal: failures are logged but
+    // do not block the summary being returned to the caller.
+    List<String> unlockedAchievements = [];
+    try {
+      final stats = await getStats(uid);
+      unlockedAchievements = await _achievementService.checkAchievements(
+        uid,
+        totalWorkouts: (stats['totalWorkouts'] as int? ?? 0),
+        streak: (stats['streak'] as int? ?? 0),
+        totalVolume: totalVolume,
+        prCount: newPRs.length,
+      );
+      for (final id in unlockedAchievements) {
+        _analyticsService.logAchievementUnlocked(id).ignore();
+      }
+    } catch (e) {
+      debugPrint('completeWorkout: achievement check failed: $e');
+    }
+
+    _analyticsService.logWorkoutCompleted(
+      durationSeconds: duration,
+      exerciseCount: workout.exercises.length,
+      totalSets: totalSets,
+      totalVolume: totalVolume,
+    ).ignore();
+
     return WorkoutSummary(
       totalSets: totalSets,
       totalReps: totalReps,
@@ -271,6 +315,7 @@ class WorkoutService {
       duration: duration,
       newPRs: newPRs,
       suggestions: suggestions,
+      unlockedAchievements: unlockedAchievements,
     );
   }
 
