@@ -24,6 +24,7 @@ import '../../../shared/widgets/custom_badge.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_card.dart';
 import '../../../shared/widgets/custom_input.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 
 import '../../../shared/models/enums.dart';
 import '../../../shared/models/exercise.dart';
@@ -682,8 +683,27 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     _initFromProvider();
     if (_completed) return _buildCompletionScreen(context);
     if (_loadingExercises) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        body: SafeArea(
+          child: SkeletonLoader(
+            child: Padding(
+              padding: EdgeInsets.all(AppSpacing.screenPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SkeletonLine(width: 180, height: 24),
+                  SizedBox(height: AppSpacing.sm),
+                  const SkeletonLine(width: 120, height: 14),
+                  SizedBox(height: AppSpacing.xl),
+                  ...List.generate(3, (_) => Padding(
+                    padding: EdgeInsets.only(bottom: AppSpacing.md),
+                    child: SkeletonCard(height: 90),
+                  )),
+                ],
+              ),
+            ),
+          ),
+        ),
       );
     }
 
