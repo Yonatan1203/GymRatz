@@ -10,11 +10,14 @@ import '../utils/platform_adapter.dart';
 class OnboardingProgressBar extends StatelessWidget {
   final int currentStep; // 1-based
   final int totalSteps;
+  /// Whether to show the "Skip" button. Defaults to true.
+  final bool showSkip;
 
   const OnboardingProgressBar({
     super.key,
     required this.currentStep,
     this.totalSteps = 9,
+    this.showSkip = true,
   });
 
   @override
@@ -75,6 +78,27 @@ class OnboardingProgressBar extends StatelessWidget {
               }),
             ),
           ),
+          if (showSkip) ...[
+            SizedBox(width: 16.w),
+            Semantics(
+              button: true,
+              label: 'Skip onboarding',
+              child: GestureDetector(
+                onTap: () {
+                  PlatformAdapter.hapticLight();
+                  context.go('/home');
+                },
+                child: Text(
+                  'Skip',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: muted,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
