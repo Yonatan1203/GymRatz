@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/analytics_service.dart';
+import '../../../shared/utils/formatters.dart';
 import '../../../shared/models/enums.dart';
 import '../../../shared/models/program.dart';
 import '../../../shared/models/workout.dart';
@@ -138,7 +139,7 @@ class WorkoutService {
       name: pe.name,
       equipment: pe.equipment ?? '',
       equipmentType: pe.equipmentType,
-      repRange: '${pe.repMin}-${pe.repMax}',
+      repRange: Formatters.reps(pe.repMin, pe.repMax),
       targetRir: pe.targetRir,
       progressionMode: pe.progressionMode,
       restSeconds: pe.restSeconds,

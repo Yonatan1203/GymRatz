@@ -16,6 +16,7 @@ import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
+import '../../../shared/utils/formatters.dart';
 import '../../../shared/widgets/custom_badge.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_card.dart';
@@ -761,7 +762,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                 children: [
                   _configSheetField(context, ex, 'Sets', '${ex.sets}', 60.w),
                   SizedBox(width: 8.w),
-                  _configSheetField(context, ex, 'Rep Range', '${ex.repMin}-${ex.repMax}', 80.w),
+                  _configSheetField(context, ex, 'Reps', Formatters.reps(ex.repMin, ex.repMax), 80.w),
                   SizedBox(width: 8.w),
                   _configSheetField(context, ex, 'RIR', '${ex.targetRir}', 50.w),
                   SizedBox(width: 8.w),
@@ -862,15 +863,25 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
           List.generate(10, (i) => '${i + 1}'),
           (v) => setState(() => ex.sets = int.parse(v)),
         );
-      case 'Rep Range':
+      case 'Reps':
         _showConfigSheet(
-          context, 'Rep Range', '${ex.repMin}-${ex.repMax}',
-          const ['1-3', '1-5', '3-5', '3-6', '4-6', '5-8', '6-8', '6-10', '8-10', '8-12', '10-12', '10-15', '12-15', '15-20', '20-30'],
+          context, 'Reps', Formatters.reps(ex.repMin, ex.repMax),
+          const [
+            '1', '2', '3', '5', '6', '8', '10', '12', '15', '20',
+            '1-3', '1-5', '3-5', '3-6', '4-6', '5-8', '6-8', '6-10',
+            '8-10', '8-12', '10-12', '10-15', '12-15', '15-20', '20-30',
+          ],
           (v) {
-            final parts = v.split('-');
             setState(() {
-              ex.repMin = int.parse(parts[0]);
-              ex.repMax = int.parse(parts[1]);
+              if (v.contains('-')) {
+                final parts = v.split('-');
+                ex.repMin = int.parse(parts[0]);
+                ex.repMax = int.parse(parts[1]);
+              } else {
+                final n = int.parse(v);
+                ex.repMin = n;
+                ex.repMax = n;
+              }
             });
           },
         );

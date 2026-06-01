@@ -2,6 +2,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gymratz/shared/utils/formatters.dart';
 
 void main() {
+  group('Formatters.reps', () {
+    test('exact target (min == max) returns single number', () {
+      expect(Formatters.reps(5, 5), '5');
+    });
+
+    test('range (min != max) returns min-max', () {
+      expect(Formatters.reps(8, 12), '8-12');
+    });
+
+    test('boundary 1-1 returns 1', () {
+      expect(Formatters.reps(1, 1), '1');
+    });
+  });
+
   group('Formatters.volume', () {
     test('below 1000 returns integer string', () {
       expect(Formatters.volume(999), '999');
