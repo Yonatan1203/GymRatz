@@ -11,9 +11,11 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(clientUid)).data.coachId == request.auth.uid;
     }
 
+    // Uses custom claim set by onUserRoleUpdate Cloud Function — no get() cost.
+    // Falls back to false for users whose token predates the claim (they
+    // re-acquire it on next sign-in or within 1 hour via token refresh).
     function isAdmin() {
-      return request.auth != null
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin_user', 'admin_coach'];
+      return request.auth != null && request.auth.token.isAdmin == true;
     }
 
     match /users/{uid} {

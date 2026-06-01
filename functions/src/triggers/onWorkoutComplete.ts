@@ -13,10 +13,13 @@ const ACHIEVEMENT_THRESHOLDS: Record<string, {field: string; total: number}> = {
 };
 
 /**
- * Firestore trigger: recalculate achievements when a workout is completed.
+ * Firestore trigger: incrementally update the user stats document and
+ * recalculate achievements when a workout is completed.
  *
- * Fires on any update to a workout document. Only processes when
- * the status changes to "completed".
+ * GYM-71: replaces the previous full-collection scan with an incremental
+ * approach. Cumulative counters (totalWorkouts, totalVolume, earlyBirdCount)
+ * use FieldValue.increment so they never require a full read. Streak and
+ * consecutive-weeks queries are bounded to the last 35 days / 56 days.
  */
 export const onWorkoutComplete = functions.firestore
   .document("users/{uid}/workouts/{workoutId}")
@@ -24,7 +27,7 @@ export const onWorkoutComplete = functions.firestore
     const before = change.before.data();
     const after = change.after.data();
 
-    // Only process when status changes to "completed"
+    // Only process when status changes to "completed".
     if (before.status === "completed" || after.status !== "completed") {
       return;
     }
@@ -37,11 +40,70 @@ export const onWorkoutComplete = functions.firestore
     );
 
     try {
-      const stats = await computeUserStats(firestore, uid);
-      await updateAchievements(firestore, uid, stats);
+      // --- Incremental counters ---
+      const volume: number = (after.totalVolume as number) || 0;
+      const isEarlyBird =
+        after.completedAt != null &&
+        new Date(after.completedAt as string).getHours() < 8;
+
+      const statsRef = firestore.collection(COLLECTIONS.USERS).doc(uid);
+      await statsRef.set(
+        {
+          stats: {
+            totalWorkouts: admin.firestore.FieldValue.increment(1),
+            totalVolume: admin.firestore.FieldValue.increment(volume),
+            earlyBirdCount: admin.firestore.FieldValue.increment(
+              isEarlyBird ? 1 : 0
+            ),
+          },
+        },
+        {merge: true}
+      );
+
+      // --- Bounded streak / week queries ---
+      const cutoff35 = new Date();
+      cutoff35.setDate(cutoff35.getDate() - 35);
+
+      const recentSnap = await firestore
+        .collection(COLLECTIONS.USERS)
+        .doc(uid)
+        .collection(COLLECTIONS.WORKOUTS)
+        .where("status", "==", "completed")
+        .where("date", ">=", cutoff35.toISOString().split("T")[0])
+        .orderBy("date", "desc")
+        .get();
+
+      const recentWorkouts = recentSnap.docs.map((d) => d.data());
+      const streak = calculateStreak(recentWorkouts);
+      const consecutiveWeeks = calculateConsecutiveWeeks(recentWorkouts);
+
+      // --- PR count (small collection, bounded) ---
+      const prsSnap = await firestore
+        .collection(COLLECTIONS.USERS)
+        .doc(uid)
+        .collection(COLLECTIONS.PRS)
+        .get();
+      const prCount = prsSnap.size;
+
+      // --- Read fresh cumulative counters for achievement checks ---
+      const userDoc = await statsRef.get();
+      const userStats = userDoc.data()?.stats ?? {};
+      const totalWorkouts: number = (userStats.totalWorkouts as number) || 0;
+      const totalVolume: number = (userStats.totalVolume as number) || 0;
+      const earlyBirdCount: number =
+        (userStats.earlyBirdCount as number) || 0;
+
+      await updateAchievements(firestore, uid, {
+        totalWorkouts,
+        streak,
+        consecutiveWeeks,
+        totalVolume,
+        prCount,
+        earlyBirdCount,
+      });
     } catch (error) {
       functions.logger.error(
-        `Failed to update achievements for user ${uid}:`,
+        `Failed to update stats/achievements for user ${uid}:`,
         error
       );
     }
@@ -56,155 +118,61 @@ interface UserStats {
   earlyBirdCount: number;
 }
 
-/**
- * Compute aggregate stats from all completed workouts for a user.
- */
-async function computeUserStats(
-  firestore: admin.firestore.Firestore,
-  uid: string,
-): Promise<UserStats> {
-  const workoutsRef = firestore
-    .collection(COLLECTIONS.USERS)
-    .doc(uid)
-    .collection(COLLECTIONS.WORKOUTS);
-
-  // Get all completed workouts ordered by date
-  const snapshot = await workoutsRef
-    .where("status", "==", "completed")
-    .orderBy("date", "desc")
-    .get();
-
-  const workouts = snapshot.docs.map((doc) => doc.data());
-  const totalWorkouts = workouts.length;
-
-  // Calculate total volume
-  let totalVolume = 0;
-  for (const w of workouts) {
-    totalVolume += (w.totalVolume as number) || 0;
-  }
-
-  // Calculate streak (consecutive days with workouts, counting from today backwards)
-  const streak = calculateStreak(workouts);
-
-  // Calculate consecutive weeks
-  const consecutiveWeeks = calculateConsecutiveWeeks(workouts);
-
-  // Count early bird workouts (completed before 8am)
-  let earlyBirdCount = 0;
-  for (const w of workouts) {
-    if (w.completedAt) {
-      const completedDate = new Date(w.completedAt);
-      if (completedDate.getHours() < 8) {
-        earlyBirdCount++;
-      }
-    }
-  }
-
-  // Count PRs
-  const prsSnapshot = await firestore
-    .collection(COLLECTIONS.USERS)
-    .doc(uid)
-    .collection(COLLECTIONS.PRS)
-    .get();
-  const prCount = prsSnapshot.size;
-
-  return {
-    totalWorkouts,
-    streak,
-    consecutiveWeeks,
-    totalVolume,
-    prCount,
-    earlyBirdCount,
-  };
-}
-
-/**
- * Calculate current workout streak (consecutive days from most recent workout).
- */
 function calculateStreak(
-  workouts: FirebaseFirestore.DocumentData[],
+  workouts: FirebaseFirestore.DocumentData[]
 ): number {
   if (workouts.length === 0) return 0;
 
-  // Get unique workout dates (YYYY-MM-DD)
   const dates = new Set<string>();
   for (const w of workouts) {
-    if (w.date) {
-      const d = new Date(w.date);
-      dates.add(d.toISOString().split("T")[0]);
-    }
+    if (w.date) dates.add((w.date as string).split("T")[0]);
   }
 
-  const sortedDates = Array.from(dates).sort().reverse();
-  if (sortedDates.length === 0) return 0;
+  const sorted = Array.from(dates).sort().reverse();
+  if (sorted.length === 0) return 0;
 
-  let streak = 1;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
-  const mostRecent = new Date(sortedDates[0]);
+  const mostRecent = new Date(sorted[0]);
   mostRecent.setHours(0, 0, 0, 0);
 
-  // Allow a 1-day gap (today or yesterday)
   const diffFromToday = Math.floor(
-    (today.getTime() - mostRecent.getTime()) / (1000 * 60 * 60 * 24)
+    (today.getTime() - mostRecent.getTime()) / 86400000
   );
   if (diffFromToday > 1) return 0;
 
-  for (let i = 1; i < sortedDates.length; i++) {
-    const current = new Date(sortedDates[i]);
-    const previous = new Date(sortedDates[i - 1]);
-    const diffDays = Math.floor(
-      (previous.getTime() - current.getTime()) / (1000 * 60 * 60 * 24)
+  let streak = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    const diff = Math.floor(
+      (new Date(sorted[i - 1]).getTime() - new Date(sorted[i]).getTime()) /
+        86400000
     );
-
-    if (diffDays === 1) {
-      streak++;
-    } else {
-      break;
-    }
+    if (diff === 1) streak++;
+    else break;
   }
-
   return streak;
 }
 
-/**
- * Calculate consecutive weeks with at least one workout.
- */
 function calculateConsecutiveWeeks(
-  workouts: FirebaseFirestore.DocumentData[],
+  workouts: FirebaseFirestore.DocumentData[]
 ): number {
   if (workouts.length === 0) return 0;
 
-  // Get the ISO week number for each workout
   const weeks = new Set<string>();
   for (const w of workouts) {
-    if (w.date) {
-      const d = new Date(w.date);
-      const weekKey = getISOWeekKey(d);
-      weeks.add(weekKey);
-    }
+    if (w.date) weeks.add(getISOWeekKey(new Date(w.date as string)));
   }
 
-  const sortedWeeks = Array.from(weeks).sort().reverse();
-  if (sortedWeeks.length === 0) return 0;
-
-  let consecutiveWeeks = 1;
-  for (let i = 1; i < sortedWeeks.length; i++) {
-    const currentWeekNum = weekKeyToNumber(sortedWeeks[i]);
-    const prevWeekNum = weekKeyToNumber(sortedWeeks[i - 1]);
-
-    if (prevWeekNum - currentWeekNum === 1) {
-      consecutiveWeeks++;
-    } else {
-      break;
-    }
+  const sorted = Array.from(weeks).sort().reverse();
+  let count = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    if (weekKeyToNumber(sorted[i - 1]) - weekKeyToNumber(sorted[i]) === 1) {
+      count++;
+    } else break;
   }
-
-  return consecutiveWeeks;
+  return count;
 }
 
-/** Get a sortable YYYY-WW key for a date. */
 function getISOWeekKey(date: Date): string {
   const d = new Date(date.getTime());
   d.setHours(0, 0, 0, 0);
@@ -216,19 +184,15 @@ function getISOWeekKey(date: Date): string {
   return `${d.getFullYear()}-${String(weekNum).padStart(2, "0")}`;
 }
 
-/** Convert YYYY-WW to a single number for comparison. */
-function weekKeyToNumber(weekKey: string): number {
-  const [year, week] = weekKey.split("-").map(Number);
+function weekKeyToNumber(key: string): number {
+  const [year, week] = key.split("-").map(Number);
   return year * 53 + week;
 }
 
-/**
- * Update achievement progress and unlock status based on computed stats.
- */
 async function updateAchievements(
   firestore: admin.firestore.Firestore,
   uid: string,
-  stats: UserStats,
+  stats: UserStats
 ): Promise<void> {
   const achievementsRef = firestore
     .collection(COLLECTIONS.USERS)
@@ -245,35 +209,28 @@ async function updateAchievements(
   };
 
   const batch = firestore.batch();
-  let updates = 0;
 
-  for (const [achievementId, config] of Object.entries(ACHIEVEMENT_THRESHOLDS)) {
+  for (const [id, config] of Object.entries(ACHIEVEMENT_THRESHOLDS)) {
     const progress = statsMap[config.field] || 0;
-    const docRef = achievementsRef.doc(achievementId);
-
-    const updateData: Record<string, unknown> = {progress};
+    const ref = achievementsRef.doc(id);
+    const update: Record<string, unknown> = {progress};
     if (progress >= config.total) {
-      updateData.unlocked = true;
-      updateData.unlockedDate = new Date().toISOString();
+      update.unlocked = true;
+      update.unlockedDate = new Date().toISOString();
     }
-
-    batch.update(docRef, updateData);
-    updates++;
+    batch.update(ref, update);
   }
 
-  // Handle early_bird separately (not in the thresholds map above)
   const earlyBirdRef = achievementsRef.doc("early_bird");
-  const earlyBirdData: Record<string, unknown> = {
+  const earlyBirdUpdate: Record<string, unknown> = {
     progress: stats.earlyBirdCount,
   };
   if (stats.earlyBirdCount >= 5) {
-    earlyBirdData.unlocked = true;
-    earlyBirdData.unlockedDate = new Date().toISOString();
+    earlyBirdUpdate.unlocked = true;
+    earlyBirdUpdate.unlockedDate = new Date().toISOString();
   }
-  batch.update(earlyBirdRef, earlyBirdData);
+  batch.update(earlyBirdRef, earlyBirdUpdate);
 
   await batch.commit();
-  functions.logger.info(
-    `Updated ${updates + 1} achievements for user ${uid}`
-  );
+  functions.logger.info(`Updated achievements for user ${uid}`);
 }
