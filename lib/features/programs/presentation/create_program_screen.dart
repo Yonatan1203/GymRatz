@@ -22,9 +22,16 @@ import '../../../shared/widgets/custom_card.dart';
 import '../../../shared/widgets/custom_input.dart';
 
 class CreateProgramScreen extends ConsumerStatefulWidget {
-  const CreateProgramScreen({super.key, this.forCoach = false});
+  const CreateProgramScreen({super.key, this.forCoach = false, this.editProgram});
 
   final bool forCoach;
+
+  /// When non-null, the screen edits this existing program instead of creating
+  /// a new one. The program's id, isActive, progress, and createdAt are
+  /// preserved on save.
+  final Program? editProgram;
+
+  bool get isEditing => editProgram != null;
 
   @override
   ConsumerState<CreateProgramScreen> createState() => _CreateProgramScreenState();
@@ -58,10 +65,56 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
   @override
   void initState() {
     super.initState();
-    _workoutDays = [
-      _WorkoutDay(id: '1', name: 'Push Day', dayOfWeek: 'Monday', exercises: []),
-    ];
-    _dayNameControllers['1'] = TextEditingController(text: 'Push Day');
+    final edit = widget.editProgram;
+    if (edit != null) {
+      _nameController.text = edit.name;
+      _weeksController.text = '${edit.weeks}';
+      _descriptionController.text = edit.description ?? '';
+      _difficulty = edit.difficulty ?? 'Intermediate';
+      var dayIndex = 0;
+      final seenDayIds = <String>{};
+      _workoutDays = edit.days.map((d) {
+        // Legacy programs may have empty or duplicate day ids — derive a stable
+        // unique id so the day-name controller map and removal logic work.
+        var dayId = d.id.isNotEmpty ? d.id : 'day_${dayIndex++}';
+        while (!seenDayIds.add(dayId)) {
+          dayId = 'day_${dayIndex++}';
+        }
+        _dayNameControllers[dayId] = TextEditingController(text: d.name);
+        return _WorkoutDay(
+          id: dayId,
+          name: d.name,
+          dayOfWeek: d.dayOfWeek,
+          isCardio: d.isCardio,
+          exercises: d.exercises.map((ex) => _ExerciseConfig(
+            id: ex.id,
+            name: ex.name,
+            category: ex.category,
+            equipment: ex.equipment,
+            equipmentType: ex.equipmentType,
+            sets: ex.sets,
+            repMin: ex.repMin,
+            repMax: ex.repMax,
+            targetRir: ex.targetRir,
+            restSeconds: ex.restSeconds,
+            progressionType: ex.progressionMode,
+            durationMinutes: ex.durationMinutes,
+          )).toList(),
+        );
+      }).toList();
+      // Guard against an empty program (shouldn't happen, but keep UI usable).
+      if (_workoutDays.isEmpty) {
+        _workoutDays = [
+          _WorkoutDay(id: '1', name: 'Day 1', dayOfWeek: 'Monday', exercises: []),
+        ];
+        _dayNameControllers['1'] = TextEditingController(text: 'Day 1');
+      }
+    } else {
+      _workoutDays = [
+        _WorkoutDay(id: '1', name: 'Push Day', dayOfWeek: 'Monday', exercises: []),
+      ];
+      _dayNameControllers['1'] = TextEditingController(text: 'Push Day');
+    }
   }
 
   @override
@@ -239,6 +292,20 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
           createdAt: DateTime.now(),
         ).toJson();
         await ref.read(coachRepositoryProvider).createCoachProgram(uid, programJson);
+      } else if (widget.isEditing) {
+        await ref.read(programServiceProvider).editProgram(
+              uid,
+              widget.editProgram!.id,
+              name: name,
+              days: days,
+              weeks: weeks,
+              description: _descriptionController.text.trim().isNotEmpty
+                  ? _descriptionController.text.trim()
+                  : null,
+              difficulty: _difficulty,
+            );
+        ref.invalidate(programByIdProvider(widget.editProgram!.id));
+        ref.invalidate(userProgramsProvider);
       } else {
         await ref.read(programServiceProvider).createProgram(
               uid,
@@ -372,7 +439,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
               ),
               SizedBox(width: 8.w),
               Expanded(
-                child: Text('Create Program', style: AppTextStyles.h2.copyWith(color: context.foreground)),
+                child: Text(widget.isEditing ? 'Edit Program' : 'Create Program', style: AppTextStyles.h2.copyWith(color: context.foreground)),
               ),
               GestureDetector(
                 onTap: _saving ? null : _saveProgram,

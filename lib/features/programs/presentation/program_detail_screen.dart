@@ -227,6 +227,11 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                 ? [
                     _buildHeaderAction(
                       context,
+                      icon: AppIcons.edit,
+                      onTap: () => context.push('/programs/detail/${program.id}/edit', extra: program),
+                    ),
+                    _buildHeaderAction(
+                      context,
                       icon: AppIcons.trash2,
                       onTap: () => _confirmDelete(context, program),
                     ),
