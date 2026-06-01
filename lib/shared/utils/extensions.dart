@@ -24,4 +24,5 @@ extension BuildContextX on BuildContext {
       isDark ? AppColors.darkBackground : AppColors.lightBackground;
   Color get coralColor => isDark ? AppColors.darkCoral : AppColors.lightCoral;
   Color get coralForeground => isDark ? AppColors.darkCoralForeground : AppColors.lightCoralForeground;
+  Color get missedDayColor => isDark ? AppColors.darkMissedDay : AppColors.lightMissedDay;
 }

@@ -74,6 +74,7 @@ class AppColors {
   static const rarityLegendaryStart = Color(0xFFF59E0B);
   static const rarityLegendaryEnd = Color(0xFFEF4444);
 
-  // Dark mode missed day (orange)
+  // Missed day indicator (orange)
+  static const lightMissedDay = Color(0xFFEA6D0A);
   static const darkMissedDay = Color(0xFFF97316);
 }

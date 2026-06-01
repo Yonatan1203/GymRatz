@@ -1256,19 +1256,19 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                     padding: EdgeInsets.all(16.r),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.amber.withValues(alpha: 0.15), Colors.orange.withValues(alpha: 0.1)],
+                        colors: [context.coralColor.withValues(alpha: 0.15), context.coralColor.withValues(alpha: 0.08)],
                       ),
                       borderRadius: AppRadius.borderXl,
-                      border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                      border: Border.all(color: context.coralColor.withValues(alpha: 0.3)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Icon(AppIcons.trophy, size: 18.r, color: Colors.amber),
+                            Icon(AppIcons.trophy, size: 18.r, color: context.coralColor),
                             SizedBox(width: 8.w),
-                            Text('New Personal Records!', style: AppTextStyles.h4.copyWith(color: Colors.amber.shade800, fontWeight: FontWeight.w600)),
+                            Text('New Personal Records!', style: AppTextStyles.h4.copyWith(color: context.coralColor, fontWeight: FontWeight.w600)),
                           ],
                         ),
                         SizedBox(height: 8.h),

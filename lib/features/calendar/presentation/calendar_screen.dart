@@ -306,9 +306,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             bgColor = context.primaryColor.withValues(alpha:0.06);
             textColor = context.foreground;
             break;
-          case 3: // Missed — orange
-            bgColor = const Color(0xFFF97316).withValues(alpha: 0.15);
-            textColor = const Color(0xFFF97316);
+          case 3: // Missed — orange (theme-aware)
+            bgColor = context.missedDayColor.withValues(alpha: 0.15);
+            textColor = context.missedDayColor;
             break;
           default: // Rest — clean
             bgColor = context.cardColor;
@@ -364,7 +364,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final items = [
       ('Completed', context.primaryColor),
       ('Scheduled', context.mutedForeground),
-      ('Missed', const Color(0xFFF97316)),
+      ('Missed', context.missedDayColor),
       ('Rest', context.cardColor),
     ];
 

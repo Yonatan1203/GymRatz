@@ -350,6 +350,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       label: 'Sign Out',
                       iconColor: context.destructiveColor,
                       onTap: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Sign Out'),
+                            content: const Text('Are you sure you want to sign out?'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(true),
+                                style: TextButton.styleFrom(foregroundColor: context.destructiveColor),
+                                child: const Text('Sign Out'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirmed != true) return;
+                        if (!context.mounted) return;
                         final authService = ref.read(authServiceProvider);
                         await authService.signOut();
                         if (context.mounted) context.go('/onboarding');
