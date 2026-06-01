@@ -7,10 +7,12 @@ void main() {
   late AchievementService service;
   late AchievementRepository repo;
 
-  setUp(() {
+  setUp(() async {
     final fakeFirestore = FakeFirebaseFirestore();
     repo = AchievementRepository(fakeFirestore);
     service = AchievementService(repo);
+    // updateProgress calls Firestore .update() which requires the doc to exist.
+    await repo.initializeAchievements('uid1', AchievementService.defaultAchievements);
   });
 
   group('AchievementService.defaultAchievements invariants', () {
