@@ -7,6 +7,7 @@ class WorkoutSummary {
   final int duration; // seconds
   final List<String> newPRs;
   final List<ProgressionSuggestion> suggestions;
+  final List<String> unlockedAchievements;
 
   const WorkoutSummary({
     required this.totalSets,
@@ -15,5 +16,6 @@ class WorkoutSummary {
     required this.duration,
     this.newPRs = const [],
     this.suggestions = const [],
+    this.unlockedAchievements = const [],
   });
 }

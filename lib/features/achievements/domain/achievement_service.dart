@@ -54,7 +54,7 @@ class AchievementService {
       final progress = checks[a.id];
       if (progress != null && progress >= a.total) {
         await _repo.unlock(uid, a.id);
-        unlocked.add(a.title);
+        unlocked.add(a.id);
       }
     }
 

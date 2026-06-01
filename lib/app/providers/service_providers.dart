@@ -11,6 +11,8 @@ final workoutServiceProvider = Provider<WorkoutService>((ref) {
     ref.watch(workoutRepositoryProvider),
     ref.watch(prRepositoryProvider),
     ref.watch(progressionRepositoryProvider),
+    ref.watch(achievementServiceProvider),
+    ref.watch(analyticsServiceProvider),
   );
 });
 
