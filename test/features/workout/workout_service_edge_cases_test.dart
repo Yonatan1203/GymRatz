@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gymratz/core/analytics_service.dart';
+import 'package:gymratz/features/achievements/data/achievement_repository.dart';
+import 'package:gymratz/features/achievements/domain/achievement_service.dart';
+
 import 'package:gymratz/features/progression/data/progression_repository.dart';
 import 'package:gymratz/features/progression/domain/models/progression_history.dart';
 import 'package:gymratz/features/progression/domain/progression_suggestion.dart';
@@ -11,6 +15,9 @@ import 'package:gymratz/shared/models/enums.dart';
 import 'package:gymratz/shared/models/workout.dart';
 import 'package:gymratz/shared/models/workout_exercise.dart';
 import 'package:gymratz/shared/models/workout_set.dart';
+
+// AnalyticsService() with no args: Firebase errors are wrapped in async
+// Futures and discarded by .ignore() callers — safe for unit tests.
 
 /// Repo subclass whose completeWorkout always throws.
 class _ThrowingWorkoutRepository extends WorkoutRepository {
@@ -67,6 +74,8 @@ void main() {
         _ThrowingWorkoutRepository(fakeFs),
         PrRepository(fakeFs),
         ProgressionRepository(fakeFs),
+        AchievementService(AchievementRepository(fakeFs)),
+        AnalyticsService(), // Firebase errors discarded via async+.ignore()
       );
 
       await expectLater(
@@ -86,6 +95,8 @@ void main() {
         workoutRepo,
         PrRepository(fakeFs),
         _ThrowingProgressionRepository(fakeFs),
+        AchievementService(AchievementRepository(fakeFs)),
+        AnalyticsService(),
       );
 
       // Should complete without throwing even if progression write fails
