@@ -128,7 +128,8 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
           repMax: 12,
           targetRir: 2,
           restSeconds: 120,
-          progressionType: ProgressionMode.hypertrophy,
+          progressionType: ref.read(userProfileProvider).valueOrNull?.defaultProgressionMode
+              ?? ProgressionMode.hypertrophy,
         ));
       }
       _pickerOpenForDay = null;
@@ -152,7 +153,8 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
         repMax: 12,
         targetRir: 2,
         restSeconds: 120,
-        progressionType: ProgressionMode.hypertrophy,
+        progressionType: ref.read(userProfileProvider).valueOrNull?.defaultProgressionMode
+            ?? ProgressionMode.hypertrophy,
       ));
       _customName.clear();
       _customFormOpenForDay = null;

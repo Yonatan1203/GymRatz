@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/crashlytics_service.dart';
 import '../features/auth/presentation/forgot_password_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/onboarding/presentation/onboarding_welcome_screen.dart';
@@ -124,6 +125,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/home',
+    observers: [CrashlyticsNavigatorObserver()],
     redirect: (context, state) {
       final isLoggedIn = authState.valueOrNull != null;
       final currentPath = state.uri.path;
