@@ -2,12 +2,20 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gymratz/shared/widgets/offline_banner.dart';
 
-Widget _wrap(Stream<List<ConnectivityResult>> stream) => MaterialApp(
-      home: Scaffold(
-        body: OfflineBanner(connectivityStream: stream),
+Widget _wrap(Stream<List<ConnectivityResult>> stream) => ScreenUtilInit(
+      designSize: const Size(390, 844),
+      builder: (_, __) => MaterialApp(
+        home: Scaffold(
+          // Bounded width prevents RenderFlex overflow in headless tests.
+          body: SizedBox(
+            width: 390,
+            child: OfflineBanner(connectivityStream: stream),
+          ),
+        ),
       ),
     );
 
