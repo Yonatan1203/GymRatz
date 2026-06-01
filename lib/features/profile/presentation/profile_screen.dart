@@ -210,13 +210,10 @@ class ProfileScreen extends ConsumerWidget {
       children: [
         Text(title, style: AppTextStyles.caption.copyWith(color: context.mutedForeground, fontWeight: FontWeight.w600, letterSpacing: 1)),
         SizedBox(height: AppSpacing.md),
-        ScaleTap(
-          onTap: () {},
-          child: CustomCard(
-            variant: CardVariant.standard,
-            padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-            child: Column(children: items),
-          ),
+        CustomCard(
+          variant: CardVariant.standard,
+          padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+          child: Column(children: items),
         ),
       ],
     );
