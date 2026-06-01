@@ -33,6 +33,31 @@ class ProgramService {
     return program;
   }
 
+  /// Partial update of an existing program — only the supplied keys are
+  /// written, so server-managed fields (isActive, progress, createdAt,
+  /// activatedAt, prefillWeights, coach fields) are left untouched.
+  /// Null description/difficulty are omitted rather than written, so they do
+  /// not overwrite an existing stored value.
+  Future<void> editProgram(
+    String uid,
+    String programId, {
+    required String name,
+    required List<WorkoutDay> days,
+    int weeks = 8,
+    String? description,
+    String? difficulty,
+  }) async {
+    final fields = <String, dynamic>{
+      'name': name,
+      'days': days.map((d) => d.toJson()).toList(),
+      'workouts': days.length,
+      'weeks': weeks,
+      if (description != null) 'description': description,
+      if (difficulty != null) 'difficulty': difficulty,
+    };
+    await _repo.updateProgram(uid, programId, fields);
+  }
+
   Future<void> activateProgram(String uid, String programId) async {
     await _repo.setActiveProgram(uid, programId);
   }

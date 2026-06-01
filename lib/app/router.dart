@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/crashlytics_service.dart';
+import '../shared/models/program.dart';
 import '../features/auth/presentation/forgot_password_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/onboarding/presentation/onboarding_welcome_screen.dart';
@@ -347,6 +348,29 @@ final routerProvider = Provider<GoRouter>((ref) {
           state: state,
           child: const CreateProgramScreen(),
         ),
+      ),
+      GoRoute(
+        path: '/programs/detail/:id/edit',
+        name: 'edit-program',
+        pageBuilder: (context, state) {
+          final program = state.extra is Program ? state.extra as Program : null;
+          // GoRouter does not persist `extra` across process restarts, so a
+          // deep-link / cold-start into this URL arrives with no program.
+          // Fall back to the detail screen rather than silently opening a
+          // blank "create" form.
+          if (program == null) {
+            return slideTransitionPage(
+              state: state,
+              child: ProgramDetailScreen(
+                programId: state.pathParameters['id'] ?? '1',
+              ),
+            );
+          }
+          return slideTransitionPage(
+            state: state,
+            child: CreateProgramScreen(editProgram: program),
+          );
+        },
       ),
       GoRoute(
         path: '/progress',
