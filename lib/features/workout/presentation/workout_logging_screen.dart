@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -1319,11 +1320,8 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                   icon: AppIcons.share2,
                   onPressed: () {
                     final volUnit = ref.read(userProfileProvider).valueOrNull?.unit ?? 'lbs';
-                    final summary = '$_workoutName\n$durationStr | $completedSets sets | ${totalVolume.toInt()} $volUnit volume';
-                    Clipboard.setData(ClipboardData(text: summary));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Workout summary copied to clipboard')),
-                    );
+                    final summary = '💪 $_workoutName\n$durationStr | $completedSets sets | ${totalVolume.toInt()} $volUnit volume\n\nLogged with GymRatz';
+                    Share.share(summary);
                   },
                 ),
                 SizedBox(height: 32.h),

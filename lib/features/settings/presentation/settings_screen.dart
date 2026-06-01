@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants.dart';
@@ -29,6 +30,61 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _pushNotifications = true;
   bool _workoutReminders = true;
   bool _isDeletingAccount = false;
+
+  // Reminder time & days — loaded from saved prefs, defaulting to 6pm Mon-Fri.
+  TimeOfDay _reminderTime = const TimeOfDay(hour: 18, minute: 0);
+  Set<int> _reminderDays = {1, 2, 3, 4, 5}; // 1=Mon … 7=Sun
+
+  static const _dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReminderPrefs();
+  }
+
+  Future<void> _loadReminderPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _reminderTime = TimeOfDay(
+        hour: prefs.getInt('notif_reminder_hour') ?? 18,
+        minute: prefs.getInt('notif_reminder_minute') ?? 0,
+      );
+    });
+  }
+
+  Future<void> _pickReminderTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _reminderTime,
+    );
+    if (picked == null) return;
+    setState(() => _reminderTime = picked);
+    if (_workoutReminders) {
+      NotificationService().scheduleWorkoutReminder(
+        hour: picked.hour,
+        minute: picked.minute,
+        weekdays: _reminderDays.toList(),
+      );
+    }
+  }
+
+  void _toggleReminderDay(int day) {
+    setState(() {
+      if (_reminderDays.contains(day)) {
+        if (_reminderDays.length > 1) _reminderDays.remove(day);
+      } else {
+        _reminderDays.add(day);
+      }
+    });
+    if (_workoutReminders) {
+      NotificationService().scheduleWorkoutReminder(
+        hour: _reminderTime.hour,
+        minute: _reminderTime.minute,
+        weekdays: _reminderDays.toList(),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,14 +177,68 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           if (v) {
                             NotificationService().requestPermission();
                             NotificationService().scheduleWorkoutReminder(
-                              hour: 18,
-                              minute: 0,
-                              weekdays: [1, 2, 3, 4, 5],
+                              hour: _reminderTime.hour,
+                              minute: _reminderTime.minute,
+                              weekdays: _reminderDays.toList(),
                             );
                           } else {
                             NotificationService().cancelWorkoutReminders();
                           }
                         }),
+                        if (_workoutReminders) ...[
+                          Divider(color: context.mutedForeground.withValues(alpha: 0.15), height: 1),
+                          Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: _pickReminderTime,
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.access_time_rounded, size: 16.r, color: context.mutedForeground),
+                                        SizedBox(width: 8.w),
+                                        Text(
+                                          _reminderTime.format(context),
+                                          style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
+                                        ),
+                                        SizedBox(width: 4.w),
+                                        Icon(Icons.chevron_right_rounded, size: 16.r, color: context.mutedForeground),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Row(
+                                  children: List.generate(7, (i) {
+                                    final day = i + 1;
+                                    final selected = _reminderDays.contains(day);
+                                    return GestureDetector(
+                                      onTap: () => _toggleReminderDay(day),
+                                      child: Container(
+                                        margin: EdgeInsets.only(left: 4.w),
+                                        width: 26.r,
+                                        height: 26.r,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: selected ? context.primaryColor : context.mutedForeground.withValues(alpha: 0.15),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            _dayLabels[i],
+                                            style: AppTextStyles.caption.copyWith(
+                                              color: selected ? Colors.white : context.mutedForeground,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                         Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
                         _toggleRow(
                           'Rest Timer Sound',
