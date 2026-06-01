@@ -39,7 +39,7 @@ class UserRepository {
   /// Deletes all user data including subcollections
   Future<void> deleteAllUserData(String uid) async {
     final userDoc = _firestore.collection('users').doc(uid);
-    final subcollections = ['workouts', 'programs', 'achievements', 'prs', 'weightEntries', 'exercises'];
+    final subcollections = ['workouts', 'programs', 'achievements', 'prs', 'weightEntries', 'exercises', 'progression'];
     for (final sub in subcollections) {
       final snap = await userDoc.collection(sub).get();
       final batch = _firestore.batch();
