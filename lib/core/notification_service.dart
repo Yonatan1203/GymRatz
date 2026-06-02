@@ -189,6 +189,37 @@ class NotificationService {
     await _plugin.cancel(_restTimerNotifId);
   }
 
+  static const _fcmNotifId = 200;
+
+  /// Display a server-sent FCM message as a local notification while the app
+  /// is in the foreground. [payload] is an optional route string for tap handling.
+  Future<void> showFcmNotification({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    await _plugin.show(
+      _fcmNotifId,
+      title,
+      body,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'gymratz_push',
+          'GymRatz Notifications',
+          channelDescription: 'Streak alerts, trial reminders, and coach messages',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentSound: true,
+          presentBadge: true,
+        ),
+      ),
+      payload: payload,
+    );
+  }
+
   tz.TZDateTime _nextInstanceOfDayTime(int weekday, int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);
     var scheduled =

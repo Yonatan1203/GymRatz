@@ -10,13 +10,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'app/app.dart';
 import 'core/env.dart';
+import 'core/fcm_service.dart';
 import 'core/notification_service.dart';
 import 'core/pip_service.dart';
 import 'features/subscription/data/entitlement_repository.dart';
+import 'features/user/data/user_repository.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Register FCM background handler before Firebase.initializeApp.
+  FcmService.registerBackgroundHandler();
 
   // Initialize Firebase with generated options.
   try {
@@ -99,11 +104,12 @@ Future<void> main() async {
   runApp(const ProviderScope(child: GymRatzApp()));
 }
 
-/// Initialize notifications and PiP after the first frame.
+/// Initialize notifications, FCM, and PiP after the first frame.
 Future<void> _initDeferredServices() async {
   await Future.wait([
     _initNotifications(),
     _initPip(),
+    initFcm(),
   ]);
 }
 
@@ -126,6 +132,21 @@ Future<void> _initNotifications() async {
     await NotificationService().initialize();
   } catch (e) {
     debugPrint('Notification init skipped: $e');
+  }
+}
+
+Future<void> initFcm() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
+  try {
+    await FcmService().initialize(
+      onTokenRefresh: (token) async {
+        await UserRepository(FirebaseFirestore.instance)
+            .saveFcmToken(user.uid, token);
+      },
+    );
+  } catch (e) {
+    debugPrint('FCM init skipped: $e');
   }
 }
 
