@@ -30,9 +30,9 @@ class EntitlementRepository {
         ? AppConstants.revenueCatAppleApiKey
         : AppConstants.revenueCatGoogleApiKey;
 
-    if (apiKey.contains('REPLACE_ME')) {
+    if (apiKey.isEmpty) {
       debugPrint(
-          'RevenueCat: placeholder API key detected — subscription features disabled');
+          'RevenueCat: API key not injected at build time — subscription features disabled');
       return;
     }
 

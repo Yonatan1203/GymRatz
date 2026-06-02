@@ -2,12 +2,12 @@
 class AppConstants {
   AppConstants._();
 
-  // RevenueCat API Keys — pass via: --dart-define=RC_GOOGLE_KEY=goog_xxx
+  // RevenueCat API Keys — injected at build time via CI secrets.
+  // Pass via: --dart-define=RC_APPLE_KEY=appl_xxx --dart-define=RC_GOOGLE_KEY=goog_xxx
   static const String revenueCatAppleApiKey =
-      String.fromEnvironment('RC_APPLE_KEY', defaultValue: 'appl_REPLACE_ME');
+      String.fromEnvironment('RC_APPLE_KEY');
   static const String revenueCatGoogleApiKey =
-      String.fromEnvironment('RC_GOOGLE_KEY',
-          defaultValue: 'goog_FLzUpFxMnQOfgdqMveJwwCBdMuK');
+      String.fromEnvironment('RC_GOOGLE_KEY');
 
   // RevenueCat identifiers
   static const String entitlementId = 'GymRatz';
