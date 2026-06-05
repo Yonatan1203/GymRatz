@@ -50,6 +50,9 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
   String _exerciseSearchQuery = '';
   String? _selectedCategory;
   String _difficulty = 'Intermediate';
+  /// Weight autofill mode for coach-created programs.
+  /// Only used when [CreateProgramScreen.forCoach] is true.
+  WeightAutofillMode _weightAutofillMode = WeightAutofillMode.systemSuggested;
 
   /// Normalized names of custom exercises already persisted this session —
   /// guards against duplicate writes from rapid double-taps before the
@@ -76,6 +79,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
       _weeksController.text = '${edit.weeks}';
       _descriptionController.text = edit.description ?? '';
       _difficulty = edit.difficulty ?? 'Intermediate';
+      _weightAutofillMode = edit.weightAutofillMode;
       var dayIndex = 0;
       final seenDayIds = <String>{};
       _workoutDays = edit.days.map((d) {
@@ -338,6 +342,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
               : null,
           difficulty: _difficulty,
           createdAt: DateTime.now(),
+          weightAutofillMode: _weightAutofillMode,
         ).toJson();
         await ref.read(coachRepositoryProvider).createCoachProgram(uid, programJson);
       } else if (widget.isEditing) {
@@ -572,6 +577,29 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
             hint: 'Brief description of this program',
             maxLines: 2,
           ),
+          if (widget.forCoach) ...[
+            SizedBox(height: 12.h),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                'Auto-suggest weights',
+                style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
+              ),
+              subtitle: Text(
+                _weightAutofillMode == WeightAutofillMode.systemSuggested
+                    ? 'PO engine pre-fills weights for athletes'
+                    : 'Athletes enter weights manually from scratch',
+                style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+              ),
+              value: _weightAutofillMode == WeightAutofillMode.systemSuggested,
+              activeColor: context.primaryColor,
+              onChanged: (on) => setState(() {
+                _weightAutofillMode = on
+                    ? WeightAutofillMode.systemSuggested
+                    : WeightAutofillMode.manual;
+              }),
+            ),
+          ],
         ],
       ),
     );

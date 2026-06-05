@@ -59,6 +59,12 @@ class WorkoutService {
       debugPrint('startWorkout: failed to load PO suggestions: $e');
     }
 
+    // When the coach has configured manual weight entry, discard all PO
+    // suggestions so athletes start from weight = 0 on every exercise.
+    if (program.weightAutofillMode == WeightAutofillMode.manual) {
+      suggestions = {};
+    }
+
     // Also load last completed workout for fallback.
     Map<String, WorkoutExercise>? lastExercises;
     try {
@@ -75,6 +81,12 @@ class WorkoutService {
       // composite index (programId, workoutDayId, status, date); log so a
       // missing index surfaces instead of silently disabling prefill.
       debugPrint('startWorkout: failed to load last workout for fallback: $e');
+    }
+
+    // In manual mode also suppress last-session fallback so every set starts
+    // at 0 — athletes are expected to fill in their own weights.
+    if (program.weightAutofillMode == WeightAutofillMode.manual) {
+      lastExercises = null;
     }
 
     final exercises = day.exercises.map((pe) {
