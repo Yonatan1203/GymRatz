@@ -18,6 +18,7 @@ import '../../../shared/widgets/empty_state_widget.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/scale_tap.dart';
 import '../../../shared/widgets/section_header.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 import '../../../shared/widgets/staggered_list.dart';
 import '../../../shared/widgets/stats_grid.dart';
 
@@ -201,6 +202,7 @@ class HomeScreen extends ConsumerWidget {
             ],
           ),
           SizedBox(height: AppSpacing.xxl),
+          // GYM-57: date strip with Semantics labels
           SizedBox(
             height: 80.h,
             child: ListView.separated(
@@ -254,51 +256,63 @@ class HomeScreen extends ConsumerWidget {
                   border = null;
                 }
 
-                return Container(
-                  width: 56.w,
-                  decoration: BoxDecoration(
-                    color: bgColor,
-                    borderRadius: AppRadius.borderLg,
-                    border: border,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        dayAbbrev[date.weekday - 1],
-                        style: AppTextStyles.caption.copyWith(color: dayTextColor),
-                      ),
-                      SizedBox(height: AppSpacing.sm),
-                      Text(
-                        '${date.day}',
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
+                // Build accessibility label
+                final parts = <String>[dayName, '${date.day}'];
+                if (isToday) parts.add('today');
+                if (isScheduled && !hasCompleted) parts.add('workout scheduled');
+                if (hasCompleted) parts.add('completed');
+                if (isMissed) parts.add('missed');
+                final semanticLabel = parts.join(', ');
+
+                return Semantics(
+                  label: semanticLabel,
+                  button: true,
+                  child: Container(
+                    width: 56.w,
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      borderRadius: AppRadius.borderLg,
+                      border: border,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          dayAbbrev[date.weekday - 1],
+                          style: AppTextStyles.caption.copyWith(color: dayTextColor),
                         ),
-                      ),
-                      if (hasCompleted) ...[
                         SizedBox(height: AppSpacing.sm),
-                        Container(
-                          width: 6.r,
-                          height: 6.r,
-                          decoration: const BoxDecoration(
-                            color: Colors.green,
-                            shape: BoxShape.circle,
+                        Text(
+                          '${date.day}',
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w600,
+                            color: textColor,
                           ),
                         ),
-                      ] else if (isScheduled && !isMissed && !isToday) ...[
-                        SizedBox(height: AppSpacing.sm),
-                        Container(
-                          width: 6.r,
-                          height: 6.r,
-                          decoration: BoxDecoration(
-                            color: context.primaryColor.withValues(alpha: 0.4),
-                            shape: BoxShape.circle,
+                        if (hasCompleted) ...[
+                          SizedBox(height: AppSpacing.sm),
+                          Container(
+                            width: 6.r,
+                            height: 6.r,
+                            decoration: const BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
+                        ] else if (isScheduled && !isMissed && !isToday) ...[
+                          SizedBox(height: AppSpacing.sm),
+                          Container(
+                            width: 6.r,
+                            height: 6.r,
+                            decoration: BoxDecoration(
+                              color: context.primaryColor.withValues(alpha: 0.4),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 );
               },
@@ -309,9 +323,35 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  // GYM-41: stats grid with skeleton loading
   Widget _buildStatsGrid(BuildContext context, bool isDark, WidgetRef ref) {
-    final stats = ref.watch(workoutStatsProvider).valueOrNull;
-    final prs = ref.watch(personalRecordsProvider).valueOrNull;
+    final statsAsync = ref.watch(workoutStatsProvider);
+    final prsAsync = ref.watch(personalRecordsProvider);
+
+    // Show skeleton while either provider is loading
+    if (statsAsync.isLoading || prsAsync.isLoading) {
+      return SkeletonLoader(
+        child: IntrinsicHeight(
+          child: Row(
+            children: List.generate(3, (i) {
+              return Expanded(
+                child: Container(
+                  margin: EdgeInsets.symmetric(horizontal: 4.w),
+                  height: 90.r,
+                  decoration: BoxDecoration(
+                    color: context.mutedColor,
+                    borderRadius: AppRadius.borderXl,
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      );
+    }
+
+    final stats = statsAsync.valueOrNull;
+    final prs = prsAsync.valueOrNull;
 
     final totalWorkouts = stats?['totalWorkouts'] as int? ?? 0;
     final weeklyVolume = stats?['weeklyVolume'] as double? ?? 0;
@@ -468,7 +508,7 @@ class HomeScreen extends ConsumerWidget {
                         Text('$exerciseCount Exercises', style: AppTextStyles.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.9))),
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                          child: Text('\u2022', style: TextStyle(color: Colors.white.withValues(alpha: 0.9))),
+                          child: Text('•', style: TextStyle(color: Colors.white.withValues(alpha: 0.9))),
                         ),
                         Text('$totalSets Sets', style: AppTextStyles.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.9))),
                       ],
@@ -511,6 +551,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  // GYM-62: Progress uses push (detail screen); Programs uses go (tab switch)
   Widget _buildQuickActions(BuildContext context, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -539,6 +580,7 @@ class HomeScreen extends ConsumerWidget {
             SizedBox(width: AppSpacing.lg),
             Expanded(
               child: ScaleTap(
+                // Programs is a top-level tab; use go to switch tabs without stacking
                 onTap: () => context.go('/programs'),
                 child: CustomCard(
                   variant: CardVariant.standard,
@@ -560,12 +602,19 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  // GYM-41: recent activity with skeleton loading
+  // GYM-62: See All wired to /progress; Recent Activity section navigates to progress log
   Widget _buildRecentActivity(BuildContext context, bool isDark, WidgetRef ref) {
     final recentWorkouts = ref.watch(recentWorkoutsProvider);
 
     return Column(
       children: [
-        SectionHeader(title: 'Recent Activity', actionText: 'See All', onAction: () => context.go('/calendar')),
+        SectionHeader(
+          title: 'Recent Activity',
+          actionText: 'See All',
+          // GYM-62: push to progress (detail screen, not a tab switch)
+          onAction: () => context.push('/progress'),
+        ),
         SizedBox(height: AppSpacing.lg),
         recentWorkouts.when(
           data: (workouts) {
@@ -587,7 +636,7 @@ class HomeScreen extends ConsumerWidget {
                             : 'Scheduled';
                 final exerciseCount = workout.exercises.length;
                 final title = exerciseCount > 0
-                    ? '$exerciseCount exercises \u2022 ${workout.totalVolume.toStringAsFixed(0)}kg'
+                    ? '$exerciseCount exercises • ${workout.totalVolume.toStringAsFixed(0)}kg'
                     : 'Workout';
 
                 return Padding(
@@ -620,9 +669,40 @@ class HomeScreen extends ConsumerWidget {
               }).toList(),
             );
           },
-          loading: () => Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.sectionGap),
-            child: const Center(child: CircularProgressIndicator()),
+          // GYM-41: shimmer skeleton placeholders instead of CircularProgressIndicator
+          loading: () => SkeletonLoader(
+            child: Column(
+              children: List.generate(3, (_) {
+                return Padding(
+                  padding: EdgeInsets.only(bottom: AppSpacing.md),
+                  child: Container(
+                    height: 72.r,
+                    decoration: BoxDecoration(
+                      color: context.mutedColor,
+                      borderRadius: AppRadius.borderXl,
+                    ),
+                    padding: EdgeInsets.all(AppSpacing.lg),
+                    child: Row(
+                      children: [
+                        SkeletonCircle(size: 40),
+                        SizedBox(width: AppSpacing.lg),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SkeletonLine(height: 12),
+                              SizedBox(height: AppSpacing.sm),
+                              SkeletonLine(width: 80.w, height: 10),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ),
           ),
           error: (error, _) => Padding(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.sectionGap),
