@@ -393,6 +393,51 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildFreeWorkoutCta(BuildContext context, WidgetRef ref) {
+    final activeSession = ref.watch(activeWorkoutSessionProvider);
+    // Hide if a workout is already in progress.
+    if (activeSession != null) return const SizedBox.shrink();
+    return Padding(
+      padding: EdgeInsets.only(top: AppSpacing.lg),
+      child: ScaleTap(
+        onTap: () => context.push('/workout/free'),
+        child: CustomCard(
+          variant: CardVariant.standard,
+          child: Row(
+            children: [
+              Container(
+                width: 40.r,
+                height: 40.r,
+                decoration: BoxDecoration(
+                  color: context.accentColor.withValues(alpha: 0.15),
+                  borderRadius: AppRadius.borderLg,
+                ),
+                child: Icon(AppIcons.plus, size: 20.r, color: context.accentColor),
+              ),
+              SizedBox(width: AppSpacing.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Free Workout',
+                      style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      'Build your own workout on the fly',
+                      style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(AppIcons.chevronRight, size: 20.r, color: context.mutedForeground),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTodaysWorkout(BuildContext context, bool isDark, WidgetRef ref) {
     const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     final todayName = dayNames[DateTime.now().weekday - 1];
@@ -426,6 +471,7 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+              _buildFreeWorkoutCta(context, ref),
             ],
           );
         }
@@ -457,6 +503,7 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+              _buildFreeWorkoutCta(context, ref),
             ],
           );
         }
@@ -517,6 +564,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
+            _buildFreeWorkoutCta(context, ref),
           ],
         );
       },
