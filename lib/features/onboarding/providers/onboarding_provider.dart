@@ -19,7 +19,6 @@ class OnboardingState {
   final String email;
   final String password;
   final bool notificationsEnabled;
-  final bool healthEnabled;
   final String? discovery;
   final bool isSubmitting;
   final String? error;
@@ -36,7 +35,6 @@ class OnboardingState {
     this.email = '',
     this.password = '',
     this.notificationsEnabled = true,
-    this.healthEnabled = false,
     this.discovery,
     this.isSubmitting = false,
     this.error,
@@ -54,7 +52,6 @@ class OnboardingState {
     String? email,
     String? password,
     bool? notificationsEnabled,
-    bool? healthEnabled,
     String? discovery,
     bool? isSubmitting,
     String? error,
@@ -71,7 +68,6 @@ class OnboardingState {
       email: email ?? this.email,
       password: password ?? this.password,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
-      healthEnabled: healthEnabled ?? this.healthEnabled,
       discovery: discovery ?? this.discovery,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       error: error,
@@ -185,10 +181,6 @@ class OnboardingNotifier extends StateNotifier<OnboardingState> {
     state = state.copyWith(notificationsEnabled: enabled);
   }
 
-  void setHealthEnabled(bool enabled) {
-    state = state.copyWith(healthEnabled: enabled);
-  }
-
   void setDiscovery(String discovery) {
     state = state.copyWith(discovery: discovery);
   }
@@ -219,7 +211,6 @@ class OnboardingNotifier extends StateNotifier<OnboardingState> {
           'injuries': state.selectedInjuries,
           'style': state.selectedStyle,
           'notificationsEnabled': state.notificationsEnabled,
-          'healthEnabled': state.healthEnabled,
           'discovery': state.discovery,
         },
       );

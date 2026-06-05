@@ -12,7 +12,6 @@ import '../features/onboarding/presentation/onboarding_style_screen.dart';
 import '../features/onboarding/presentation/onboarding_height_screen.dart';
 import '../features/onboarding/presentation/onboarding_summary_screen.dart';
 import '../features/onboarding/presentation/onboarding_email_screen.dart';
-import '../features/onboarding/presentation/onboarding_health_screen.dart';
 import '../features/onboarding/presentation/onboarding_showcase_screen.dart';
 import '../features/onboarding/presentation/onboarding_discovery_screen.dart';
 import '../features/home/presentation/home_screen.dart';
@@ -112,7 +111,6 @@ const _publicPaths = {
   '/onboarding/goal',
   '/onboarding/style',
   '/onboarding/height',
-  '/onboarding/health',
   '/onboarding/email',
   '/onboarding/summary',
   '/onboarding/discovery',
@@ -224,14 +222,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => horizontalSlideTransitionPage(
           state: state,
           child: const OnboardingEmailScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/onboarding/health',
-        name: 'onboarding-health',
-        pageBuilder: (context, state) => horizontalSlideTransitionPage(
-          state: state,
-          child: const OnboardingHealthScreen(),
         ),
       ),
       GoRoute(
