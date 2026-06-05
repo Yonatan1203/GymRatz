@@ -18,7 +18,7 @@ class CalendarSyncService {
       location: '',
       startDate: start,
       endDate: start.add(const Duration(hours: 1)),
-      iosParams: const IOSParams(reminder: -30),
+      iosParams: IOSParams(reminder: const Duration(minutes: 30)),
     );
     await Add2Calendar.addEvent2Cal(event);
   }
