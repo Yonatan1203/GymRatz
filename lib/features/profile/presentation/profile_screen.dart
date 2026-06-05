@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../core/constants.dart';
 import '../../../theme/app_icons.dart';
 
@@ -17,6 +19,7 @@ import '../../../shared/widgets/stats_grid.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
 import '../../../shared/data/sample_data.dart';
+import '../../../shared/models/personal_record.dart';
 import 'package:intl/intl.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -119,29 +122,18 @@ class ProfileScreen extends ConsumerWidget {
 
   Widget _buildPersonalRecords(BuildContext context, WidgetRef ref) {
     final prsAsync = ref.watch(personalRecordsProvider);
-    final prs = prsAsync.valueOrNull;
-
-    final prList = prs != null && prs.isNotEmpty
-        ? prs
-            .map((p) => {
-                  'exercise': p.exerciseName,
-                  'weight': p.weight.toInt(),
-                  'unit': 'lbs',
-                  'date': '${p.date.month}/${p.date.day}/${p.date.year}',
-                })
-            .toList()
-        : <Map<String, dynamic>>[];
+    final prs = prsAsync.valueOrNull ?? <PersonalRecord>[];
 
     return Column(
       children: [
         SectionHeader(title: 'PERSONAL RECORDS', actionText: 'View All', onAction: () => context.push('/progress')),
         SizedBox(height: AppSpacing.lg),
-        if (prList.isEmpty)
+        if (prs.isEmpty)
           Padding(
             padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
             child: Text('No personal records yet. Complete workouts to set PRs!', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
           ),
-        ...prList.map((pr) => Padding(
+        ...prs.map((pr) => Padding(
           padding: EdgeInsets.only(bottom: AppSpacing.md),
           child: ScaleTap(
             onTap: () => context.go('/progress'),
@@ -160,17 +152,25 @@ class ProfileScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('${pr['exercise']}', style: AppTextStyles.bodySmall.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
-                        Text('${pr['date']}', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                        Text(pr.exerciseName, style: AppTextStyles.bodySmall.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
+                        Text('${pr.date.month}/${pr.date.day}/${pr.date.year}', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
                       ],
                     ),
                   ),
                   Text(
-                    '${pr['weight']} ${pr['unit']}',
+                    '${pr.weight.toInt()} lbs',
                     style: AppTextStyles.h4.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600),
                   ),
                   SizedBox(width: AppSpacing.md),
-                  Icon(AppIcons.share2, size: 16.r, color: context.mutedForeground),
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Share.share(
+                        '${pr.exerciseName}: ${pr.weight.toInt()}kg × ${pr.reps} reps 💪 via GymRatz',
+                      );
+                    },
+                    child: Icon(AppIcons.share2, size: 16.r, color: context.mutedForeground),
+                  ),
                 ],
               ),
             ),
