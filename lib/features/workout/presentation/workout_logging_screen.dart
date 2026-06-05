@@ -408,31 +408,46 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   }
 
   void _beginCountdown() {
+    // Compute the absolute end time so the countdown stays accurate even when
+    // the phone locks and the Dart isolate is paused. Each tick re-derives
+    // remaining seconds from DateTime.now() rather than decrementing a counter.
     final endTime = DateTime.now().add(Duration(seconds: _restSeconds));
     setState(() => _timerRunning = true);
-    // Sync restEndTime so the banner can count down independently
+    // Sync restEndTime to the provider so the active-workout banner and PiP
+    // widget can also compute the correct remaining time independently.
     ref.read(activeWorkoutSessionProvider.notifier).syncState(
       restActive: true,
       timerRunning: true,
       restSeconds: _restSeconds,
       restEndTime: endTime,
     );
-    // Schedule a notification for when the timer ends (works even if app is backgrounded)
+    // Schedule a local notification at endTime. The notification is delivered
+    // by the OS even when the app is backgrounded or the phone is locked.
     NotificationService().showRestTimerNotification(_restSeconds);
+    bool _completionFired = false;
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (_restSeconds > 0) {
-        setState(() => _restSeconds--);
-      } else {
+      if (!mounted) {
         t.cancel();
+        return;
+      }
+      // Derive remaining time from the absolute end time — survives phone lock.
+      final remaining = endTime.difference(DateTime.now()).inSeconds;
+      if (remaining > 0) {
+        setState(() => _restSeconds = remaining);
+      } else if (!_completionFired) {
+        _completionFired = true;
+        t.cancel();
+        setState(() => _restSeconds = 0);
         PlatformAdapter.hapticSelection();
-        // Sound: fire immediate notification with sound instead of silently canceling.
         final soundEnabled = ref.read(timerSettingsProvider).soundEnabled;
+        // If the app is in the foreground, fire an immediate alert. If it was
+        // backgrounded, the OS already delivered the scheduled notification.
         if (soundEnabled) {
           NotificationService().showRestCompleteNow();
         } else {
           NotificationService().cancelRestTimerNotification();
         }
-        // Keep restActive true briefly so banner/PiP can show the bell icon
+        // Keep restActive true briefly so banner/PiP shows the completion state.
         Future.delayed(const Duration(seconds: 2), () {
           if (!mounted) return;
           setState(() { _restActive = false; _timerRunning = false; });
@@ -455,7 +470,20 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     });
 
     if (!wasCompleted) {
-      // Completing a set — auto-start rest timer if enabled.
+      // Completing a set — cancel the current rest timer notification and
+      // either restart the timer (auto-start) or let the user start it manually.
+      // Either way the previous scheduled "Rest Complete" notification is stale.
+      if (_restActive && _timerRunning) {
+        // User started a new set before rest ended — cancel the scheduled alert.
+        _timer?.cancel();
+        NotificationService().cancelRestTimerNotification();
+        setState(() { _restActive = false; _timerRunning = false; _restSeconds = 120; });
+        ref.read(activeWorkoutSessionProvider.notifier).syncState(
+          restActive: false,
+          timerRunning: false,
+          clearRestEndTime: true,
+        );
+      }
       _syncToProvider();
       _saveWorkoutState();
       final autoStart = ref.read(timerSettingsProvider).autoStartOnSetComplete;
