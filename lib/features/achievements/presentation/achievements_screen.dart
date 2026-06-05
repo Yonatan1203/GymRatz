@@ -182,9 +182,91 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
   }
 
   Widget _buildAchievementCard(BuildContext context, Achievement achievement) {
+    return _AchievementCard(
+      key: ValueKey(achievement.id),
+      achievement: achievement,
+      rarityBgColor: _rarityBgColor(context, achievement.rarity),
+      rarityTextColor: _rarityTextColor(context, achievement.rarity),
+      iconForName: _iconForName,
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(AppIcons.trophy, size: 48.r, color: context.mutedForeground.withValues(alpha:0.6)),
+          SizedBox(height: 12.h),
+          Text('No achievements in this category', style: AppTextStyles.body.copyWith(color: context.mutedForeground)),
+        ],
+      ),
+    );
+  }
+}
+
+// GYM-60: per-card StatefulWidget so each newly-unlocked achievement bounces in
+class _AchievementCard extends StatefulWidget {
+  final Achievement achievement;
+  final Color rarityBgColor;
+  final Color rarityTextColor;
+  final IconData Function(String) iconForName;
+
+  const _AchievementCard({
+    super.key,
+    required this.achievement,
+    required this.rarityBgColor,
+    required this.rarityTextColor,
+    required this.iconForName,
+  });
+
+  @override
+  State<_AchievementCard> createState() => _AchievementCardState();
+}
+
+class _AchievementCardState extends State<_AchievementCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
+
+  bool get _isNewlyUnlocked {
+    if (!widget.achievement.unlocked) return false;
+    final unlockedAt = widget.achievement.unlockedDate;
+    if (unlockedAt == null) return false;
+    return DateTime.now().difference(unlockedAt).inSeconds < 60;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _scale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.1), weight: 60),
+      TweenSequenceItem(tween: Tween(begin: 1.1, end: 1.0), weight: 40),
+    ]).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
+
+    if (_isNewlyUnlocked) {
+      _controller.forward();
+    } else {
+      _controller.value = 1.0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final achievement = widget.achievement;
     final progressPercent = achievement.total > 0 ? achievement.progress / achievement.total : 0.0;
 
-    return Padding(
+    final card = Padding(
       padding: EdgeInsets.only(bottom: 12.h),
       child: Opacity(
         opacity: achievement.unlocked ? 1.0 : 0.75,
@@ -198,7 +280,7 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
                 height: 56.r,
                 child: Center(
                   child: Icon(
-                    achievement.unlocked ? _iconForName(achievement.iconName) : AppIcons.lock,
+                    achievement.unlocked ? widget.iconForName(achievement.iconName) : AppIcons.lock,
                     size: 28.r,
                     color: achievement.unlocked ? context.primaryColor : context.mutedForeground,
                   ),
@@ -240,8 +322,8 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
                       children: [
                         CustomBadge(
                           text: achievement.rarity,
-                          backgroundColor: _rarityBgColor(context, achievement.rarity),
-                          textColor: _rarityTextColor(context, achievement.rarity),
+                          backgroundColor: widget.rarityBgColor,
+                          textColor: widget.rarityTextColor,
                         ),
                         if (achievement.unlocked && achievement.unlockedDate != null) ...[
                           SizedBox(width: 8.w),
@@ -275,18 +357,9 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
         ),
       ),
     );
-  }
 
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(AppIcons.trophy, size: 48.r, color: context.mutedForeground.withValues(alpha:0.6)),
-          SizedBox(height: 12.h),
-          Text('No achievements in this category', style: AppTextStyles.body.copyWith(color: context.mutedForeground)),
-        ],
-      ),
-    );
+    if (!_isNewlyUnlocked) return card;
+
+    return ScaleTransition(scale: _scale, child: card);
   }
 }

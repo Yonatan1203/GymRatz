@@ -42,7 +42,8 @@ class WorkoutLoggingScreen extends ConsumerStatefulWidget {
   ConsumerState<WorkoutLoggingScreen> createState() => _WorkoutLoggingScreenState();
 }
 
-class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
+class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
+    with TickerProviderStateMixin {
   late List<List<WorkoutSet>> _sets;
   late List<WorkoutExercise> _exercises;
   late Set<int> _expanded;
@@ -63,6 +64,11 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   late DateTime _startTime;
   WorkoutSummary? _workoutSummary;
   static const _workoutCacheKeyPrefix = 'in_progress_workout';
+
+  // GYM-59: completion screen animation controllers
+  late AnimationController _completionAnimController;
+  final List<Animation<double>> _statCardFades = [];
+  final List<Animation<Offset>> _statCardSlides = [];
 
   String get _workoutCacheKey {
     final uid = ref.read(currentUidProvider) ?? '';
@@ -386,6 +392,13 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // GYM-59: pre-create a dummy controller; it gets replaced when completion triggers
+    _completionAnimController = AnimationController(vsync: this, duration: Duration.zero);
+  }
+
+  @override
   void dispose() {
     _timer?.cancel();
     _durationTimer?.cancel();
@@ -393,7 +406,32 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       c.dispose();
     }
     _controllers.clear();
+    _completionAnimController.dispose();
     super.dispose();
+  }
+
+  // GYM-59: build staggered entrance animations for the 6 stat cards
+  void _initCompletionAnimations() {
+    _completionAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+    _statCardFades.clear();
+    _statCardSlides.clear();
+    for (int i = 0; i < 6; i++) {
+      final start = (i * 150) / 1500.0;
+      final end = (start + 400 / 1500.0).clamp(0.0, 1.0);
+      final interval = CurvedAnimation(
+        parent: _completionAnimController,
+        curve: Interval(start, end, curve: Curves.easeOut),
+      );
+      _statCardFades.add(interval);
+      _statCardSlides.add(
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
+            .animate(interval),
+      );
+    }
+    _completionAnimController.forward();
   }
 
   void _showRestTimer() {
@@ -529,6 +567,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
         if (mounted) {
           PlatformAdapter.hapticMedium();
           SharedPreferences.getInstance().then((p) => p.setBool('has_completed_workout', true));
+          _initCompletionAnimations();
           setState(() {
             _workoutSummary = summary;
             _completed = true;
@@ -537,6 +576,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
         }
       } catch (e) {
         if (mounted) {
+          _initCompletionAnimations();
           setState(() {
             _completed = true;
             _saving = false;
@@ -548,6 +588,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       }
     } else {
       // Not authenticated — still show completion
+      _initCompletionAnimations();
       setState(() {
         _completed = true;
         _saving = false;
@@ -1413,28 +1454,28 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                   ),
                 ],
                 SizedBox(height: 28.h),
-                // Stats grid — 2x3
+                // Stats grid — 2x3 with staggered entrance animations (GYM-59)
                 Row(
                   children: [
-                    Expanded(child: _completionStatCard(context, isDark, AppIcons.clock, 'Duration', durationStr)),
+                    Expanded(child: _completionStatCardAnimated(context, isDark, 0, AppIcons.clock, 'Duration', durationStr)),
                     SizedBox(width: 12.w),
-                    Expanded(child: _completionStatCard(context, isDark, AppIcons.layers, 'Sets', '$completedSets / $totalSets')),
+                    Expanded(child: _completionStatCardAnimated(context, isDark, 1, AppIcons.layers, 'Sets', '$completedSets / $totalSets')),
                   ],
                 ),
                 SizedBox(height: 12.h),
                 Row(
                   children: [
-                    Expanded(child: _completionStatCard(context, isDark, AppIcons.repeat, 'Total Reps', '$totalReps')),
+                    Expanded(child: _completionStatCardAnimated(context, isDark, 2, AppIcons.repeat, 'Total Reps', null, countValue: totalReps)),
                     SizedBox(width: 12.w),
-                    Expanded(child: _completionStatCard(context, isDark, AppIcons.barChart2, 'Volume', '${totalVolume.toInt()} ${ref.read(userProfileProvider).valueOrNull?.unit ?? 'lbs'}')),
+                    Expanded(child: _completionStatCardAnimated(context, isDark, 3, AppIcons.barChart2, 'Volume', null, countValue: totalVolume.toInt(), countSuffix: ' ${ref.read(userProfileProvider).valueOrNull?.unit ?? 'lbs'}')),
                   ],
                 ),
                 SizedBox(height: 12.h),
                 Row(
                   children: [
-                    Expanded(child: _completionStatCard(context, isDark, AppIcons.dumbbell, 'Exercises', '${_exercises.length}')),
+                    Expanded(child: _completionStatCardAnimated(context, isDark, 4, AppIcons.dumbbell, 'Exercises', null, countValue: _exercises.length)),
                     SizedBox(width: 12.w),
-                    Expanded(child: _completionStatCard(context, isDark, AppIcons.flame, 'Intensity', completionPct >= 80 ? 'High' : completionPct >= 50 ? 'Medium' : 'Light')),
+                    Expanded(child: _completionStatCardAnimated(context, isDark, 5, AppIcons.flame, 'Intensity', completionPct >= 80 ? 'High' : completionPct >= 50 ? 'Medium' : 'Light')),
                   ],
                 ),
                 SizedBox(height: 32.h),
@@ -1465,8 +1506,18 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     );
   }
 
-  Widget _completionStatCard(BuildContext context, bool isDark, IconData icon, String label, String value) {
-    return Container(
+  // GYM-59: animated version with staggered fade+slide and optional counting value
+  Widget _completionStatCardAnimated(
+    BuildContext context,
+    bool isDark,
+    int index,
+    IconData icon,
+    String label,
+    String? staticValue, {
+    int? countValue,
+    String countSuffix = '',
+  }) {
+    final cardContent = Container(
       padding: EdgeInsets.all(16.r),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : AppColors.lightCard,
@@ -1479,10 +1530,34 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
         children: [
           Icon(icon, size: 20.r, color: context.primaryColor),
           SizedBox(height: 8.h),
-          Text(value, style: AppTextStyles.h3.copyWith(color: context.foreground, fontWeight: FontWeight.w700)),
+          if (countValue != null)
+            TweenAnimationBuilder<int>(
+              tween: IntTween(begin: 0, end: countValue),
+              duration: const Duration(milliseconds: 800),
+              builder: (_, val, __) => Text(
+                '$val$countSuffix',
+                style: AppTextStyles.h3.copyWith(color: context.foreground, fontWeight: FontWeight.w700),
+              ),
+            )
+          else
+            Text(
+              staticValue ?? '',
+              style: AppTextStyles.h3.copyWith(color: context.foreground, fontWeight: FontWeight.w700),
+            ),
           SizedBox(height: 2.h),
           Text(label, style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
         ],
+      ),
+    );
+
+    // Guard: animations may not be set up yet on first frame
+    if (_statCardFades.length <= index) return cardContent;
+
+    return FadeTransition(
+      opacity: _statCardFades[index],
+      child: SlideTransition(
+        position: _statCardSlides[index],
+        child: cardContent,
       ),
     );
   }

@@ -150,11 +150,18 @@ class ProgramsScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        p.name,
-                        style: AppTextStyles.h4.copyWith(
-                          color: context.foreground,
-                          fontWeight: FontWeight.w600,
+                      // GYM-58: Hero tag for shared element transition to detail screen
+                      Hero(
+                        tag: 'program_title_${p.id}',
+                        child: Material(
+                          color: Colors.transparent,
+                          child: Text(
+                            p.name,
+                            style: AppTextStyles.h4.copyWith(
+                              color: context.foreground,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
                       if (p.assignedByCoach)

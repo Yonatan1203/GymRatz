@@ -103,6 +103,26 @@ CustomTransitionPage<void> horizontalSlideTransitionPage({
   );
 }
 
+// GYM-58: slide-from-bottom for immersive full-screen views (program detail, workout logging)
+CustomTransitionPage<void> slideFromBottomTransitionPage({
+  required Widget child,
+  required GoRouterState state,
+  Duration duration = const Duration(milliseconds: 350),
+}) {
+  return CustomTransitionPage(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: duration,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final slide = Tween<Offset>(
+        begin: const Offset(0, 1),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+      return SlideTransition(position: slide, child: child);
+    },
+  );
+}
+
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 /// Routes that don't require authentication.
@@ -324,7 +344,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/workout/:dayId',
         name: 'workout-logging',
-        pageBuilder: (context, state) => slideTransitionPage(
+        // GYM-58: slide up from bottom for immersive workout experience
+        pageBuilder: (context, state) => slideFromBottomTransitionPage(
           state: state,
           child: WorkoutLoggingScreen(
             dayId: state.pathParameters['dayId'] ?? '1',
@@ -334,7 +355,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/programs/detail/:id',
         name: 'program-detail',
-        pageBuilder: (context, state) => slideTransitionPage(
+        // GYM-58: slide up from bottom for program detail
+        pageBuilder: (context, state) => slideFromBottomTransitionPage(
           state: state,
           child: ProgramDetailScreen(
             programId: state.pathParameters['id'] ?? '1',
