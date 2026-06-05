@@ -212,6 +212,7 @@ class WorkoutScreen extends ConsumerWidget {
           padding: EdgeInsets.only(bottom: AppSpacing.md),
           child: _buildDayRow(
             context,
+            ref,
             isDark,
             dayShort: dayShort,
             dayName: dayName,
@@ -239,6 +240,7 @@ class WorkoutScreen extends ConsumerWidget {
 
   Widget _buildDayRow(
     BuildContext context,
+    WidgetRef ref,
     bool isDark, {
     required String dayShort,
     required String dayName,
