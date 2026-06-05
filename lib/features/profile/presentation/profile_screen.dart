@@ -176,7 +176,7 @@ class ProfileScreen extends ConsumerWidget {
                     onTap: () {
                       HapticFeedback.lightImpact();
                       Share.share(
-                        '${pr.exerciseName}: ${pr.weight.toInt()}kg × ${pr.reps} reps 💪 via GymRatz',
+                        '🏆 New PR: ${pr.exerciseName} — ${pr.weight.toInt()} $userUnit × ${pr.reps} reps 💪 #GymRatz',
                       );
                     },
                     child: Icon(AppIcons.share2, size: 16.r, color: context.mutedForeground),
