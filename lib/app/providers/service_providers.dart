@@ -17,7 +17,10 @@ final workoutServiceProvider = Provider<WorkoutService>((ref) {
 });
 
 final programServiceProvider = Provider<ProgramService>((ref) {
-  return ProgramService(ref.watch(programRepositoryProvider));
+  return ProgramService(
+    ref.watch(programRepositoryProvider),
+    ref.watch(analyticsServiceProvider),
+  );
 });
 
 final achievementServiceProvider = Provider<AchievementService>((ref) {

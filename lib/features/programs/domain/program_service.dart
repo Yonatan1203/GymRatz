@@ -1,14 +1,16 @@
 import 'package:uuid/uuid.dart';
 
+import '../../../core/analytics_service.dart';
 import '../../../shared/models/program.dart';
 import '../../../shared/models/workout_day.dart';
 import '../data/program_repository.dart';
 
 class ProgramService {
   final ProgramRepository _repo;
+  final AnalyticsService _analyticsService;
   static const _uuid = Uuid();
 
-  ProgramService(this._repo);
+  ProgramService(this._repo, this._analyticsService);
 
   Future<Program> createProgram(
     String uid, {
@@ -30,6 +32,7 @@ class ProgramService {
     );
 
     await _repo.createProgram(uid, program);
+    _analyticsService.logProgramCreated(name).ignore();
     return program;
   }
 

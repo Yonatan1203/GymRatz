@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../core/analytics_service.dart';
 import '../../../shared/models/user_profile.dart';
 import '../../achievements/domain/achievement_service.dart';
 import '../../subscription/domain/entitlement_service.dart';
@@ -14,6 +15,7 @@ class AuthService {
   final UserRepository _userRepository;
   EntitlementService? _entitlementService;
   AchievementService? _achievementService;
+  AnalyticsService? _analyticsService;
 
   AuthService(this._authRepo, this._firestore, this._userRepository);
 
@@ -25,6 +27,11 @@ class AuthService {
   /// Set the achievement service for initializing achievements on sign-up.
   void setAchievementService(AchievementService service) {
     _achievementService = service;
+  }
+
+  /// Set the analytics service for logging auth events.
+  void setAnalyticsService(AnalyticsService service) {
+    _analyticsService = service;
   }
 
   Stream<User?> authStateChanges() => _authRepo.authStateChanges();
@@ -86,6 +93,8 @@ class AuthService {
       debugPrint('AUTH: RevenueCat login failed: $e');
     }
 
+    _analyticsService?.logSignUp('email').ignore();
+
     return user;
   }
 
@@ -106,6 +115,8 @@ class AuthService {
     } catch (e) {
       debugPrint('AUTH: RevenueCat login failed: $e');
     }
+
+    _analyticsService?.logLogin('email').ignore();
 
     return user;
   }
@@ -152,6 +163,10 @@ class AuthService {
       } catch (e) {
         debugPrint('AUTH: Failed to init achievements for Google user: $e');
       }
+
+      _analyticsService?.logSignUp('google').ignore();
+    } else {
+      _analyticsService?.logLogin('google').ignore();
     }
   }
 
@@ -197,6 +212,10 @@ class AuthService {
       } catch (e) {
         debugPrint('AUTH: Failed to init achievements for Apple user: $e');
       }
+
+      _analyticsService?.logSignUp('apple').ignore();
+    } else {
+      _analyticsService?.logLogin('apple').ignore();
     }
   }
 
