@@ -9,6 +9,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'app/app.dart';
+import 'core/constants.dart';
 import 'core/env.dart';
 import 'core/notification_service.dart';
 import 'core/pip_service.dart';
@@ -54,6 +55,9 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('Firebase init skipped: $e');
   }
+
+  // Populate appVersion from native package metadata.
+  await AppConstants.init();
 
   // Initialize RevenueCat before runApp so subscription providers work immediately.
   await _initRevenueCat();

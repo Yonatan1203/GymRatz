@@ -1,3 +1,5 @@
+import 'package:package_info_plus/package_info_plus.dart';
+
 /// App-wide constants and RevenueCat configuration.
 class AppConstants {
   AppConstants._();
@@ -35,8 +37,15 @@ class AppConstants {
     }
   }
 
-  // App info
-  static const String appVersion = '1.1.0';
+  // App info — populated at startup via AppConstants.init().
+  static String appVersion = '';
   static const String privacyPolicyUrl = 'https://yonatan1203.github.io/GymRatz/legal/privacy.html';
   static const String termsOfServiceUrl = 'https://yonatan1203.github.io/GymRatz/legal/terms.html';
+
+  /// Call once in main() before runApp to populate [appVersion] from the
+  /// platform's native package metadata (pubspec version field).
+  static Future<void> init() async {
+    final info = await PackageInfo.fromPlatform();
+    appVersion = info.version;
+  }
 }
