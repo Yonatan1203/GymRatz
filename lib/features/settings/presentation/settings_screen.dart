@@ -292,7 +292,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       children: [
                         MenuItemWidget(icon: AppIcons.user, label: 'Edit Profile', onTap: () => context.push('/profile/edit')),
                         Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
-                        MenuItemWidget(icon: AppIcons.shield, label: 'Privacy & Security', onTap: () => _showComingSoon('Privacy & Security')),
+                        MenuItemWidget(icon: AppIcons.shield, label: 'Privacy & Security', onTap: () => context.push('/settings/privacy')),
                       ],
                     ),
                   ),
@@ -481,6 +481,80 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+
+  Future<void> _handleExportData() async {
+    // Gate behind subscription
+    final isPro = ref.read(isProProvider).valueOrNull ?? false;
+    if (!isPro) {
+      if (!mounted) return;
+      context.push('/paywall');
+      return;
+    }
+
+    final uid = ref.read(currentUidProvider);
+    if (uid == null) return;
+
+    setState(() => _isExporting = true);
+
+    try {
+      final repo = ref.read(workoutRepositoryProvider);
+      final now = DateTime.now();
+      final from = now.subtract(const Duration(days: 90));
+      final workouts = await repo
+          .watchWorkouts(uid, from, now)
+          .first;
+
+      // Build CSV
+      final buf = StringBuffer();
+      buf.writeln('date,exercise,set,reps,weight');
+      for (final workout in workouts) {
+        final dateStr =
+            DateFormat('yyyy-MM-dd').format(workout.date);
+        for (final exercise in workout.exercises) {
+          var setIndex = 1;
+          for (final set in exercise.sets) {
+            if (!set.completed) continue;
+            buf.writeln(
+              '$dateStr,${_csvEscape(exercise.name)},$setIndex,${set.reps},${set.weight}',
+            );
+            setIndex++;
+          }
+        }
+      }
+
+      final bytes = utf8.encode(buf.toString());
+      final file = XFile.fromData(
+        bytes,
+        name: 'gymratz_export.csv',
+        mimeType: 'text/csv',
+      );
+
+      if (!mounted) return;
+      await Share.shareXFiles(
+        [file],
+        subject: 'GymRatz workout export',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
+  }
+
+  /// Escapes a CSV field by wrapping in quotes if it contains a comma,
+  /// quote, or newline.
+  String _csvEscape(String value) {
+    if (value.contains(',') ||
+        value.contains('"') ||
+        value.contains('\n')) {
+      return '"${value.replaceAll('"', '""')}"';
+    }
+    return value;
+  }
 
   Widget _buildCoachSection(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(userProfileProvider).valueOrNull;

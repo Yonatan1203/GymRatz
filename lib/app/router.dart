@@ -29,6 +29,7 @@ import '../features/exercises/presentation/exercise_library_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../features/settings/presentation/faq_screen.dart';
 import '../features/settings/presentation/about_screen.dart';
+import '../features/settings/presentation/privacy_security_screen.dart';
 import '../features/settings/presentation/progression_settings_screen.dart';
 import '../features/achievements/presentation/achievements_screen.dart';
 import '../features/favorites/presentation/favorites_screen.dart';
@@ -439,6 +440,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => slideTransitionPage(
           state: state,
           child: const ProgressionSettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/privacy',
+        name: 'privacy-security',
+        pageBuilder: (context, state) => slideTransitionPage(
+          state: state,
+          child: const PrivacySecurityScreen(),
         ),
       ),
       GoRoute(
