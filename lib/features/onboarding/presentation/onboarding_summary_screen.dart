@@ -39,7 +39,7 @@ class OnboardingSummaryScreen extends ConsumerWidget {
     return Scaffold(
       body: Column(
         children: [
-          const OnboardingProgressBar(currentStep: 7),
+          const OnboardingProgressBar(currentStep: 6),
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),

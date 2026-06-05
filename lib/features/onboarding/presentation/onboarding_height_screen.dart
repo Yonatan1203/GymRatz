@@ -361,7 +361,7 @@ class _OnboardingHeightScreenState
               final notifier = ref.read(onboardingProvider.notifier);
               notifier.setHeight(_heightCmForIndex(_selectedHeightIndex));
               notifier.setWeight(_selectedWeight);
-              context.push('/onboarding/health');
+              context.push('/onboarding/email');
             },
           ),
         ],
