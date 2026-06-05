@@ -18,6 +18,16 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.isAdmin == true;
     }
 
+    // Returns true when the user's subscription is NOT explicitly blocked.
+    // Fail-safe: missing or null subscriptionStatus means the webhook hasn't
+    // fired yet (e.g. new users, pre-webhook deploy) — we allow access so
+    // they are never accidentally locked out. Only "expired" or "cancelled"
+    // explicitly blocks write-heavy premium paths.
+    function hasActiveSubscription(uid) {
+      let status = get(/databases/$(database)/documents/users/$(uid)).data.subscriptionStatus;
+      return status == null || !(status == 'expired' || status == 'cancelled');
+    }
+
     match /users/{uid} {
       allow read: if isOwner(uid) || isCoachOf(uid) || isAdmin();
       allow create: if isOwner(uid);
@@ -26,7 +36,13 @@ service cloud.firestore {
 
       match /{subcollection}/{docId} {
         allow read: if isOwner(uid) || isCoachOf(uid) || isAdmin();
-        allow create, update: if isOwner(uid) || isCoachOf(uid);
+        // Write-heavy premium paths (workouts, programs) require an active
+        // subscription. The check is fail-safe: missing / null status → allowed.
+        allow create, update: if (isOwner(uid) || isCoachOf(uid))
+          && (
+            !(subcollection == 'workouts' || subcollection == 'programs')
+            || hasActiveSubscription(uid)
+          );
         allow delete: if isOwner(uid) || isCoachOf(uid);
       }
     }
