@@ -188,43 +188,88 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
 
   Widget _buildChart(BuildContext context) {
     final isDark = context.isDark;
-    final asyncData = ref.watch(weeklyVolumeProvider);
+    // Use per-exercise data when a specific exercise is selected; otherwise
+    // fall back to the weekly total volume loader so both are async-safe.
+    final isAll = _selectedExercise == 'All';
+    final chartData = ref.watch(exerciseChartDataProvider(_selectedExercise));
+    final weeklyAsync = ref.watch(weeklyVolumeProvider);
 
-    return asyncData.when(
-      loading: () => CustomCard(
-        child: SizedBox(
-          height: 220.h,
-          child: Center(child: CircularProgressIndicator(color: context.primaryColor)),
-        ),
-      ),
-      error: (_, _) => CustomCard(
-        child: SizedBox(
-          height: 220.h,
-          child: Center(
-            child: Text('Failed to load chart data', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+    if (isAll) {
+      return weeklyAsync.when(
+        loading: () => CustomCard(
+          child: SizedBox(
+            height: 220.h,
+            child: Center(child: CircularProgressIndicator(color: context.primaryColor)),
           ),
         ),
-      ),
-      data: (data) {
-        if (data.isEmpty || data.every((d) => (d['value'] as double) == 0)) {
-          return _buildEmptyChart(context, 'No workout data yet');
-        }
-        return _buildLineChart(context, data, isDark);
-      },
-    );
+        error: (_, _) => CustomCard(
+          child: SizedBox(
+            height: 220.h,
+            child: Center(
+              child: Text('Failed to load chart data', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+            ),
+          ),
+        ),
+        data: (data) {
+          if (data.isEmpty || data.every((d) => (d['value'] as double) == 0)) {
+            return _buildEmptyChart(context, 'No workout data yet');
+          }
+          return _buildLineChart(context, data, isDark, prValue: null, unit: 'vol');
+        },
+      );
+    }
+
+    // Per-exercise: synchronous (derived from recentWorkoutsProvider).
+    if (chartData.length < 2) {
+      final msg = chartData.isEmpty
+          ? 'No data for $_selectedExercise yet'
+          : 'Need at least 2 sessions to draw a graph';
+      return _buildEmptyChart(context, msg);
+    }
+
+    // Find the PR for the selected exercise to draw an annotation line.
+    final prs = ref.watch(personalRecordsProvider).valueOrNull ?? [];
+    final prForExercise = prs
+        .where((p) => p.exerciseName.toLowerCase() == _selectedExercise.toLowerCase())
+        .fold<double?>(null, (best, p) => best == null || p.weight > best ? p.weight : best);
+
+    final userUnit = ref.watch(userProfileProvider).valueOrNull?.unit ?? 'lbs';
+    return _buildLineChart(context, chartData, isDark, prValue: prForExercise, unit: userUnit);
   }
 
-  Widget _buildLineChart(BuildContext context, List<Map<String, dynamic>> data, bool isDark) {
+  Widget _buildLineChart(BuildContext context, List<Map<String, dynamic>> data, bool isDark, {required double? prValue, required String unit}) {
     final primary = isDark ? AppColors.darkPrimary : AppColors.lightPrimary;
+    final coral = context.coralColor;
     final values = data.map((d) => d['value'] as double).toList();
     final dataMin = values.reduce(min);
     final dataMax = values.reduce(max);
     final range = dataMax - dataMin;
-    final padding = range > 0 ? range * 0.2 : dataMax * 0.2;
+    final padding = range > 0 ? range * 0.2 : max(dataMax * 0.2, 5.0);
     final chartMin = max(0.0, dataMin - padding);
-    final chartMax = dataMax + padding;
+    // Ensure the PR line (if any) fits in the chart.
+    final chartMax = prValue != null && prValue > dataMax
+        ? prValue + padding
+        : dataMax + padding;
 
     final interval = max(1.0, ((chartMax - chartMin) / 4).roundToDouble());
+
+    // Build optional PR horizontal line.
+    final extraLines = <HorizontalLine>[];
+    if (prValue != null) {
+      extraLines.add(HorizontalLine(
+        y: prValue,
+        color: coral.withValues(alpha: 0.7),
+        strokeWidth: 1.5,
+        dashArray: [6, 4],
+        label: HorizontalLineLabel(
+          show: true,
+          alignment: Alignment.topRight,
+          padding: EdgeInsets.only(right: 4.w, bottom: 2.h),
+          style: AppTextStyles.caption.copyWith(color: coral, fontWeight: FontWeight.w600),
+          labelResolver: (_) => 'PR',
+        ),
+      ));
+    }
 
     return CustomCard(
       child: SizedBox(
@@ -241,26 +286,36 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 dashArray: [5, 5],
               ),
             ),
+            extraLinesData: ExtraLinesData(horizontalLines: extraLines),
             titlesData: FlTitlesData(
               leftTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
-                  reservedSize: 44,
+                  reservedSize: 48,
                   getTitlesWidget: (value, meta) {
                     if (value == meta.min || value == meta.max) return const SizedBox();
-                    return Text(Formatters.volume(value), style: AppTextStyles.caption.copyWith(color: context.mutedForeground));
+                    final label = unit == 'vol' ? Formatters.volume(value) : '${value.toInt()}';
+                    return Text(label, style: AppTextStyles.caption.copyWith(color: context.mutedForeground));
                   },
                 ),
               ),
               bottomTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
+                  // Show at most 6 labels to avoid crowding.
+                  interval: max(1, (data.length / 6).ceil()).toDouble(),
                   getTitlesWidget: (value, meta) {
                     final idx = value.toInt();
                     if (idx >= 0 && idx < data.length) {
                       return Padding(
                         padding: EdgeInsets.only(top: 8.h),
-                        child: Text(data[idx]['week'] as String, style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                        child: Text(
+                          data[idx]['week'] as String,
+                          style: AppTextStyles.caption.copyWith(
+                            color: context.mutedForeground,
+                            fontSize: 10.sp,
+                          ),
+                        ),
                       );
                     }
                     return const SizedBox();
@@ -274,7 +329,10 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             lineTouchData: LineTouchData(
               touchTooltipData: LineTouchTooltipData(
                 getTooltipItems: (spots) => spots.map((spot) {
-                  return LineTooltipItem(Formatters.volume(spot.y), AppTextStyles.caption.copyWith(color: Colors.white));
+                  final label = unit == 'vol'
+                      ? Formatters.volume(spot.y)
+                      : Formatters.weight(spot.y, unit);
+                  return LineTooltipItem(label, AppTextStyles.caption.copyWith(color: Colors.white));
                 }).toList(),
               ),
             ),

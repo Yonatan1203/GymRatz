@@ -262,7 +262,6 @@ final weeklyProgramProgressProvider = Provider<({int completed, int scheduled})>
   final weekStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: offsetDays));
   final weekEnd = weekStart.add(const Duration(days: 7));
 
-  // Count workouts completed this week for the active program.
   final completedThisWeek = recentWorkouts.where((w) {
     return w.status == WorkoutStatus.completed &&
         w.programId == activeProgram.id &&
@@ -270,7 +269,6 @@ final weeklyProgramProgressProvider = Provider<({int completed, int scheduled})>
         w.date.isBefore(weekEnd);
   }).length;
 
-  // Count scheduled workout-days this week.
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   final scheduledDayNames = activeProgram.days.map((d) => d.dayOfWeek).toSet();
   int scheduledThisWeek = 0;
@@ -281,4 +279,36 @@ final weeklyProgramProgressProvider = Provider<({int completed, int scheduled})>
   }
 
   return (completed: completedThisWeek, scheduled: scheduledThisWeek);
+});
+
+/// Per-exercise weight history for the progress chart.
+/// Returns a list of {date, value} sorted ascending by date.
+/// When [exerciseName] is 'All', returns total weekly volume (same as
+/// weeklyVolumeProvider). When a specific exercise is selected, returns the
+/// per-session max weight for that exercise derived from recentWorkoutsProvider.
+final exerciseChartDataProvider =
+    Provider.family<List<Map<String, dynamic>>, String>((ref, exerciseName) {
+  if (exerciseName == 'All') {
+    return ref.watch(weeklyVolumeProvider).valueOrNull ?? [];
+  }
+
+  final workouts = ref.watch(recentWorkoutsProvider).valueOrNull ?? [];
+  final points = <Map<String, dynamic>>[];
+  for (final w in workouts.reversed) {
+    if (w.status != WorkoutStatus.completed) continue;
+    final exerciseSets = w.exercises
+        .where((e) => e.name.toLowerCase() == exerciseName.toLowerCase())
+        .expand((e) => e.sets)
+        .where((s) => s.weight > 0)
+        .toList();
+    if (exerciseSets.isEmpty) continue;
+    final maxWeight = exerciseSets.map((s) => s.weight).reduce((a, b) => a > b ? a : b);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    points.add({
+      'week': '${months[w.date.month - 1]} ${w.date.day}',
+      'value': maxWeight,
+      'date': w.date,
+    });
+  }
+  return points;
 });
