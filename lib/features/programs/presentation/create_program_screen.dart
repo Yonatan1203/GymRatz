@@ -108,6 +108,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
             restSeconds: ex.restSeconds,
             progressionType: ex.progressionMode,
             durationMinutes: ex.durationMinutes,
+            isTimeBased: ex.isTimeBased,
           )).toList(),
         );
       }).toList();
@@ -325,6 +326,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
               equipment: ex.equipment,
               equipmentType: ex.equipmentType,
               durationMinutes: ex.durationMinutes,
+              isTimeBased: ex.isTimeBased,
             );
           }).toList(),
         );
@@ -785,12 +787,24 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                 ],
               )
             else ...[
-              // Strength exercise: show sets/reps/rir/rest
+              // Reps / Time toggle (GYM-122)
+              Row(
+                children: [
+                  _modeToggleButton(context, 'Reps', !ex.isTimeBased, () => setState(() => ex.isTimeBased = false)),
+                  SizedBox(width: 8.w),
+                  _modeToggleButton(context, 'Time', ex.isTimeBased, () => setState(() => ex.isTimeBased = true)),
+                ],
+              ),
+              SizedBox(height: 8.h),
+              // Strength exercise: show sets/reps(or duration)/rir/rest
               Row(
                 children: [
                   _configSheetField(context, ex, 'Sets', '${ex.sets}', 60.w),
                   SizedBox(width: 8.w),
-                  _configSheetField(context, ex, 'Reps', Formatters.reps(ex.repMin, ex.repMax), 80.w),
+                  if (ex.isTimeBased)
+                    _configSheetField(context, ex, 'Sec', '${ex.setDurationSeconds}s', 80.w)
+                  else
+                    _configSheetField(context, ex, 'Reps', Formatters.reps(ex.repMin, ex.repMax), 80.w),
                   SizedBox(width: 8.w),
                   _configSheetField(context, ex, 'RIR', '${ex.targetRir}', 50.w),
                   SizedBox(width: 8.w),
@@ -826,6 +840,28 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Small toggle button for Reps / Time mode selection (GYM-122).
+  Widget _modeToggleButton(BuildContext context, String label, bool isActive, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          color: isActive ? context.primaryColor : context.mutedColor,
+          borderRadius: AppRadius.borderFull,
+          border: Border.all(color: isActive ? context.primaryColor : context.borderColor),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.caption.copyWith(
+            color: isActive ? Colors.white : context.mutedForeground,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+          ),
         ),
       ),
     );
@@ -932,6 +968,13 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
           const ['10', '15', '20', '25', '30', '35', '40', '45', '50', '60', '75', '90'],
           (v) => setState(() => ex.durationMinutes = int.parse(v)),
           displayTransform: (v) => '$v min',
+        );
+      case 'Sec':
+        _showConfigSheet(
+          context, 'Set Duration (seconds)', '${ex.setDurationSeconds}s',
+          const ['10', '15', '20', '30', '40', '45', '60', '90', '120'],
+          (v) => setState(() => ex.setDurationSeconds = int.parse(v)),
+          displayTransform: (v) => '${v}s',
         );
     }
   }
@@ -1474,6 +1517,10 @@ class _ExerciseConfig {
   ProgressionMode progressionType;
   /// Duration in minutes for cardio exercises.
   int? durationMinutes;
+  /// When true, sets are logged by duration (seconds) rather than reps.
+  bool isTimeBased;
+  /// Default duration in seconds for time-based sets.
+  int setDurationSeconds;
 
   _ExerciseConfig({
     required this.id,
@@ -1488,5 +1535,7 @@ class _ExerciseConfig {
     this.restSeconds = 120,
     this.progressionType = ProgressionMode.hypertrophy,
     this.durationMinutes,
+    this.isTimeBased = false,
+    this.setDurationSeconds = 30,
   });
 }
