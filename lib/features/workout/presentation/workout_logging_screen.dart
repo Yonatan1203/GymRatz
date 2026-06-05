@@ -158,6 +158,14 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
   // Persistent controllers keyed by 'exIdx-setIdx-field'
   final Map<String, TextEditingController> _controllers = {};
 
+  /// Formats a weight value for display in the text field.
+  /// Shows integers without decimals (80), fractional values with one decimal (82.5).
+  /// Returns empty string for 0 so the hint text shows instead.
+  static String _weightText(double weight) {
+    if (weight <= 0) return '';
+    return weight % 1 == 0 ? '${weight.toInt()}' : weight.toStringAsFixed(1);
+  }
+
   TextEditingController _getController(int exIdx, int setIdx, String field, String initialValue) {
     final key = '$exIdx-$setIdx-$field';
     if (!_controllers.containsKey(key)) {
@@ -175,7 +183,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
       for (int setIdx = 0; setIdx < _sets[exIdx].length; setIdx++) {
         final s = _sets[exIdx][setIdx];
         _getController(exIdx, setIdx, 'reps', s.reps > 0 ? '${s.reps}' : '');
-        _getController(exIdx, setIdx, 'weight', s.weight > 0 ? '${s.weight.toInt()}' : '');
+        _getController(exIdx, setIdx, 'weight', _weightText(s.weight));
         _getController(exIdx, setIdx, 'rir', (s.rir ?? 0) > 0 ? '${s.rir}' : '');
         _getController(exIdx, setIdx, 'duration', s.durationSeconds > 0 ? '${s.durationSeconds}' : '');
       }
@@ -1315,10 +1323,10 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
                 ? _numField(context, exIdx, sIdx, 'duration', 'sec')
                 : _numField(context, exIdx, sIdx, 'reps', 'Reps'),
           ),
-          // Weight field with BW+ label for bodyweight exercises (GYM-121)
+          // Weight field with +/- stepper (1.25 increments) and decimal keyboard
           Expanded(
             flex: 3,
-            child: _numField(context, exIdx, sIdx, 'weight', isBw ? '+$unit' : unit),
+            child: _weightStepperField(context, exIdx, sIdx, isBw: isBw, unit: unit),
           ),
           Expanded(
             flex: 2,
@@ -1383,13 +1391,13 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     );
   }
 
-  Widget _numField(BuildContext context, int exIdx, int setIdx, String field, String hint, {TextInputAction? textInputAction}) {
+  Widget _numField(BuildContext context, int exIdx, int setIdx, String field, String hint, {TextInputAction? textInputAction, TextInputType? keyboardType}) {
     final s = _sets[exIdx][setIdx];
     String initialValue;
     if (field == 'reps') {
       initialValue = s.reps > 0 ? '${s.reps}' : '';
     } else if (field == 'weight') {
-      initialValue = s.weight > 0 ? '${s.weight.toInt()}' : '';
+      initialValue = _weightText(s.weight);
     } else if (field == 'duration') {
       initialValue = s.durationSeconds > 0 ? '${s.durationSeconds}' : '';
     } else {
@@ -1404,7 +1412,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
         child: TextField(
           controller: controller,
           textAlign: TextAlign.center,
-          keyboardType: TextInputType.number,
+          keyboardType: keyboardType ?? TextInputType.number,
           textInputAction: textInputAction ?? TextInputAction.next,
           style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
           onChanged: (value) => _updateSet(exIdx, setIdx, field, value),
@@ -1421,6 +1429,47 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
         ),
       ),
     );
+  }
+
+  Widget _weightStepperField(BuildContext context, int exIdx, int sIdx, {required bool isBw, required String unit}) {
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: () => _adjustWeight(exIdx, sIdx, -1.25),
+          child: SizedBox(
+            width: 20.r,
+            height: 36.h,
+            child: Center(
+              child: Text('−', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground, fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ),
+        Expanded(
+          child: _numField(context, exIdx, sIdx, 'weight', isBw ? '+$unit' : unit,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false)),
+        ),
+        GestureDetector(
+          onTap: () => _adjustWeight(exIdx, sIdx, 1.25),
+          child: SizedBox(
+            width: 20.r,
+            height: 36.h,
+            child: Center(
+              child: Text('+', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground, fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _adjustWeight(int exIdx, int sIdx, double delta) {
+    final current = _sets[exIdx][sIdx].weight;
+    final raw = (current + delta).clamp(0.0, 999.0);
+    // Round to nearest 0.01 to prevent floating-point drift (e.g. 1.25+1.25 = 2.5000000001)
+    final rounded = (raw * 100).round() / 100.0;
+    final text = _weightText(rounded);
+    _controllers['$exIdx-$sIdx-weight']?.text = text;
+    _updateSet(exIdx, sIdx, 'weight', text);
   }
 
   Widget _buildCompletionScreen(BuildContext context) {

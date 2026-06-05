@@ -177,8 +177,12 @@ class WorkoutService {
       sets: List.generate(
         numSets,
         (i) {
-          // Use per-set history weight where available; fall back to prefillWeight for new sets.
-          final weight = (lastExercise != null && i < lastExercise.sets.length)
+          // When a PO suggestion is active, use its weight for every set.
+          // Only fall back to per-set history when there is no suggestion —
+          // otherwise the history weights silently override the PO engine output.
+          final weight = (suggestion == null &&
+                  lastExercise != null &&
+                  i < lastExercise.sets.length)
               ? lastExercise.sets[i].weight
               : prefillWeight;
 
