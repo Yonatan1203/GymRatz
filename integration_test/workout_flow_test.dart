@@ -18,7 +18,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:gymratz/core/analytics_service.dart';
 import 'package:gymratz/features/achievements/domain/achievement_service.dart';
 import 'package:gymratz/features/progression/data/progression_repository.dart';
-import 'package:gymratz/features/progression/domain/models/progression_history.dart';
 import 'package:gymratz/features/progress/data/pr_repository.dart';
 import 'package:gymratz/features/workout/data/workout_repository.dart';
 import 'package:gymratz/features/workout/domain/workout_service.dart';
