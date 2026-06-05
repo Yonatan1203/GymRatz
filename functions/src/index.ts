@@ -11,5 +11,8 @@ export {onUserRoleUpdate} from "./auth/onUserRoleUpdate";
 // Firestore triggers
 export {onWorkoutComplete} from "./triggers/onWorkoutComplete";
 
+// Scheduled jobs
+export {scheduledFirestoreBackup} from "./backup/scheduledBackup";
+
 // HTTP endpoints (post-beta)
 // export {revenueCatWebhook} from "./webhooks/revenueCatWebhook";

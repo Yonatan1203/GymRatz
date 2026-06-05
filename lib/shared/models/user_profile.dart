@@ -30,6 +30,12 @@ class UserProfile {
   final DateTime? updatedAt;
   final bool weekStartsOnMonday;
 
+  /// Schema version for forward-compatible data migrations.
+  /// Increment this when the UserProfile structure changes in a
+  /// way that requires a migration step on existing documents.
+  /// Default is 1 (the initial schema version).
+  final int schemaVersion;
+
   const UserProfile({
     this.uid,
     required this.name,
@@ -55,6 +61,7 @@ class UserProfile {
     this.createdAt,
     this.updatedAt,
     this.weekStartsOnMonday = true,
+    this.schemaVersion = 1,
   });
 
   Map<String, dynamic> toJson() => {
@@ -82,6 +89,7 @@ class UserProfile {
         'createdAt': createdAt?.toIso8601String(),
         'updatedAt': updatedAt?.toIso8601String(),
         'weekStartsOnMonday': weekStartsOnMonday,
+        'schemaVersion': schemaVersion,
       };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -124,6 +132,7 @@ class UserProfile {
             ? DateTime.tryParse(json['updatedAt'] as String)
             : null,
         weekStartsOnMonday: json['weekStartsOnMonday'] as bool? ?? true,
+        schemaVersion: json['schemaVersion'] as int? ?? 1,
       );
 
   /// Maps the user's onboarding `primaryGoal` to a default `ProgressionMode`
@@ -173,6 +182,7 @@ class UserProfile {
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? weekStartsOnMonday,
+    int? schemaVersion,
   }) =>
       UserProfile(
         uid: uid ?? this.uid,
@@ -199,5 +209,6 @@ class UserProfile {
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
         weekStartsOnMonday: weekStartsOnMonday ?? this.weekStartsOnMonday,
+        schemaVersion: schemaVersion ?? this.schemaVersion,
       );
 }
