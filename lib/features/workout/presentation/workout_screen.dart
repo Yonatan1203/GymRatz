@@ -13,7 +13,6 @@ import '../../../shared/models/workout.dart';
 import '../../../shared/models/workout_day.dart';
 import '../../../shared/models/enums.dart';
 import '../../../shared/utils/extensions.dart';
-import '../../../shared/utils/platform_adapter.dart';
 import '../../../shared/widgets/custom_badge.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_card.dart';
@@ -227,11 +226,32 @@ class WorkoutScreen extends ConsumerWidget {
       );
     }
 
+    // Build dayDates map for week-export
+    final dayDates = <String, DateTime>{};
+    for (int i = 0; i < 7; i++) {
+      dayDates[weekDays[i]] = weekStart.add(Duration(days: i));
+    }
+    final workoutDays = days.where((d) => dayDates.containsKey(d.dayOfWeek)).toList();
+
     return Padding(
       padding: EdgeInsets.all(AppSpacing.screenPadding),
       child: StaggeredList(
         children: [
           ...dayRows,
+          SizedBox(height: AppSpacing.md),
+          CustomButton(
+            text: 'Add Week to Calendar',
+            variant: ButtonVariant.outline,
+            icon: AppIcons.calendar,
+            onPressed: workoutDays.isEmpty
+                ? null
+                : () async {
+                    await CalendarSyncService.addWeekToCalendar(
+                      days: workoutDays,
+                      dayDates: dayDates,
+                    );
+                  },
+          ),
           SizedBox(height: AppSpacing.xxl),
         ],
       ),
@@ -254,12 +274,7 @@ class WorkoutScreen extends ConsumerWidget {
     final isRestDay = workoutDay == null;
     final isMissed = isPast && !isRestDay && !isCompleted;
 
-    // GYM-63: long-press opens day options bottom sheet
-    return GestureDetector(
-      onLongPress: workoutDay == null
-          ? null
-          : () => _showDayOptionsSheet(context, ref, workoutDay, date, dayName, isToday),
-      child: ScaleTap(
+    return ScaleTap(
       onTap: isRestDay
           ? null
           : () => _onDayTapped(context, dayName, isToday, workoutDay),
@@ -324,9 +339,23 @@ class WorkoutScreen extends ConsumerWidget {
             // Status badge
             if (!isRestDay)
               _buildStatusBadge(context, isCompleted: isCompleted, isMissed: isMissed, isToday: isToday),
+            // Calendar icon
+            if (!isRestDay) ...[
+              SizedBox(width: AppSpacing.sm),
+              GestureDetector(
+                onTap: () => CalendarSyncService.addWorkoutToCalendar(
+                  day: workoutDay,
+                  date: date,
+                ),
+                child: Icon(
+                  AppIcons.calendar,
+                  size: 18.r,
+                  color: context.mutedForeground,
+                ),
+              ),
+            ],
           ],
         ),
-      ),
       ),
     );
   }
@@ -359,93 +388,6 @@ class WorkoutScreen extends ConsumerWidget {
       text: 'Scheduled',
       backgroundColor: context.mutedColor,
       textColor: context.mutedForeground,
-    );
-  }
-
-  // GYM-63: day options bottom sheet with Start Workout, Mark as Rest, View History, Add to Calendar
-  void _showDayOptionsSheet(
-    BuildContext context,
-    WidgetRef ref,
-    WorkoutDay workoutDay,
-    DateTime date,
-    String dayName,
-    bool isToday,
-  ) {
-    PlatformAdapter.hapticMedium();
-    showModalBottomSheet<void>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (sheetCtx) {
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 8.h),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 36.w,
-                  height: 4.h,
-                  margin: EdgeInsets.only(bottom: 12.h),
-                  decoration: BoxDecoration(
-                    color: Theme.of(sheetCtx).dividerColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  child: Text(
-                    workoutDay.name,
-                    style: AppTextStyles.h4.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                ListTile(
-                  leading: Icon(AppIcons.play, size: 20.r),
-                  title: Text('Start Workout', style: AppTextStyles.bodySmall),
-                  onTap: () {
-                    Navigator.of(sheetCtx).pop();
-                    _onDayTapped(context, dayName, isToday, workoutDay);
-                  },
-                ),
-                ListTile(
-                  leading: Icon(AppIcons.moon, size: 20.r),
-                  title: Text('Mark as Rest', style: AppTextStyles.bodySmall),
-                  onTap: () {
-                    Navigator.of(sheetCtx).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${workoutDay.name} marked as rest day')),
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: Icon(AppIcons.clock, size: 20.r),
-                  title: Text('View Day History', style: AppTextStyles.bodySmall),
-                  onTap: () {
-                    Navigator.of(sheetCtx).pop();
-                    context.push('/progress');
-                  },
-                ),
-                ListTile(
-                  leading: Icon(AppIcons.calendar, size: 20.r),
-                  title: Text('Add to Calendar', style: AppTextStyles.bodySmall),
-                  onTap: () {
-                    Navigator.of(sheetCtx).pop();
-                    CalendarSyncService.addWorkoutToCalendar(
-                      day: workoutDay,
-                      date: date,
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Opening calendar...')),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 
