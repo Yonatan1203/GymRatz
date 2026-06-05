@@ -322,6 +322,14 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // ─── Standalone Screens (no bottom nav) ───
       GoRoute(
+        path: '/workout/free',
+        name: 'free-workout',
+        pageBuilder: (context, state) => slideTransitionPage(
+          state: state,
+          child: const WorkoutLoggingScreen(isFreeWorkout: true),
+        ),
+      ),
+      GoRoute(
         path: '/workout/:dayId',
         name: 'workout-logging',
         pageBuilder: (context, state) => slideTransitionPage(

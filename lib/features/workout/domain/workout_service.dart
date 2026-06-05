@@ -34,6 +34,25 @@ class WorkoutService {
     this._analyticsService,
   );
 
+  /// Create a new free-form workout not tied to any program day.
+  ///
+  /// Returns a [Workout] with empty programId and workoutDayId so the caller
+  /// (WorkoutLoggingScreen in free-workout mode) can add exercises ad-hoc.
+  Future<Workout> startFreeWorkout(String uid) async {
+    _analyticsService
+        .logWorkoutStarted(programId: '', workoutDayId: '')
+        .ignore();
+
+    return Workout(
+      id: _uuid.v4(),
+      programId: '',
+      workoutDayId: '',
+      date: DateTime.now(),
+      status: WorkoutStatus.inProgress,
+      exercises: [],
+    );
+  }
+
   /// Create a new workout from a program day template.
   ///
   /// Pre-fills weights and reps from the PO engine's saved suggestions.

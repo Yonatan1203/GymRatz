@@ -36,7 +36,15 @@ import '../domain/workout_summary.dart';
 
 class WorkoutLoggingScreen extends ConsumerStatefulWidget {
   final String dayId;
-  const WorkoutLoggingScreen({super.key, required this.dayId});
+  /// When true the screen operates in free-workout mode: no program day is
+  /// loaded; the user builds the workout from scratch by adding exercises.
+  final bool isFreeWorkout;
+
+  const WorkoutLoggingScreen({
+    super.key,
+    this.dayId = '',
+    this.isFreeWorkout = false,
+  });
 
   @override
   ConsumerState<WorkoutLoggingScreen> createState() => _WorkoutLoggingScreenState();
@@ -71,6 +79,9 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
 
   /// Save current workout state after each set update
   Future<void> _saveWorkoutState() async {
+    // Skip persistence for free workouts — they have no dayId anchor and
+    // recovery would require selecting exercises again anyway.
+    if (widget.isFreeWorkout) return;
     final prefs = await SharedPreferences.getInstance();
     final data = {
       'dayId': widget.dayId,
@@ -194,8 +205,10 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     if (_initialized) return;
     _initialized = true;
 
+    // Free workouts use a sentinel dayId; look up any existing free session.
+    final sessionDayId = widget.isFreeWorkout ? '__free__' : widget.dayId;
     final existingSession = ref.read(activeWorkoutSessionProvider.notifier)
-        .getSessionForDay(widget.dayId);
+        .getSessionForDay(sessionDayId);
 
     if (existingSession != null) {
       _startTime = existingSession.startTime;
@@ -226,87 +239,102 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     } else {
       _startTime = DateTime.now();
 
-      final activeProgram = ref.read(activeProgramProvider).valueOrNull;
-      final matchingDay = activeProgram?.days
-          .where((d) => d.id == widget.dayId)
-          .toList();
-
-      if (matchingDay != null && matchingDay.isNotEmpty) {
-        final day = matchingDay.first;
-        _workoutName = day.name;
-        // Start with template defaults synchronously (weight=0).
-        _exercises = day.exercises.map((pe) => WorkoutExercise(
-          name: pe.name,
-          equipment: pe.equipment ?? 'Barbell',
-          equipmentType: pe.equipmentType,
-          exerciseType: pe.isTimeBased ? ExerciseType.timed : ExerciseType.reps,
-          repRange: Formatters.reps(pe.repMin, pe.repMax),
-          targetRir: pe.targetRir,
-          restSeconds: pe.restSeconds,
-          sets: List.generate(pe.sets, (_) => const WorkoutSet()),
-        )).toList();
-        _sets = _exercises.map((e) => List<WorkoutSet>.from(e.sets)).toList();
-
-        // Async: load PO-prefilled exercises from WorkoutService.
-        final uid = ref.read(currentUidProvider);
-        if (uid != null) {
-          _loadingExercises = true;
-          Future(() async {
-            try {
-              final workout = await ref.read(workoutServiceProvider).startWorkout(
-                uid: uid,
-                program: activeProgram!,
-                day: day,
-              );
-              if (mounted) {
-                setState(() {
-                  _exercises = List.from(workout.exercises);
-                  _sets = _exercises.map((e) => List<WorkoutSet>.from(e.sets)).toList();
-                  _loadingExercises = false;
-                  _rebuildAllControllers();
-                });
-                ref.read(activeWorkoutSessionProvider.notifier).startSession(
-                  dayId: widget.dayId,
-                  workoutName: _workoutName,
-                  exercises: _exercises,
-                  sets: _sets,
-                );
-              }
-            } catch (e, st) {
-              // PO prefill failed — keep template defaults already set above.
-              // Log so a failing read (e.g. a missing Firestore index) is
-              // visible instead of silently leaving weights empty.
-              debugPrint('startWorkout prefill failed, using template defaults: $e');
-              FirebaseCrashlytics.instance.recordError(
-                e, st,
-                reason: 'workout weight prefill failed',
-                fatal: false,
-              );
-              if (mounted) {
-                setState(() => _loadingExercises = false);
-                ref.read(activeWorkoutSessionProvider.notifier).startSession(
-                  dayId: widget.dayId,
-                  workoutName: _workoutName,
-                  exercises: _exercises,
-                  sets: _sets,
-                );
-              }
-            }
-          });
-        } else {
-          // No uid — use template defaults.
-          Future(() {
-            ref.read(activeWorkoutSessionProvider.notifier).startSession(
-              dayId: widget.dayId,
-              workoutName: _workoutName,
-              exercises: _exercises,
-              sets: _sets,
-            );
-          });
-        }
-      } else {
+      if (widget.isFreeWorkout) {
+        // Free workout — start empty; user adds exercises via the FAB.
+        _workoutName = 'Free Workout';
         _exercises = [];
         _sets = [];
+        Future(() {
+          ref.read(activeWorkoutSessionProvider.notifier).startSession(
+            dayId: '__free__',
+            workoutName: _workoutName,
+            exercises: _exercises,
+            sets: _sets,
+          );
+        });
+      } else {
+        final activeProgram = ref.read(activeProgramProvider).valueOrNull;
+        final matchingDay = activeProgram?.days
+            .where((d) => d.id == widget.dayId)
+            .toList();
+
+        if (matchingDay != null && matchingDay.isNotEmpty) {
+          final day = matchingDay.first;
+          _workoutName = day.name;
+          // Start with template defaults synchronously (weight=0).
+          _exercises = day.exercises.map((pe) => WorkoutExercise(
+            name: pe.name,
+            equipment: pe.equipment ?? 'Barbell',
+            equipmentType: pe.equipmentType,
+            exerciseType: pe.isTimeBased ? ExerciseType.timed : ExerciseType.reps,
+            repRange: Formatters.reps(pe.repMin, pe.repMax),
+            targetRir: pe.targetRir,
+            restSeconds: pe.restSeconds,
+            sets: List.generate(pe.sets, (_) => const WorkoutSet()),
+          )).toList();
+          _sets = _exercises.map((e) => List<WorkoutSet>.from(e.sets)).toList();
+
+          // Async: load PO-prefilled exercises from WorkoutService.
+          final uid = ref.read(currentUidProvider);
+          if (uid != null) {
+            _loadingExercises = true;
+            Future(() async {
+              try {
+                final workout = await ref.read(workoutServiceProvider).startWorkout(
+                  uid: uid,
+                  program: activeProgram!,
+                  day: day,
+                );
+                if (mounted) {
+                  setState(() {
+                    _exercises = List.from(workout.exercises);
+                    _sets = _exercises.map((e) => List<WorkoutSet>.from(e.sets)).toList();
+                    _loadingExercises = false;
+                    _rebuildAllControllers();
+                  });
+                  ref.read(activeWorkoutSessionProvider.notifier).startSession(
+                    dayId: widget.dayId,
+                    workoutName: _workoutName,
+                    exercises: _exercises,
+                    sets: _sets,
+                  );
+                }
+              } catch (e, st) {
+                // PO prefill failed — keep template defaults already set above.
+                // Log so a failing read (e.g. a missing Firestore index) is
+                // visible instead of silently leaving weights empty.
+                debugPrint('startWorkout prefill failed, using template defaults: $e');
+                FirebaseCrashlytics.instance.recordError(
+                  e, st,
+                  reason: 'workout weight prefill failed',
+                  fatal: false,
+                );
+                if (mounted) {
+                  setState(() => _loadingExercises = false);
+                  ref.read(activeWorkoutSessionProvider.notifier).startSession(
+                    dayId: widget.dayId,
+                    workoutName: _workoutName,
+                    exercises: _exercises,
+                    sets: _sets,
+                  );
+                }
+              }
+            });
+          } else {
+            // No uid — use template defaults.
+            Future(() {
+              ref.read(activeWorkoutSessionProvider.notifier).startSession(
+                dayId: widget.dayId,
+                workoutName: _workoutName,
+                exercises: _exercises,
+                sets: _sets,
+              );
+            });
+          }
+        } else {
+          _exercises = [];
+          _sets = [];
+        }
       }
       _expanded = {0};
     }
@@ -326,7 +354,9 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       if (mounted) setState(() => _elapsedSeconds++);
     });
 
-    // Check for recoverable workout state from a previous session
+    // Check for recoverable workout state from a previous session.
+    // Free workouts are never persisted, so skip the recovery check.
+    if (widget.isFreeWorkout) return;
     _checkForRecovery().then((hasRecovery) {
       if (hasRecovery && mounted && existingSession == null) {
         showDialog(
@@ -362,6 +392,9 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     final currentExercise = _expanded.isNotEmpty && _expanded.first < _exercises.length
         ? _exercises[_expanded.first].name
         : '';
+    // Ensure a session exists before syncing (may not be initialized yet for
+    // free workouts where the session is started asynchronously).
+    if (ref.read(activeWorkoutSessionProvider) == null) return;
     ref.read(activeWorkoutSessionProvider.notifier).syncState(
       exercises: List.from(_exercises),
       sets: _sets.map((s) => List<WorkoutSet>.from(s)).toList(),
@@ -509,10 +542,16 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     final unit = profile?.unit ?? 'lbs';
 
     final exercises = _buildExercisesWithSets();
+    // Free workouts have no program/day linkage; store empty strings so
+    // completeWorkout (and the Firestore repo) can accept the record.
+    final programId = widget.isFreeWorkout
+        ? ''
+        : (ref.read(activeProgramProvider).valueOrNull?.id ?? '');
+    final workoutDayId = widget.isFreeWorkout ? '' : widget.dayId;
     final workout = Workout(
       id: const Uuid().v4(),
-      programId: ref.read(activeProgramProvider).valueOrNull?.id,
-      workoutDayId: widget.dayId,
+      programId: programId,
+      workoutDayId: workoutDayId,
       date: _startTime,
       status: WorkoutStatus.completed,
       exercises: exercises,
@@ -748,6 +787,8 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                   ),
                   children: [
                     if (_showFirstTimeTips) _buildFirstTimeTips(context, isDark),
+                    if (widget.isFreeWorkout && exercises.isEmpty)
+                      _buildFreeWorkoutEmptyState(context),
                     ...List.generate(exercises.length, (i) => _buildExerciseCard(context, isDark, i, exercises[i])),
                     CustomCard(
                       child: Column(
@@ -916,6 +957,31 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
             _tipRow(context, AppIcons.timer, 'Rest timer starts automatically after each set'),
             SizedBox(height: 8.h),
             _tipRow(context, AppIcons.trendingUp, 'Weights auto-adjust next session based on performance'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFreeWorkoutEmptyState(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: CustomCard(
+        padding: EdgeInsets.all(24.r),
+        child: Column(
+          children: [
+            Icon(AppIcons.dumbbell, size: 40.r, color: context.mutedForeground),
+            SizedBox(height: 16.h),
+            Text(
+              'Build Your Workout',
+              style: AppTextStyles.h3.copyWith(color: context.foreground, fontWeight: FontWeight.w600),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'Tap "+ Add Exercise" below to start adding exercises.',
+              style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),
