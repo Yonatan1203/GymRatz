@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:uuid/uuid.dart';
@@ -9,6 +10,7 @@ import '../../../shared/models/enums.dart';
 import '../../../shared/models/weight_entry.dart';
 import '../../../shared/utils/extensions.dart';
 import '../../../shared/utils/platform_adapter.dart';
+import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_card.dart';
 import '../../../shared/widgets/custom_input.dart';
 import '../../../shared/widgets/gradient_header.dart';
@@ -86,11 +88,98 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     });
   }
 
+  void _showQuickWeightSheet() {
+    final userProfile = ref.read(userProfileProvider).valueOrNull;
+    final unit = userProfile?.unit ?? 'lbs';
+    final quickWeightController = TextEditingController();
+
+    HapticFeedback.lightImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.screenPadding,
+            AppSpacing.xl,
+            AppSpacing.screenPadding,
+            MediaQuery.of(sheetContext).viewInsets.bottom + AppSpacing.xl,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Quick Log Weight',
+                style: AppTextStyles.h4.copyWith(
+                  color: context.foreground,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: AppSpacing.xl),
+              StatefulBuilder(
+                builder: (ctx, setSheetState) {
+                  return Column(
+                    children: [
+                      CustomInput(
+                        controller: quickWeightController,
+                        label: 'Weight ($unit)',
+                        hint: 'e.g., 175',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        onChanged: (_) => setSheetState(() {}),
+                      ),
+                      SizedBox(height: AppSpacing.xl),
+                      CustomButton(
+                        text: 'Save',
+                        variant: ButtonVariant.gradient,
+                        onPressed: double.tryParse(quickWeightController.text) != null
+                            ? () async {
+                                final weight = double.tryParse(quickWeightController.text);
+                                if (weight != null) {
+                                  final uid = ref.read(currentUidProvider);
+                                  if (uid != null) {
+                                    final entry = WeightEntry(
+                                      id: const Uuid().v4(),
+                                      date: DateTime.now(),
+                                      weight: weight,
+                                      unit: unit,
+                                    );
+                                    await ref
+                                        .read(weightEntryRepositoryProvider)
+                                        .addWeightEntry(uid, entry);
+                                  }
+                                }
+                                if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+                              }
+                            : null,
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDark;
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showQuickWeightSheet,
+        backgroundColor: context.primaryColor,
+        foregroundColor: Colors.white,
+        tooltip: 'Quick log weight',
+        child: const Icon(Icons.monitor_weight_outlined),
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -286,14 +375,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
         final workoutStatus = calendarData[dayNumber];
         int statusCode = 0;
+        String statusLabel = '';
         if (workoutStatus == WorkoutStatus.completed) {
           statusCode = 1;
+          statusLabel = ', workout completed';
         } else if (workoutStatus == WorkoutStatus.scheduled) {
           statusCode = 2;
+          statusLabel = ', workout scheduled';
         } else if (workoutStatus == WorkoutStatus.missed) {
           statusCode = 3;
+          statusLabel = ', workout missed';
         }
-
 
         Color bgColor;
         Color textColor;
@@ -331,26 +423,30 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           border = Border.all(color: context.primaryColor.withValues(alpha:0.2));
         }
 
-        return ScaleTap(
-          onTap: () {
-            PlatformAdapter.hapticSelection();
-            setState(() {
-              _selectedDay = _selectedDay == dayNumber ? null : dayNumber;
-            });
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: AppRadius.borderLg,
-              border: border,
-            ),
-            child: Center(
-              child: Text(
-                '$dayNumber',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
-                  color: textColor,
+        return Semantics(
+          label: 'Day $dayNumber${isToday ? ", today" : ""}$statusLabel',
+          button: true,
+          child: ScaleTap(
+            onTap: () {
+              PlatformAdapter.hapticSelection();
+              setState(() {
+                _selectedDay = _selectedDay == dayNumber ? null : dayNumber;
+              });
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: AppRadius.borderLg,
+                border: border,
+              ),
+              child: Center(
+                child: Text(
+                  '$dayNumber',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+                    color: textColor,
+                  ),
                 ),
               ),
             ),
@@ -479,12 +575,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               ),
               SizedBox(height: AppSpacing.xl),
               if (!_showWeightLog)
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => setState(() => _showWeightLog = true),
-                    child: const Text('+ Add Weight Entry'),
-                  ),
+                CustomButton(
+                  text: '+ Add Weight Entry',
+                  variant: ButtonVariant.gradient,
+                  onPressed: () => setState(() => _showWeightLog = true),
                 )
               else
                 Column(
@@ -500,7 +594,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: ElevatedButton(
+                          child: CustomButton(
+                            text: 'Save',
+                            variant: ButtonVariant.gradient,
                             onPressed: double.tryParse(_weightController.text) != null
                                 ? () async {
                                     final weight = double.tryParse(_weightController.text);
@@ -520,21 +616,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                     setState(() => _showWeightLog = false);
                                   }
                                 : null,
-                            child: const Text('Save'),
                           ),
                         ),
                         SizedBox(width: AppSpacing.md),
                         Expanded(
-                          child: ElevatedButton(
+                          child: CustomButton(
+                            text: 'Cancel',
+                            variant: ButtonVariant.outline,
                             onPressed: () {
                               _weightController.clear();
                               setState(() => _showWeightLog = false);
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: context.mutedColor,
-                              foregroundColor: context.foreground,
-                            ),
-                            child: const Text('Cancel'),
                           ),
                         ),
                       ],

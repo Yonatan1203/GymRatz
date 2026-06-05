@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../../theme/app_icons.dart';
@@ -226,6 +227,7 @@ class ProgramsScreen extends ConsumerWidget {
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () {
+                    HapticFeedback.selectionClick();
                     final uid = ref.read(currentUidProvider);
                     if (uid == null) return;
                     ref.read(userRepositoryProvider).toggleFavoriteProgram(uid, p.id);
