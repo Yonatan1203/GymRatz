@@ -14,6 +14,8 @@ class ProgramExercise {
   final EquipmentType equipmentType;
   /// Duration in minutes for cardio exercises (null for strength exercises).
   final int? durationMinutes;
+  /// When true, sets are logged by duration (seconds) rather than reps.
+  final bool isTimeBased;
 
   const ProgramExercise({
     required this.id,
@@ -28,6 +30,7 @@ class ProgramExercise {
     this.equipment,
     this.equipmentType = EquipmentType.barbell,
     this.durationMinutes,
+    this.isTimeBased = false,
   });
 
   bool get isCardio => durationMinutes != null;
@@ -45,6 +48,7 @@ class ProgramExercise {
         'equipment': equipment,
         'equipmentType': equipmentType.name,
         if (durationMinutes != null) 'durationMinutes': durationMinutes,
+        'isTimeBased': isTimeBased,
       };
 
   factory ProgramExercise.fromJson(Map<String, dynamic> json) {
@@ -75,6 +79,7 @@ class ProgramExercise {
         orElse: () => EquipmentType.barbell,
       ),
       durationMinutes: json['durationMinutes'] as int?,
+      isTimeBased: json['isTimeBased'] as bool? ?? false,
     );
   }
 
@@ -91,6 +96,7 @@ class ProgramExercise {
     String? equipment,
     EquipmentType? equipmentType,
     int? durationMinutes,
+    bool? isTimeBased,
   }) =>
       ProgramExercise(
         id: id ?? this.id,
@@ -105,5 +111,6 @@ class ProgramExercise {
         equipment: equipment ?? this.equipment,
         equipmentType: equipmentType ?? this.equipmentType,
         durationMinutes: durationMinutes ?? this.durationMinutes,
+        isTimeBased: isTimeBased ?? this.isTimeBased,
       );
 }

@@ -161,6 +161,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
         _getController(exIdx, setIdx, 'reps', s.reps > 0 ? '${s.reps}' : '');
         _getController(exIdx, setIdx, 'weight', s.weight > 0 ? '${s.weight.toInt()}' : '');
         _getController(exIdx, setIdx, 'rir', (s.rir ?? 0) > 0 ? '${s.rir}' : '');
+        _getController(exIdx, setIdx, 'duration', s.durationSeconds > 0 ? '${s.durationSeconds}' : '');
       }
     }
   }
@@ -177,6 +178,9 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
         break;
       case 'rir':
         updated = current.copyWith(rir: int.tryParse(text) ?? 0);
+        break;
+      case 'duration':
+        updated = current.copyWith(durationSeconds: int.tryParse(text) ?? 0, reps: 0);
         break;
       default:
         return;
@@ -236,6 +240,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
           name: pe.name,
           equipment: pe.equipment ?? 'Barbell',
           equipmentType: pe.equipmentType,
+          exerciseType: pe.isTimeBased ? ExerciseType.timed : ExerciseType.reps,
           repRange: Formatters.reps(pe.repMin, pe.repMax),
           targetRir: pe.targetRir,
           restSeconds: pe.restSeconds,
@@ -683,6 +688,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
         _getController(newIdx, setIdx, 'reps', '');
         _getController(newIdx, setIdx, 'weight', '');
         _getController(newIdx, setIdx, 'rir', '');
+        _getController(newIdx, setIdx, 'duration', '');
       }
     });
     _syncToProvider();
@@ -720,7 +726,8 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     final isDark = context.isDark;
     final exercises = _exercises;
 
-    final bool timerVisible = _restActive;
+    // GYM-125: bottom overlay timer visibility
+    final bool _timerVisible = _restActive && _timerRunning;
 
     return Scaffold(
       body: Column(
@@ -733,10 +740,13 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                   padding: EdgeInsets.only(
                     left: AppSpacing.screenPadding,
                     right: AppSpacing.screenPadding,
-                    bottom: AppSpacing.screenPadding,
-                    top: timerVisible
-                        ? (_restMinimized ? 52.h : 72.h)
-                        : AppSpacing.screenPadding,
+                    // Extra bottom padding when timer overlay is visible (GYM-125)
+                    bottom: _timerVisible ? 80.h : AppSpacing.screenPadding,
+                    top: (_restActive && !_timerRunning && !_restMinimized)
+                        ? 72.h
+                        : (_restActive && !_timerRunning && _restMinimized)
+                            ? 52.h
+                            : AppSpacing.screenPadding,
                   ),
                   children: [
                     if (_showFirstTimeTips) _buildFirstTimeTips(context, isDark),
@@ -771,10 +781,19 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                     SizedBox(height: 60.h),
                   ],
                 ),
-                if (_restActive && !_restMinimized)
+                // Top timer: shown only when timer is not yet running (adjust mode)
+                if (_restActive && !_timerRunning && !_restMinimized)
                   Positioned(top: 0, left: 0, right: 0, child: _buildRestTimer(context)),
-                if (_restActive && _restMinimized)
+                if (_restActive && !_timerRunning && _restMinimized)
                   Positioned(top: 0, left: 0, right: 0, child: _buildMinimizedTimer(context)),
+                // GYM-125: bottom overlay when timer is actively counting down
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 300),
+                  bottom: _timerVisible ? 0 : -100,
+                  left: 0,
+                  right: 0,
+                  child: _buildTimerBottomOverlay(context),
+                ),
               ],
             ),
           ),
@@ -1021,6 +1040,47 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     );
   }
 
+  /// GYM-125: persistent bottom overlay shown when rest timer is actively counting down.
+  Widget _buildTimerBottomOverlay(BuildContext context) {
+    return Container(
+      color: Theme.of(context).colorScheme.primaryContainer,
+      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h + MediaQuery.of(context).padding.bottom),
+      child: Row(
+        children: [
+          Icon(AppIcons.timer, size: 20.r, color: Theme.of(context).colorScheme.onPrimaryContainer),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              'Rest: ${Formatters.timer(_restSeconds)}',
+              style: AppTextStyles.bodySmall.copyWith(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              _timer?.cancel();
+              NotificationService().cancelRestTimerNotification();
+              setState(() { _restActive = false; _timerRunning = false; });
+              ref.read(activeWorkoutSessionProvider.notifier).syncState(
+                restActive: false, timerRunning: false, clearRestEndTime: true,
+              );
+            },
+            child: Text(
+              'Skip',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildExerciseCard(BuildContext context, bool isDark, int exIdx, WorkoutExercise exercise) {
     final isExpanded = _expanded.contains(exIdx);
     final sets = _sets[exIdx];
@@ -1086,8 +1146,8 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                 child: Row(
                   children: [
                     SizedBox(width: 32.w, child: _gridHeaderText(context, 'SET')),
-                    Expanded(flex: 2, child: _gridHeaderText(context, 'REPS')),
-                    Expanded(flex: 3, child: _gridHeaderText(context, 'WEIGHT')),
+                    Expanded(flex: 2, child: _gridHeaderText(context, exercise.isTimed ? 'SEC' : 'REPS')),
+                    Expanded(flex: 3, child: _gridHeaderText(context, exercise.equipmentType == EquipmentType.bodyweight ? 'BW +' : 'WEIGHT')),
                     Expanded(flex: 2, child: _gridHeaderText(context, 'RIR')),
                     SizedBox(width: 36.w),
                   ],
@@ -1105,6 +1165,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                     _getController(exIdx, newSetIdx, 'reps', '');
                     _getController(exIdx, newSetIdx, 'weight', '');
                     _getController(exIdx, newSetIdx, 'rir', '');
+                    _getController(exIdx, newSetIdx, 'duration', '');
                     _syncToProvider();
                   },
                 ),
@@ -1121,7 +1182,12 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   }
 
   Widget _buildSetRow(BuildContext context, int exIdx, int sIdx, WorkoutSet set) {
-    return Padding(
+    final exercise = _exercises[exIdx];
+    final isBw = exercise.equipmentType == EquipmentType.bodyweight;
+    final isTimed = exercise.isTimed;
+    final unit = ref.read(userProfileProvider).valueOrNull?.unit ?? 'lbs';
+
+    final rowContent = Padding(
       padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 6.h),
       child: Row(
         children: [
@@ -1137,15 +1203,17 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
               ),
             ),
           ),
+          // Reps or Duration field (GYM-122)
           Expanded(
             flex: 2,
-            child: _numField(context, exIdx, sIdx, 'reps', 'Reps'),
+            child: isTimed
+                ? _numField(context, exIdx, sIdx, 'duration', 'sec')
+                : _numField(context, exIdx, sIdx, 'reps', 'Reps'),
           ),
+          // Weight field with BW+ label for bodyweight exercises (GYM-121)
           Expanded(
             flex: 3,
-            child: _exercises[exIdx].equipmentType == EquipmentType.bodyweight
-                ? Center(child: Text('-', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)))
-                : _numField(context, exIdx, sIdx, 'weight', ref.read(userProfileProvider).valueOrNull?.unit ?? 'lbs'),
+            child: _numField(context, exIdx, sIdx, 'weight', isBw ? '+$unit' : unit),
           ),
           Expanded(
             flex: 2,
@@ -1173,19 +1241,56 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
         ],
       ),
     );
+
+    // GYM-133: swipe-to-dismiss to remove a set
+    return Dismissible(
+      key: ValueKey('set_${exIdx}_$sIdx'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: EdgeInsets.only(right: 16.w),
+        color: Colors.red,
+        child: Icon(Icons.delete, color: Colors.white, size: 20.r),
+      ),
+      confirmDismiss: (_) async {
+        if (_sets[exIdx].length <= 1) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cannot remove the last set')),
+          );
+          return false;
+        }
+        return true;
+      },
+      onDismissed: (_) {
+        setState(() {
+          // Dispose controllers for this set
+          for (final field in ['reps', 'weight', 'rir', 'duration']) {
+            final key = '$exIdx-$sIdx-$field';
+            _controllers[key]?.dispose();
+            _controllers.remove(key);
+          }
+          _sets[exIdx].removeAt(sIdx);
+        });
+        _syncToProvider();
+        _saveWorkoutState();
+      },
+      child: rowContent,
+    );
   }
 
   Widget _numField(BuildContext context, int exIdx, int setIdx, String field, String hint, {TextInputAction? textInputAction}) {
-    final controller = _getController(
-      exIdx,
-      setIdx,
-      field,
-      field == 'reps'
-          ? (_sets[exIdx][setIdx].reps > 0 ? '${_sets[exIdx][setIdx].reps}' : '')
-          : field == 'weight'
-              ? (_sets[exIdx][setIdx].weight > 0 ? '${_sets[exIdx][setIdx].weight.toInt()}' : '')
-              : ((_sets[exIdx][setIdx].rir ?? 0) > 0 ? '${_sets[exIdx][setIdx].rir}' : ''),
-    );
+    final s = _sets[exIdx][setIdx];
+    String initialValue;
+    if (field == 'reps') {
+      initialValue = s.reps > 0 ? '${s.reps}' : '';
+    } else if (field == 'weight') {
+      initialValue = s.weight > 0 ? '${s.weight.toInt()}' : '';
+    } else if (field == 'duration') {
+      initialValue = s.durationSeconds > 0 ? '${s.durationSeconds}' : '';
+    } else {
+      initialValue = (s.rir ?? 0) > 0 ? '${s.rir}' : '';
+    }
+    final controller = _getController(exIdx, setIdx, field, initialValue);
 
     return SizedBox(
       height: 36.h,
