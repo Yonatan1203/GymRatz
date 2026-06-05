@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
 import '../../../shared/data/sample_data.dart';
 import '../../../shared/models/personal_record.dart';
+import '../../../shared/utils/weight_utils.dart';
 import 'package:intl/intl.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -128,6 +129,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildPersonalRecords(BuildContext context, WidgetRef ref) {
     final prsAsync = ref.watch(personalRecordsProvider);
     final prs = prsAsync.valueOrNull ?? <PersonalRecord>[];
+    final userUnit = ref.watch(userProfileProvider).valueOrNull?.unit ?? 'lbs';
 
     return Column(
       children: [
@@ -166,7 +168,7 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    '${pr.weight.toInt()} lbs',
+                    WeightUtils.format(pr.weight, userUnit),
                     style: AppTextStyles.h4.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600),
                   ),
                   SizedBox(width: AppSpacing.md),
