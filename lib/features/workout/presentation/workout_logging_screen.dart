@@ -1635,9 +1635,10 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
                   variant: ButtonVariant.outline,
                   icon: AppIcons.share2,
                   onPressed: () {
-                    final volUnit = ref.read(userProfileProvider).valueOrNull?.unit ?? 'lbs';
-                    final summary = '💪 $_workoutName\n$durationStr | $completedSets sets | ${totalVolume.toInt()} $volUnit volume\n\nLogged with GymRatz';
-                    Share.share(summary);
+                    final n = _exercises.length;
+                    final exerciseWord = n == 1 ? 'exercise' : 'exercises';
+                    final text = 'I just completed $_workoutName — $n $exerciseWord 💪 #GymRatz';
+                    Share.share(text);
                   },
                 ),
                 SizedBox(height: 32.h),
