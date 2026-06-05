@@ -10,6 +10,7 @@ export {onUserRoleUpdate} from "./auth/onUserRoleUpdate";
 
 // Firestore triggers
 export {onWorkoutComplete} from "./triggers/onWorkoutComplete";
+export {onCoachApplicationUpdate} from "./triggers/onCoachApplicationUpdate";
 
 // Scheduled jobs
 export {scheduledFirestoreBackup} from "./backup/scheduledBackup";
