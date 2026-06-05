@@ -111,6 +111,24 @@ enum GoalPreset {
   }
 }
 
+/// How a coach-assigned program prefills weights for athletes.
+///
+/// [systemSuggested] — the PO engine's saved suggestions are used (default).
+/// [manual] — suggestions are ignored; athletes enter weights from scratch.
+enum WeightAutofillMode {
+  systemSuggested,
+  manual;
+
+  String get label {
+    switch (this) {
+      case WeightAutofillMode.systemSuggested:
+        return 'Auto-suggest weights';
+      case WeightAutofillMode.manual:
+        return 'Manual entry';
+    }
+  }
+}
+
 /// User role within the app.
 enum UserRole {
   user('user'),

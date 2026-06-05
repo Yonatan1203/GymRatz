@@ -1,3 +1,4 @@
+import 'enums.dart';
 import 'workout_day.dart';
 
 class Program {
@@ -15,6 +16,13 @@ class Program {
   final DateTime? activatedAt;
   final bool assignedByCoach;
   final String? coachId;
+  /// Controls whether the PO engine's weight suggestions are applied when
+  /// an athlete starts a workout from this program.
+  ///
+  /// Only meaningful for coach-assigned programs ([assignedByCoach] == true).
+  /// Defaults to [WeightAutofillMode.systemSuggested] for backwards
+  /// compatibility with existing programs.
+  final WeightAutofillMode weightAutofillMode;
 
   const Program({
     required this.id,
@@ -31,6 +39,7 @@ class Program {
     this.activatedAt,
     this.assignedByCoach = false,
     this.coachId,
+    this.weightAutofillMode = WeightAutofillMode.systemSuggested,
   });
 
   /// Date (time-truncated) from which this program counts for schedule/missed
@@ -56,6 +65,7 @@ class Program {
         'activatedAt': activatedAt?.toIso8601String(),
         'assignedByCoach': assignedByCoach,
         'coachId': coachId,
+        'weightAutofillMode': weightAutofillMode.name,
       };
 
   factory Program.fromJson(Map<String, dynamic> json) => Program(
@@ -80,6 +90,9 @@ class Program {
             : null,
         assignedByCoach: json['assignedByCoach'] as bool? ?? false,
         coachId: json['coachId'] as String?,
+        weightAutofillMode: WeightAutofillMode.values.byName(
+          json['weightAutofillMode'] as String? ?? 'systemSuggested',
+        ),
       );
 
   Program copyWith({
@@ -97,6 +110,7 @@ class Program {
     DateTime? activatedAt,
     bool? assignedByCoach,
     String? coachId,
+    WeightAutofillMode? weightAutofillMode,
   }) =>
       Program(
         id: id ?? this.id,
@@ -113,5 +127,6 @@ class Program {
         activatedAt: activatedAt ?? this.activatedAt,
         assignedByCoach: assignedByCoach ?? this.assignedByCoach,
         coachId: coachId ?? this.coachId,
+        weightAutofillMode: weightAutofillMode ?? this.weightAutofillMode,
       );
 }
