@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
@@ -18,6 +19,7 @@ import '../../../shared/utils/platform_adapter.dart';
 import '../../../shared/widgets/custom_card.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
 import '../../../shared/widgets/gradient_header.dart';
+import '../../../shared/widgets/menu_item_widget.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/stats_grid.dart';
 
@@ -91,10 +93,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                       _buildExerciseFilters(context),
                       SizedBox(height: 16.h),
                       _buildChart(context),
-                    ] else ...[
+                    ] else if (_chartView == 'Body Weight') ...[
                       _buildBodyWeightChart(context),
                       SizedBox(height: 16.h),
                       _buildWeightSummary(context),
+                    ] else ...[
+                      _buildBodyMeasurementsEntry(context),
                     ],
                     SizedBox(height: AppSpacing.sectionGap),
                     _buildPRSection(context),
@@ -111,9 +115,23 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     );
   }
 
+  Widget _buildBodyMeasurementsEntry(BuildContext context) {
+    final asyncMeasurements = ref.watch(bodyMeasurementsProvider);
+    final count = asyncMeasurements.valueOrNull?.length ?? 0;
+
+    return CustomCard(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+      child: MenuItemWidget(
+        icon: AppIcons.ruler,
+        label: 'Body Measurements${count > 0 ? ' ($count entries)' : ''}',
+        onTap: () => context.push('/progress/body-measurements'),
+      ),
+    );
+  }
+
   Widget _buildViewToggle(BuildContext context) {
     return Row(
-      children: ['Exercise Progress', 'Body Weight'].map((v) {
+      children: ['Exercise Progress', 'Body Weight', 'Measurements'].map((v) {
         final isSelected = _chartView == v;
         return Expanded(
           child: Semantics(

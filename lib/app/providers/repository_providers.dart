@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/achievements/data/achievement_repository.dart';
 import '../../features/calendar/data/weight_entry_repository.dart';
 import '../../features/programs/data/program_repository.dart';
+import '../../features/progress/data/body_measurement_repository.dart';
 import '../../features/progress/data/pr_repository.dart';
 import '../../features/user/data/user_repository.dart';
 import '../../features/progression/data/progression_repository.dart';
@@ -39,4 +40,9 @@ final weightEntryRepositoryProvider = Provider<WeightEntryRepository>((ref) {
 
 final progressionRepositoryProvider = Provider<ProgressionRepository>((ref) {
   return ProgressionRepository(ref.watch(firestoreProvider)!);
+});
+
+final bodyMeasurementRepositoryProvider =
+    Provider<BodyMeasurementRepository>((ref) {
+  return BodyMeasurementRepository(ref.watch(firestoreProvider)!);
 });

@@ -23,6 +23,7 @@ import '../features/programs/presentation/programs_screen.dart';
 import '../features/programs/presentation/program_detail_screen.dart';
 import '../features/programs/presentation/create_program_screen.dart';
 import '../features/progress/presentation/progress_screen.dart';
+import '../features/progress/presentation/body_measurements_screen.dart';
 import '../features/profile/presentation/profile_screen.dart';
 import '../features/profile/presentation/edit_profile_screen.dart';
 import '../features/exercises/presentation/exercise_library_screen.dart';
@@ -378,6 +379,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => slideTransitionPage(
           state: state,
           child: const ProgressScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/progress/body-measurements',
+        name: 'body-measurements',
+        pageBuilder: (context, state) => slideTransitionPage(
+          state: state,
+          child: const BodyMeasurementsScreen(),
         ),
       ),
       GoRoute(
