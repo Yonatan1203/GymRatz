@@ -1,6 +1,8 @@
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../theme/app_icons.dart';
 
 import '../../../theme/app_gradients.dart';
@@ -30,9 +32,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final TextEditingController _weightController;
   late final TextEditingController _ageController;
   late final TextEditingController _heightController;
+  late final TextEditingController _bioController;
   bool _initialized = false;
   bool _notifications = true;
   bool _isSaving = false;
+  bool _isUploadingPhoto = false;
+  String? _pendingPhotoUrl; // URL after a successful upload this session.
 
   final _nameFocus = FocusNode();
   final _emailFocus = FocusNode();
@@ -45,6 +50,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _weightController.dispose();
     _ageController.dispose();
     _heightController.dispose();
+    _bioController.dispose();
     _nameFocus.dispose();
     _emailFocus.dispose();
     _weightFocus.dispose();
@@ -60,6 +66,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _weightController = TextEditingController(text: '${user.weight}');
     _ageController = TextEditingController(text: '${user.age}');
     _heightController = TextEditingController(text: _formatHeightForUnit(user.height, user.unit));
+    _bioController = TextEditingController(text: user.bio ?? '');
     _notifications = user.notificationsEnabled;
   }
 
@@ -128,7 +135,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         'height': _heightController.text.trim(),
         'weight': double.tryParse(_weightController.text) ?? 0,
         'notificationsEnabled': _notifications,
+        'bio': _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
       };
+      if (_pendingPhotoUrl != null) {
+        fields['photoUrl'] = _pendingPhotoUrl;
+      }
       await ref.read(userRepositoryProvider).updateUser(uid, fields);
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
@@ -139,6 +150,39 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _pickAndUploadPhoto() async {
+    final uid = ref.read(currentUidProvider);
+    if (uid == null) return;
+
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+
+    setState(() => _isUploadingPhoto = true);
+    try {
+      final ref_ = FirebaseStorage.instance.ref('users/$uid/profile.jpg');
+      await ref_.putData(
+        await picked.readAsBytes(),
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+      final url = await ref_.getDownloadURL();
+      setState(() => _pendingPhotoUrl = url);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Photo upload failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingPhoto = false);
     }
   }
 
@@ -198,35 +242,52 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
-                    child: Stack(
-                      children: [
-                        Container(
-                          width: 96.r,
-                          height: 96.r,
-                          decoration: BoxDecoration(
-                            gradient: AppGradients.primary(isDark: isDark),
-                            shape: BoxShape.circle,
-                            boxShadow: AppShadows.lg,
-                          ),
-                          child: Center(
-                            child: Text(user.initials, style: TextStyle(fontSize: 32.sp, fontWeight: FontWeight.w700, color: Colors.white)),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: Container(
-                            width: 32.r,
-                            height: 32.r,
+                    child: GestureDetector(
+                      onTap: _isUploadingPhoto ? null : _pickAndUploadPhoto,
+                      child: Stack(
+                        children: [
+                          // Avatar: show uploaded photo, then Firestore photo, then initials.
+                          Container(
+                            width: 96.r,
+                            height: 96.r,
                             decoration: BoxDecoration(
-                              color: context.primaryColor,
+                              gradient: (_pendingPhotoUrl == null && user.photoUrl == null)
+                                  ? AppGradients.primary(isDark: isDark)
+                                  : null,
                               shape: BoxShape.circle,
-                              border: Border.all(color: context.cardColor, width: 2),
+                              boxShadow: AppShadows.lg,
                             ),
-                            child: Icon(AppIcons.camera, size: 16.r, color: Colors.white),
+                            clipBehavior: Clip.antiAlias,
+                            child: _isUploadingPhoto
+                                ? Center(child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : (_pendingPhotoUrl ?? user.photoUrl) != null
+                                    ? Image.network(
+                                        _pendingPhotoUrl ?? user.photoUrl!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => Center(
+                                          child: Text(user.initials, style: TextStyle(fontSize: 32.sp, fontWeight: FontWeight.w700, color: Colors.white)),
+                                        ),
+                                      )
+                                    : Center(
+                                        child: Text(user.initials, style: TextStyle(fontSize: 32.sp, fontWeight: FontWeight.w700, color: Colors.white)),
+                                      ),
                           ),
-                        ),
-                      ],
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              width: 32.r,
+                              height: 32.r,
+                              decoration: BoxDecoration(
+                                color: context.primaryColor,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: context.cardColor, width: 2),
+                              ),
+                              child: Icon(AppIcons.camera, size: 16.r, color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   SizedBox(height: AppSpacing.xxxl),
@@ -261,6 +322,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         keyboardType: TextInputType.text,
                       )),
                     ],
+                  ),
+                  SizedBox(height: AppSpacing.xl),
+                  CustomInput(
+                    controller: _bioController,
+                    label: 'Bio',
+                    hint: 'Tell us a little about yourself…',
+                    maxLines: 3,
                   ),
                   SizedBox(height: AppSpacing.xxxl),
                   _sectionTitle('Fitness Profile'),

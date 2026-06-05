@@ -1,5 +1,8 @@
 import 'enums.dart';
 
+// Sentinel used by copyWith to distinguish "not provided" from null.
+const Object _kUnset = Object();
+
 class UserProfile {
   final String? uid;
   final String name;
@@ -36,6 +39,12 @@ class UserProfile {
   /// Default is 1 (the initial schema version).
   final int schemaVersion;
 
+  /// Optional profile photo URL (Firebase Storage download URL).
+  final String? photoUrl;
+
+  /// Short bio / about-me text.
+  final String? bio;
+
   const UserProfile({
     this.uid,
     required this.name,
@@ -62,6 +71,8 @@ class UserProfile {
     this.updatedAt,
     this.weekStartsOnMonday = true,
     this.schemaVersion = 1,
+    this.photoUrl,
+    this.bio,
   });
 
   Map<String, dynamic> toJson() => {
@@ -90,6 +101,8 @@ class UserProfile {
         'updatedAt': updatedAt?.toIso8601String(),
         'weekStartsOnMonday': weekStartsOnMonday,
         'schemaVersion': schemaVersion,
+        'photoUrl': photoUrl,
+        'bio': bio,
       };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -133,6 +146,8 @@ class UserProfile {
             : null,
         weekStartsOnMonday: json['weekStartsOnMonday'] as bool? ?? true,
         schemaVersion: json['schemaVersion'] as int? ?? 1,
+        photoUrl: json['photoUrl'] as String?,
+        bio: json['bio'] as String?,
       );
 
   /// Maps the user's onboarding `primaryGoal` to a default `ProgressionMode`
@@ -183,6 +198,9 @@ class UserProfile {
     DateTime? updatedAt,
     bool? weekStartsOnMonday,
     int? schemaVersion,
+    // Use Object? sentinel to allow explicitly clearing nullable fields.
+    Object? photoUrl = _kUnset,
+    Object? bio = _kUnset,
   }) =>
       UserProfile(
         uid: uid ?? this.uid,
@@ -210,5 +228,7 @@ class UserProfile {
         updatedAt: updatedAt ?? this.updatedAt,
         weekStartsOnMonday: weekStartsOnMonday ?? this.weekStartsOnMonday,
         schemaVersion: schemaVersion ?? this.schemaVersion,
+        photoUrl: identical(photoUrl, _kUnset) ? this.photoUrl : photoUrl as String?,
+        bio: identical(bio, _kUnset) ? this.bio : bio as String?,
       );
 }
