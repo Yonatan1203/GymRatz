@@ -191,91 +191,102 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Widget _buildActivityHeatmap(BuildContext context, WidgetRef ref) {
-    // Build a set of completed workout dates from the last 12 weeks (84 days)
-    final recentWorkouts = ref.watch(recentWorkoutsProvider).valueOrNull ?? [];
-    final completedDates = <String>{};
-    final workoutCounts = <String, int>{};
-    for (final w in recentWorkouts) {
-      final key = '${w.date.year}-${w.date.month}-${w.date.day}';
-      completedDates.add(key);
-      workoutCounts[key] = (workoutCounts[key] ?? 0) + 1;
-    }
+    final recentWorkoutsAsync = ref.watch(recentWorkoutsProvider);
 
-    final today = DateTime.now();
-    // Align to start of week (Monday)
-    final startOfThisWeek = today.subtract(Duration(days: today.weekday - 1));
-    final heatmapStart = startOfThisWeek.subtract(const Duration(days: 7 * 11)); // 12 weeks back
-
-    const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
-    return Card(
-      color: context.cardColor,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.r),
-        side: BorderSide(color: context.borderColor, width: 0.5),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Activity',
-              style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w600),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(title: 'ACTIVITY'),
+        SizedBox(height: AppSpacing.lg),
+        recentWorkoutsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+            child: Text(
+              'Could not load activity',
+              style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
             ),
-            SizedBox(height: AppSpacing.lg),
-            Row(
-              children: dayLabels.map((label) => Expanded(
-                child: Center(
-                  child: Text(
-                    label,
-                    style: AppTextStyles.caption.copyWith(
-                      color: context.mutedForeground,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+          ),
+          data: (workouts) {
+            if (workouts.isEmpty) {
+              return Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                child: Text(
+                  'No activity yet. Complete a workout to see your history here.',
+                  style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
                 ),
-              )).toList(),
-            ),
-            SizedBox(height: AppSpacing.sm),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                mainAxisSpacing: 3.r,
-                crossAxisSpacing: 3.r,
-                childAspectRatio: 1,
+              );
+            }
+            final workoutCounts = <String, int>{};
+            for (final w in workouts) {
+              final key = '${w.date.year}-${w.date.month}-${w.date.day}';
+              workoutCounts[key] = (workoutCounts[key] ?? 0) + 1;
+            }
+
+            final today = DateTime.now();
+            final mondayThis = today.subtract(Duration(days: today.weekday - 1));
+            final heatmapStart = mondayThis.subtract(const Duration(days: 7 * 11));
+            const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+            return CustomCard(
+              child: Padding(
+                padding: EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: dayLabels.map((l) => Expanded(
+                        child: Center(
+                          child: Text(
+                            l,
+                            style: AppTextStyles.caption.copyWith(
+                              color: context.mutedForeground,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      )).toList(),
+                    ),
+                    SizedBox(height: AppSpacing.sm),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 7,
+                        mainAxisSpacing: 3.r,
+                        crossAxisSpacing: 3.r,
+                        childAspectRatio: 1,
+                      ),
+                      itemCount: 84,
+                      itemBuilder: (ctx, i) {
+                        final cell = heatmapStart.add(Duration(days: i));
+                        final key = '${cell.year}-${cell.month}-${cell.day}';
+                        final count = workoutCounts[key] ?? 0;
+                        final isFuture = cell.isAfter(today);
+
+                        final Color cellColor;
+                        if (isFuture || count == 0) {
+                          cellColor = context.mutedColor;
+                        } else if (count == 1) {
+                          cellColor = context.primaryColor.withValues(alpha: 0.5);
+                        } else {
+                          cellColor = context.primaryColor;
+                        }
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: cellColor,
+                            borderRadius: BorderRadius.circular(2.r),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-              itemCount: 84,
-              itemBuilder: (ctx, index) {
-                // index 0 = heatmapStart (Monday of 12 weeks ago)
-                final cellDate = heatmapStart.add(Duration(days: index));
-                final key = '${cellDate.year}-${cellDate.month}-${cellDate.day}';
-                final count = workoutCounts[key] ?? 0;
-                final isFuture = cellDate.isAfter(today);
-
-                Color cellColor;
-                if (isFuture || count == 0) {
-                  cellColor = Theme.of(context).colorScheme.surfaceContainerHighest;
-                } else if (count == 1) {
-                  cellColor = context.primaryColor.withValues(alpha: 0.5);
-                } else {
-                  cellColor = context.primaryColor;
-                }
-
-                return Container(
-                  decoration: BoxDecoration(
-                    color: cellColor,
-                    borderRadius: BorderRadius.circular(2.r),
-                  ),
-                );
-              },
-            ),
-          ],
+            );
+          },
         ),
-      ),
+      ],
     );
   }
 
