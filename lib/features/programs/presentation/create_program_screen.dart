@@ -504,15 +504,15 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                         SizedBox(
                           width: 16.r,
                           height: 16.r,
-                          child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.onPrimary),
                         )
                       else
-                        Icon(AppIcons.save, size: 16.r, color: Colors.white),
+                        Icon(AppIcons.save, size: 16.r, color: Theme.of(context).colorScheme.onPrimary),
                       SizedBox(width: 4.w),
                       Text(
                         _saving ? 'Saving...' : 'Save',
                         style: AppTextStyles.bodySmall.copyWith(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onPrimary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -579,6 +579,8 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
 
   Widget _buildWorkoutDayCard(BuildContext context, bool isDark, _WorkoutDay day) {
     final nameController = _dayNameControllers[day.id]!;
+    final onGradient = Theme.of(context).colorScheme.onPrimary;
+    final onGradientMuted = onGradient.withValues(alpha: 0.7);
 
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
@@ -604,23 +606,23 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                         TextField(
                           controller: nameController,
                           onChanged: (v) => day.name = v,
-                          style: AppTextStyles.body.copyWith(color: Colors.white),
+                          style: AppTextStyles.body.copyWith(color: onGradient),
                           decoration: InputDecoration(
                             hintText: 'Workout name',
-                            hintStyle: AppTextStyles.body.copyWith(color: Colors.white54),
+                            hintStyle: AppTextStyles.body.copyWith(color: onGradientMuted),
                             filled: true,
-                            fillColor: Colors.white.withValues(alpha: 0.1),
+                            fillColor: onGradient.withValues(alpha: 0.1),
                             border: OutlineInputBorder(
                               borderRadius: AppRadius.borderLg,
-                              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                              borderSide: BorderSide(color: onGradient.withValues(alpha: 0.2)),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: AppRadius.borderLg,
-                              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                              borderSide: BorderSide(color: onGradient.withValues(alpha: 0.2)),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: AppRadius.borderLg,
-                              borderSide: const BorderSide(color: Colors.white),
+                              borderSide: BorderSide(color: onGradient),
                             ),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                             isDense: true,
@@ -646,7 +648,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                       onTap: () => _removeWorkoutDay(day.id),
                       child: Padding(
                         padding: EdgeInsets.all(8.r),
-                        child: Icon(AppIcons.trash2, size: 24.r, color: Colors.white),
+                        child: Icon(AppIcons.trash2, size: 24.r, color: onGradient),
                       ),
                     ),
                   ],
@@ -930,10 +932,10 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
       ),
       builder: (ctx) {
         final theme = Theme.of(ctx);
-        final isDark = theme.brightness == Brightness.dark;
-        final fg = isDark ? Colors.white : Colors.black;
-        final mutedFg = isDark ? Colors.white60 : Colors.black54;
-        final primaryColor = theme.colorScheme.primary;
+        final colorScheme = theme.colorScheme;
+        final fg = colorScheme.onSurface;
+        final mutedFg = colorScheme.onSurfaceVariant;
+        final primaryColor = colorScheme.primary;
 
         return SafeArea(
           child: ConstrainedBox(
@@ -1158,7 +1160,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
           child: Text(
             label,
             style: AppTextStyles.caption.copyWith(
-              color: isSelected ? Colors.white : context.mutedForeground,
+              color: isSelected ? Theme.of(context).colorScheme.onPrimary : context.mutedForeground,
               fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
             ),
           ),
@@ -1245,6 +1247,8 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
     IconData? icon,
     String? sheetTitle,
   }) {
+    final onPrimary = Theme.of(context).colorScheme.onPrimary;
+    final onPrimaryMuted = onPrimary.withValues(alpha: 0.7);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1252,7 +1256,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
           Text(
             label,
             style: AppTextStyles.bodySmall.copyWith(
-              color: onDark ? Colors.white70 : context.mutedForeground,
+              color: onDark ? onPrimaryMuted : context.mutedForeground,
             ),
           ),
           SizedBox(height: 8.h),
@@ -1269,12 +1273,12 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
             decoration: BoxDecoration(
               color: onDark
-                  ? Colors.white.withValues(alpha: 0.1)
+                  ? onPrimary.withValues(alpha: 0.1)
                   : context.mutedColor,
               borderRadius: AppRadius.borderLg,
               border: Border.all(
                 color: onDark
-                    ? Colors.white.withValues(alpha: 0.2)
+                    ? onPrimary.withValues(alpha: 0.2)
                     : context.borderColor,
               ),
             ),
@@ -1284,7 +1288,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                   Icon(
                     icon,
                     size: 16.r,
-                    color: onDark ? Colors.white70 : context.mutedForeground,
+                    color: onDark ? onPrimaryMuted : context.mutedForeground,
                   ),
                   SizedBox(width: 8.w),
                 ],
@@ -1292,14 +1296,14 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                   child: Text(
                     value,
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: onDark ? Colors.white : context.foreground,
+                      color: onDark ? onPrimary : context.foreground,
                     ),
                   ),
                 ),
                 Icon(
                   AppIcons.chevronDown,
                   size: 16.r,
-                  color: onDark ? Colors.white70 : context.mutedForeground,
+                  color: onDark ? onPrimaryMuted : context.mutedForeground,
                 ),
               ],
             ),
@@ -1328,12 +1332,8 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
         // to avoid cross-boundary dependencies that cause _dependents.isEmpty
         final theme = Theme.of(ctx);
         final colorScheme = theme.colorScheme;
-        final fg = theme.brightness == Brightness.dark
-            ? Colors.white
-            : Colors.black;
-        final mutedFg = theme.brightness == Brightness.dark
-            ? Colors.white60
-            : Colors.black54;
+        final fg = colorScheme.onSurface;
+        final mutedFg = colorScheme.onSurfaceVariant;
         final primaryColor = colorScheme.primary;
 
         return SafeArea(
