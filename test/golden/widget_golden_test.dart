@@ -46,146 +46,80 @@ Future<void> _setSurface(WidgetTester tester) async {
 // Tests
 // ---------------------------------------------------------------------------
 
-// Golden baselines are not committed yet.
-// To generate: flutter test --update-goldens test/golden/
-// Then commit the generated files in test/golden/goldens/.
-const _goldenSkip = 'Golden baseline images not yet committed — run flutter test --update-goldens to initialise';
+// Golden baselines are not committed yet — tests are skipped.
+// To initialise: flutter test --update-goldens test/golden/
+// Then commit the generated files in test/golden/goldens/ and remove the skip.
 
 void main() {
-  group('CustomButton golden tests', () {
-    testWidgets('enabled primary button matches golden', skip: true, // baselines not yet committed — run flutter test --update-goldens (tester) async {
+  // skip: true on each group until baseline PNGs are committed
+  group('CustomButton golden tests', skip: true, () {
+    testWidgets('enabled primary button matches golden', (tester) async {
       await _setSurface(tester);
       await tester.pumpWidget(
-        _wrap(
-          CustomButton(
-            text: 'Start Workout',
-            onPressed: () {},
-          ),
-        ),
+        _wrap(CustomButton(text: 'Start Workout', onPressed: () {})),
       );
       await tester.pumpAndSettle();
-
-      await expectLater(
-        find.byType(CustomButton),
-        matchesGoldenFile('goldens/custom_button_enabled.png'),
-      );
+      await expectLater(find.byType(CustomButton), matchesGoldenFile('goldens/custom_button_enabled.png'));
     });
 
-    testWidgets('disabled button (onPressed null) matches golden', skip: true, // baselines not yet committed — run flutter test --update-goldens (tester) async {
+    testWidgets('disabled button (onPressed null) matches golden', (tester) async {
       await _setSurface(tester);
       await tester.pumpWidget(
-        _wrap(
-          const CustomButton(
-            text: 'Start Workout',
-            onPressed: null,
-          ),
-        ),
+        _wrap(const CustomButton(text: 'Start Workout', onPressed: null)),
       );
       await tester.pumpAndSettle();
-
-      await expectLater(
-        find.byType(CustomButton),
-        matchesGoldenFile('goldens/custom_button_disabled.png'),
-      );
+      await expectLater(find.byType(CustomButton), matchesGoldenFile('goldens/custom_button_disabled.png'));
     });
 
-    testWidgets('loading state matches golden', skip: true, // baselines not yet committed — run flutter test --update-goldens (tester) async {
+    testWidgets('loading state matches golden', (tester) async {
       await _setSurface(tester);
       await tester.pumpWidget(
-        _wrap(
-          CustomButton(
-            text: 'Start Workout',
-            onPressed: () {},
-            isLoading: true,
-          ),
-        ),
+        _wrap(CustomButton(text: 'Start Workout', onPressed: () {}, isLoading: true)),
       );
-      // Don't call pumpAndSettle — CircularProgressIndicator animates forever.
       await tester.pump();
-
-      await expectLater(
-        find.byType(CustomButton),
-        matchesGoldenFile('goldens/custom_button_loading.png'),
-      );
+      await expectLater(find.byType(CustomButton), matchesGoldenFile('goldens/custom_button_loading.png'));
     });
   });
 
-  group('CustomCard golden tests', () {
-    testWidgets('standard card with text content matches golden', skip: true, // baselines not yet committed — run flutter test --update-goldens (tester) async {
+  group('CustomCard golden tests', skip: true, () {
+    testWidgets('standard card with text content matches golden', (tester) async {
       await _setSurface(tester);
-      await tester.pumpWidget(
-        _wrap(
-          const CustomCard(
-            child: Text('Card content'),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_wrap(const CustomCard(child: Text('Card content'))));
       await tester.pumpAndSettle();
-
-      await expectLater(
-        find.byType(CustomCard),
-        matchesGoldenFile('goldens/custom_card_standard.png'),
-      );
+      await expectLater(find.byType(CustomCard), matchesGoldenFile('goldens/custom_card_standard.png'));
     });
 
-    testWidgets('workout variant card matches golden', skip: true, // baselines not yet committed — run flutter test --update-goldens (tester) async {
+    testWidgets('workout variant card matches golden', (tester) async {
       await _setSurface(tester);
-      await tester.pumpWidget(
-        _wrap(
-          const CustomCard(
-            variant: CardVariant.workout,
-            child: Text('Workout Card'),
-          ),
-        ),
-      );
+      await tester.pumpWidget(_wrap(const CustomCard(variant: CardVariant.workout, child: Text('Workout Card'))));
       await tester.pumpAndSettle();
-
-      await expectLater(
-        find.byType(CustomCard),
-        matchesGoldenFile('goldens/custom_card_workout.png'),
-      );
+      await expectLater(find.byType(CustomCard), matchesGoldenFile('goldens/custom_card_workout.png'));
     });
   });
 
-  group('EmptyStateWidget golden tests', () {
-    testWidgets('empty state without action matches golden', skip: true, // baselines not yet committed — run flutter test --update-goldens (tester) async {
+  group('EmptyStateWidget golden tests', skip: true, () {
+    testWidgets('empty state without action matches golden', (tester) async {
       await _setSurface(tester);
-      await tester.pumpWidget(
-        _wrap(
-          const EmptyStateWidget(
-            icon: Icons.fitness_center,
-            title: 'No Workouts Yet',
-            subtitle: 'Start your first workout to see your progress here.',
-          ),
-        ),
-      );
+      await tester.pumpWidget(_wrap(const EmptyStateWidget(
+        icon: Icons.fitness_center,
+        title: 'No Workouts Yet',
+        subtitle: 'Start your first workout to see your progress here.',
+      )));
       await tester.pumpAndSettle();
-
-      await expectLater(
-        find.byType(EmptyStateWidget),
-        matchesGoldenFile('goldens/empty_state_no_action.png'),
-      );
+      await expectLater(find.byType(EmptyStateWidget), matchesGoldenFile('goldens/empty_state_no_action.png'));
     });
 
-    testWidgets('empty state with action button matches golden', skip: true, // baselines not yet committed — run flutter test --update-goldens (tester) async {
+    testWidgets('empty state with action button matches golden', (tester) async {
       await _setSurface(tester);
-      await tester.pumpWidget(
-        _wrap(
-          EmptyStateWidget(
-            icon: Icons.fitness_center,
-            title: 'No Workouts Yet',
-            subtitle: 'Start your first workout to see your progress here.',
-            actionLabel: 'Start Workout',
-            onAction: () {},
-          ),
-        ),
-      );
+      await tester.pumpWidget(_wrap(EmptyStateWidget(
+        icon: Icons.fitness_center,
+        title: 'No Workouts Yet',
+        subtitle: 'Start your first workout to see your progress here.',
+        actionLabel: 'Start Workout',
+        onAction: () {},
+      )));
       await tester.pumpAndSettle();
-
-      await expectLater(
-        find.byType(EmptyStateWidget),
-        matchesGoldenFile('goldens/empty_state_with_action.png'),
-      );
+      await expectLater(find.byType(EmptyStateWidget), matchesGoldenFile('goldens/empty_state_with_action.png'));
     });
   });
 }
