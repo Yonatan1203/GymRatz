@@ -15,8 +15,9 @@ class NotificationService {
   static const _keyReminderEnabled = 'notif_reminder_enabled';
   static const _keyReminderHour = 'notif_reminder_hour';
   static const _keyReminderMinute = 'notif_reminder_minute';
-  // ignore: unused_field
   static const _keyStreakEnabled = 'notif_streak_enabled';
+
+  static const _streakNotifId = 200;
 
   Future<void> initialize() async {
     tz_data.initializeTimeZones();
@@ -96,6 +97,50 @@ class NotificationService {
     }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyReminderEnabled, false);
+  }
+
+  /// Schedule a daily streak reminder at 20:00 local time.
+  /// Call this when the user has an active streak and enables streak reminders.
+  Future<void> scheduleStreakReminder() async {
+    await cancelStreakReminder();
+
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduled =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, 20, 0);
+    if (scheduled.isBefore(now)) {
+      scheduled = scheduled.add(const Duration(days: 1));
+    }
+
+    await _plugin.zonedSchedule(
+      _streakNotifId,
+      'Keep your streak alive!',
+      'Log a workout today to maintain your streak.',
+      scheduled,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'streak_reminders',
+          'Streak Reminders',
+          channelDescription: 'Daily reminder to keep your workout streak going',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.wallClockTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyStreakEnabled, true);
+  }
+
+  /// Cancel the daily streak reminder.
+  Future<void> cancelStreakReminder() async {
+    await _plugin.cancel(_streakNotifId);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyStreakEnabled, false);
   }
 
   static const _restTimerNotifId = 100;

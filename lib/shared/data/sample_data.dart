@@ -13,12 +13,12 @@ class SampleData {
   SampleData._();
 
   static const user = UserProfile(
-    name: 'Yonatan Glav',
-    initials: 'YG',
-    email: 'yonatan@gymratz.app',
-    age: 25,
-    height: '5\'10"',
-    weight: 175.2,
+    name: 'GymRatz User',
+    initials: 'GR',
+    email: 'user@example.com',
+    age: 0,
+    height: '0 cm',
+    weight: 0,
     unit: 'lbs',
     experienceLevel: 'Intermediate',
     primaryGoal: 'Build Muscle',

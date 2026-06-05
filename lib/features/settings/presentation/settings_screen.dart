@@ -29,6 +29,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _pushNotifications = true;
   bool _workoutReminders = true;
+  bool _streakReminders = false;
   bool _isDeletingAccount = false;
 
   // Reminder time & days — loaded from saved prefs, defaulting to 6pm Mon-Fri.
@@ -40,12 +41,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadReminderPrefs();
+    _loadPrefs();
   }
 
-  Future<void> _loadReminderPrefs() async {
+  Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
+      _pushNotifications = prefs.getBool('notif_push_enabled') ?? true;
+      _workoutReminders = prefs.getBool('notif_workout_enabled') ?? true;
+      _streakReminders = prefs.getBool('notif_streak_enabled') ?? false;
       _reminderTime = TimeOfDay(
         hour: prefs.getInt('notif_reminder_hour') ?? 18,
         minute: prefs.getInt('notif_reminder_minute') ?? 0,
@@ -171,15 +176,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: Column(
                       children: [
-                        _toggleRow('Push Notifications', _pushNotifications, (v) {
+                        _toggleRow('Push Notifications', _pushNotifications, (v) async {
                           setState(() => _pushNotifications = v);
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('notif_push_enabled', v);
                           if (v) {
                             NotificationService().requestPermission();
                           }
                         }),
                         Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
-                        _toggleRow('Workout Reminders', _workoutReminders, (v) {
+                        _toggleRow('Workout Reminders', _workoutReminders, (v) async {
                           setState(() => _workoutReminders = v);
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('notif_workout_enabled', v);
                           if (v) {
                             NotificationService().requestPermission();
                             NotificationService().scheduleWorkoutReminder(
@@ -245,6 +254,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ),
                           ),
                         ],
+                        Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
+                        _toggleRow('Streak Reminders', _streakReminders, (v) async {
+                          setState(() => _streakReminders = v);
+                          if (v) {
+                            await NotificationService().requestPermission();
+                            await NotificationService().scheduleStreakReminder();
+                          } else {
+                            await NotificationService().cancelStreakReminder();
+                          }
+                        }),
                         Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
                         _toggleRow(
                           'Rest Timer Sound',
@@ -492,13 +511,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _toggleRow(String label, bool value, ValueChanged<bool> onChanged) {
+  Widget _toggleRow(String label, bool value, Function(bool) onChanged) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 14.h),
       child: Row(
         children: [
           Expanded(child: Text(label, style: AppTextStyles.body.copyWith(color: context.foreground))),
-          CustomToggle(value: value, onChanged: onChanged),
+          CustomToggle(value: value, onChanged: (v) => onChanged(v)),
         ],
       ),
     );
