@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -726,8 +725,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     final isDark = context.isDark;
     final exercises = _exercises;
 
-    // GYM-125: bottom overlay timer visibility
-    final bool _timerVisible = _restActive && _timerRunning;
+    final bool timerVisible = _restActive && _timerRunning;
 
     return Scaffold(
       body: Column(
@@ -741,7 +739,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                     left: AppSpacing.screenPadding,
                     right: AppSpacing.screenPadding,
                     // Extra bottom padding when timer overlay is visible (GYM-125)
-                    bottom: _timerVisible ? 80.h : AppSpacing.screenPadding,
+                    bottom: timerVisible ? 80.h : AppSpacing.screenPadding,
                     top: (_restActive && !_timerRunning && !_restMinimized)
                         ? 72.h
                         : (_restActive && !_timerRunning && _restMinimized)
@@ -789,7 +787,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                 // GYM-125: bottom overlay when timer is actively counting down
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 300),
-                  bottom: _timerVisible ? 0 : -100,
+                  bottom: timerVisible ? 0 : -100,
                   left: 0,
                   right: 0,
                   child: _buildTimerBottomOverlay(context),
