@@ -214,7 +214,8 @@ void main() {
     test('deleteAllUserData is called before deleteAccount', () async {
       final callOrder = <String>[];
 
-      when(() => authRepo.currentUser).thenReturn(_makeUser());
+      final deleteUser = _makeUser();
+      when(() => authRepo.currentUser).thenReturn(deleteUser);
       when(() => userRepo.deleteAllUserData(any())).thenAnswer((_) async {
         callOrder.add('deleteData');
       });

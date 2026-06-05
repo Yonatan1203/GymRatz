@@ -114,6 +114,11 @@ void main() {
   late MockAnalyticsService analyticsService;
   late WorkoutService sut;
 
+  setUpAll(() {
+    registerFallbackValue(Workout(id: 'fb', programId: '', workoutDayId: '', date: DateTime(2026), status: WorkoutStatus.completed, exercises: []));
+    registerFallbackValue(ProgressionHistory(exerciseName: '', sessions: []));
+  });
+
   setUp(() {
     workoutRepo = MockWorkoutRepository();
     prRepo = MockPrRepository();
