@@ -239,3 +239,46 @@ final exerciseFilterProvider = Provider<List<String>>((ref) {
   final names = prs.map((p) => p.exerciseName).toSet().toList()..sort();
   return ['All', ...names];
 });
+
+/// Weekly progress for a given program: (completedThisWeek, scheduledThisWeek).
+/// Uses the same week-boundary logic as the calendar bar so both widgets stay
+/// in sync. Returns (0, 0) when the program is null or has no scheduled days.
+final weeklyProgramProgressProvider = Provider<({int completed, int scheduled})>((ref) {
+  final activeProgram = ref.watch(activeProgramProvider).valueOrNull;
+  if (activeProgram == null || activeProgram.days.isEmpty) {
+    return (completed: 0, scheduled: 0);
+  }
+
+  final startsOnMonday = ref.watch(weekStartsOnMondayProvider);
+  final recentWorkouts = ref.watch(recentWorkoutsProvider).valueOrNull ?? [];
+
+  final now = DateTime.now();
+  final int offsetDays;
+  if (startsOnMonday) {
+    offsetDays = now.weekday - 1; // Mon=0 … Sun=6
+  } else {
+    offsetDays = now.weekday % 7; // Sun=0 … Sat=6
+  }
+  final weekStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: offsetDays));
+  final weekEnd = weekStart.add(const Duration(days: 7));
+
+  // Count workouts completed this week for the active program.
+  final completedThisWeek = recentWorkouts.where((w) {
+    return w.status == WorkoutStatus.completed &&
+        w.programId == activeProgram.id &&
+        !w.date.isBefore(weekStart) &&
+        w.date.isBefore(weekEnd);
+  }).length;
+
+  // Count scheduled workout-days this week.
+  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  final scheduledDayNames = activeProgram.days.map((d) => d.dayOfWeek).toSet();
+  int scheduledThisWeek = 0;
+  for (int i = 0; i < 7; i++) {
+    final day = weekStart.add(Duration(days: i));
+    final name = dayNames[day.weekday - 1];
+    if (scheduledDayNames.contains(name)) scheduledThisWeek++;
+  }
+
+  return (completed: completedThisWeek, scheduled: scheduledThisWeek);
+});

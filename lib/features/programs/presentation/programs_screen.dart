@@ -136,6 +136,17 @@ class ProgramsScreen extends ConsumerWidget {
   Widget _buildProgramCard(BuildContext context, WidgetRef ref, Program p) {
     final favIds = ref.watch(favoriteProgramIdsProvider);
     final isFav = favIds.contains(p.id);
+    // For the active program: use live weekly progress so the bar matches the
+    // calendar bar. For inactive programs fall back to the stored value.
+    final double displayProgress;
+    if (p.isActive) {
+      final weekly = ref.watch(weeklyProgramProgressProvider);
+      displayProgress = weekly.scheduled > 0
+          ? (weekly.completed / weekly.scheduled).clamp(0.0, 1.0)
+          : 0.0;
+    } else {
+      displayProgress = p.progress / 100.0;
+    }
 
     return ScaleTap(
       onTap: () => context.push('/programs/detail/${p.id}'),
@@ -259,10 +270,10 @@ class ProgramsScreen extends ConsumerWidget {
             SizedBox(height: AppSpacing.lg),
             Row(
               children: [
-                Expanded(child: ProgressBarWidget(progress: p.progress / 100)),
+                Expanded(child: ProgressBarWidget(progress: displayProgress)),
                 SizedBox(width: AppSpacing.lg),
                 Text(
-                  '${p.progress}%',
+                  '${(displayProgress * 100).round()}%',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: context.primaryColor,
                     fontWeight: FontWeight.w600,
