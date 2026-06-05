@@ -1,45 +1,84 @@
+import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
+
 /**
- * RevenueCat Webhook Handler — STUB (post-beta)
+ * RevenueCat Webhook Handler
  *
- * TODO: Implement after beta launch. This function will:
+ * Receives POST requests from RevenueCat and syncs subscription status to Firestore.
  *
- * 1. Receive POST requests from RevenueCat webhooks
- * 2. Validate the Authorization header against a stored secret
- * 3. Parse the event body (RevenueCat webhook v2 format)
- * 4. Extract app_user_id (= Firebase UID)
- * 5. Map event types to subscription status updates:
- *    - INITIAL_PURCHASE → subscriptionStatus: 'active'
- *    - RENEWAL → update subscriptionExpiry
- *    - CANCELLATION → subscriptionStatus: 'cancelled'
- *    - BILLING_ISSUE → subscriptionStatus: 'billing_issue'
- *    - EXPIRATION → subscriptionStatus: 'expired'
- *    - PRODUCT_CHANGE → update subscriptionProductId
- * 6. Update users/{uid} doc with subscriptionStatus, subscriptionExpiry, subscriptionProductId
- * 7. Optionally trigger FCM notifications for trial-end, cancellation, etc.
+ * Setup:
+ *   firebase functions:secrets:set REVENUECAT_WEBHOOK_SECRET
+ *   Configure the same value in RevenueCat Dashboard → Webhooks → Authorization header.
  *
- * For beta, all premium gating is client-side via RevenueCat SDK.
+ * RevenueCat sends: Authorization: Bearer <secret>
  */
 
-// Uncomment and implement post-beta:
-// import * as functions from "firebase-functions";
-// import * as admin from "firebase-admin";
-//
-// export const revenueCatWebhook = functions.https.onRequest(async (req, res) => {
-//   if (req.method !== "POST") {
-//     res.status(405).send("Method Not Allowed");
-//     return;
-//   }
-//
-//   // Validate webhook secret
-//   // const secret = functions.config().revenuecat?.webhook_secret;
-//   // if (req.headers.authorization !== `Bearer ${secret}`) {
-//   //   res.status(401).send("Unauthorized");
-//   //   return;
-//   // }
-//
-//   // Parse and handle event
-//   // const event = req.body;
-//   // ...
-//
-//   res.status(200).send("OK");
-// });
+const ACTIVE_EVENTS = new Set([
+  "INITIAL_PURCHASE",
+  "RENEWAL",
+  "NON_RENEWING_PURCHASE",
+  "UNCANCELLATION",
+]);
+
+const INACTIVE_EVENTS = new Set([
+  "CANCELLATION",
+  "EXPIRATION",
+  "BILLING_ISSUE",
+]);
+
+export const revenueCatWebhook = functions.https.onRequest(async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).send("Method Not Allowed");
+    return;
+  }
+
+  // Validate webhook secret (Authorization: Bearer <secret>)
+  const webhookSecret = process.env.REVENUECAT_WEBHOOK_SECRET;
+  if (webhookSecret) {
+    const authHeader = req.headers.authorization ?? "";
+    const expectedHeader = `Bearer ${webhookSecret}`;
+    if (authHeader !== expectedHeader) {
+      functions.logger.warn("RevenueCat webhook: unauthorized request");
+      res.status(401).send("Unauthorized");
+      return;
+    }
+  }
+
+  const event = req.body?.event;
+  if (!event) {
+    functions.logger.warn("RevenueCat webhook: missing event body");
+    res.status(400).send("Bad Request");
+    return;
+  }
+
+  const uid: string | undefined = event.app_user_id;
+  const type: string | undefined = event.type;
+
+  if (!uid) {
+    // No UID — nothing to update, but acknowledge receipt
+    res.status(200).send("OK");
+    return;
+  }
+
+  functions.logger.info("RevenueCat webhook received", {uid, type});
+
+  const isActive = ACTIVE_EVENTS.has(type ?? "");
+  const isInactive = INACTIVE_EVENTS.has(type ?? "");
+
+  if (isActive || isInactive) {
+    await admin.firestore().collection("users").doc(uid).update({
+      isPro: isActive,
+      subscriptionStatus: isActive ? "active" : "expired",
+      subscriptionUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    functions.logger.info("Updated subscription status", {
+      uid,
+      isPro: isActive,
+      subscriptionStatus: isActive ? "active" : "expired",
+    });
+  } else {
+    functions.logger.info("RevenueCat webhook: unhandled event type, no Firestore update", {type});
+  }
+
+  res.status(200).send("OK");
+});
