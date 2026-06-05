@@ -117,6 +117,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(Workout(id: 'fb', programId: '', workoutDayId: '', date: DateTime(2026), status: WorkoutStatus.completed, exercises: []));
     registerFallbackValue(const ProgressionHistory());
+    registerFallbackValue(const ProgressionSuggestion(suggestedWeight: 0, suggestedReps: 0, suggestedSets: 0, reasoning: ''));
   });
 
   setUp(() {
