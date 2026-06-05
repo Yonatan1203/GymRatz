@@ -224,9 +224,23 @@ class AuthService {
 
     // 1. Delete all Firestore data (user doc + subcollections)
     await _userRepository.deleteAllUserData(uid);
-    // 2. Clear RevenueCat
-    await _entitlementService?.logoutUser();
-    // 3. Delete Firebase Auth account
+
+    // 2. Delete coach document and subcollections if user is a coach
+    try {
+      final coachDoc = await FirebaseFirestore.instance.collection('coaches').doc(uid).get();
+      if (coachDoc.exists) {
+        final clients = await FirebaseFirestore.instance.collection('coaches').doc(uid).collection('clients').get();
+        for (final c in clients.docs) { await c.reference.delete(); }
+        await coachDoc.reference.delete();
+      }
+    } catch (_) {}
+
+    // 3. Delete RevenueCat customer record.
+    // purchases_flutter v8.x does not expose deleteCustomerInfo(); logoutUser()
+    // anonymises the session which is the closest available equivalent.
+    try { await _entitlementService?.logoutUser(); } catch (_) {}
+
+    // 4. Delete Firebase Auth account
     await _authRepo.deleteAccount();
   }
 

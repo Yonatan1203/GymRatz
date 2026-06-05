@@ -20,9 +20,23 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read: if isOwner(uid) || isCoachOf(uid) || isAdmin();
-      allow create: if isOwner(uid);
-      allow update: if isOwner(uid) || isCoachOf(uid);
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasAll(['displayName', 'email'])
+        && request.resource.data.displayName is string
+        && request.resource.data.email is string;
+      allow update: if (isOwner(uid) || isCoachOf(uid))
+        && request.resource.data.keys().hasAll(['displayName', 'email'])
+        && request.resource.data.displayName is string
+        && request.resource.data.email is string;
       allow delete: if isOwner(uid);
+
+      match /workouts/{wid} {
+        allow read: if isOwner(uid) || isCoachOf(uid) || isAdmin();
+        allow create, update: if (isOwner(uid) || isCoachOf(uid))
+          && (!request.resource.data.keys().hasAny(['status'])
+            || request.resource.data.status in ['in_progress', 'completed', 'skipped']);
+        allow delete: if isOwner(uid) || isCoachOf(uid);
+      }
 
       match /{subcollection}/{docId} {
         allow read: if isOwner(uid) || isCoachOf(uid) || isAdmin();
@@ -54,16 +68,25 @@ service cloud.firestore {
     match /invite_codes/{code} {
       allow read: if request.auth != null;
       allow create: if request.auth != null
-        && request.resource.data.coachUid == request.auth.uid;
+        && request.resource.data.coachUid == request.auth.uid
+        && (!request.resource.data.keys().hasAny(['status'])
+          || request.resource.data.status in ['pending', 'accepted', 'expired']);
       allow update: if request.auth != null
-        && resource.data.coachUid == request.auth.uid;
+        && resource.data.coachUid == request.auth.uid
+        && (!request.resource.data.keys().hasAny(['status'])
+          || request.resource.data.status in ['pending', 'accepted', 'expired']);
       allow delete: if request.auth != null
         && resource.data.coachUid == request.auth.uid;
     }
 
     match /coach_applications/{uid} {
-      allow create: if isOwner(uid);
-      allow read, update: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid)
+        && (!request.resource.data.keys().hasAny(['status'])
+          || request.resource.data.status in ['pending', 'approved', 'rejected']);
+      allow read: if isOwner(uid) || isAdmin();
+      allow update: if (isOwner(uid) || isAdmin())
+        && (!request.resource.data.keys().hasAny(['status'])
+          || request.resource.data.status in ['pending', 'approved', 'rejected']);
     }
 
     match /{document=**} {
