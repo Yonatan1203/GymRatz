@@ -32,6 +32,15 @@ class UserRepository {
     await _userDoc(uid).update(fields);
   }
 
+  /// Persist the FCM token so Cloud Functions can send targeted pushes.
+  /// Uses set-with-merge so it works even before the full profile is created.
+  Future<void> saveFcmToken(String uid, String token) async {
+    await _userDoc(uid).set(
+      {'fcmToken': token, 'fcmTokenUpdatedAt': DateTime.now().toIso8601String()},
+      SetOptions(merge: true),
+    );
+  }
+
   Future<void> deleteUser(String uid) async {
     await _userDoc(uid).delete();
   }

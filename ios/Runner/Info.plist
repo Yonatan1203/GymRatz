@@ -45,6 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>GymRatz sends workout reminders and rest timer alerts to keep you on track.</string>
 	<key>NSCalendarsUsageDescription</key>
