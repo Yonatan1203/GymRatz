@@ -15,5 +15,5 @@ export {onCoachApplicationUpdate} from "./triggers/onCoachApplicationUpdate";
 // Scheduled jobs
 export {scheduledFirestoreBackup} from "./backup/scheduledBackup";
 
-// HTTP endpoints (post-beta)
-// export {revenueCatWebhook} from "./webhooks/revenueCatWebhook";
+// HTTP endpoints
+export {revenueCatWebhook} from "./webhooks/revenueCatWebhook";
