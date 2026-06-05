@@ -141,6 +141,14 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   // Persistent controllers keyed by 'exIdx-setIdx-field'
   final Map<String, TextEditingController> _controllers = {};
 
+  /// Formats a weight value for display in the text field.
+  /// Shows integers without decimals (80), fractional values with one decimal (82.5).
+  /// Returns empty string for 0 so the hint text shows instead.
+  static String _weightText(double weight) {
+    if (weight <= 0) return '';
+    return weight % 1 == 0 ? '${weight.toInt()}' : weight.toStringAsFixed(1);
+  }
+
   TextEditingController _getController(int exIdx, int setIdx, String field, String initialValue) {
     final key = '$exIdx-$setIdx-$field';
     if (!_controllers.containsKey(key)) {
@@ -158,7 +166,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       for (int setIdx = 0; setIdx < _sets[exIdx].length; setIdx++) {
         final s = _sets[exIdx][setIdx];
         _getController(exIdx, setIdx, 'reps', s.reps > 0 ? '${s.reps}' : '');
-        _getController(exIdx, setIdx, 'weight', s.weight > 0 ? '${s.weight.toInt()}' : '');
+        _getController(exIdx, setIdx, 'weight', _weightText(s.weight));
         _getController(exIdx, setIdx, 'rir', (s.rir ?? 0) > 0 ? '${s.rir}' : '');
         _getController(exIdx, setIdx, 'duration', s.durationSeconds > 0 ? '${s.durationSeconds}' : '');
       }
@@ -1282,7 +1290,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     if (field == 'reps') {
       initialValue = s.reps > 0 ? '${s.reps}' : '';
     } else if (field == 'weight') {
-      initialValue = s.weight > 0 ? '${s.weight.toInt()}' : '';
+      initialValue = _weightText(s.weight);
     } else if (field == 'duration') {
       initialValue = s.durationSeconds > 0 ? '${s.durationSeconds}' : '';
     } else {
