@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../theme/app_icons.dart';
 
@@ -81,6 +82,7 @@ class FavoritesScreen extends ConsumerWidget {
                               SizedBox(width: 8.w),
                               GestureDetector(
                                 onTap: () {
+                                  HapticFeedback.selectionClick();
                                   final uid = ref.read(currentUidProvider);
                                   if (uid == null) return;
                                   ref.read(userRepositoryProvider).toggleFavoriteProgram(uid, p.id);

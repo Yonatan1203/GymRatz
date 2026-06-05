@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants.dart';
@@ -34,6 +35,8 @@ class ProfileScreen extends ConsumerWidget {
                 child: StaggeredList(
                   children: [
                     _buildPersonalRecords(context, ref),
+                    SizedBox(height: AppSpacing.sectionGap),
+                    _buildActivityHeatmap(context, ref),
                     SizedBox(height: AppSpacing.sectionGap),
                     _buildMenuSection(context, 'WORKOUTS & TRAINING', [
                       MenuItemWidget(icon: AppIcons.dumbbell, label: 'Exercises', onTap: () => context.push('/exercises')),
@@ -82,7 +85,10 @@ class ProfileScreen extends ConsumerWidget {
     return GradientHeader(
       actions: [
         GestureDetector(
-          onTap: () => context.push('/profile/edit'),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            context.push('/profile/edit');
+          },
           child: Icon(AppIcons.edit, size: 22.r, color: context.foreground),
         ),
       ],
@@ -144,8 +150,10 @@ class ProfileScreen extends ConsumerWidget {
         ...prList.map((pr) => Padding(
           padding: EdgeInsets.only(bottom: AppSpacing.md),
           child: ScaleTap(
-            // GYM-62: /progress is a standalone detail screen; use push not go
-            onTap: () => context.push('/progress'),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              context.push('/progress');
+            },
             child: CustomCard(
               variant: CardVariant.standard,
               padding: EdgeInsets.all(AppSpacing.lg),
@@ -178,6 +186,95 @@ class ProfileScreen extends ConsumerWidget {
           ),
         )),
       ],
+    );
+  }
+
+  Widget _buildActivityHeatmap(BuildContext context, WidgetRef ref) {
+    // Build a set of completed workout dates from the last 12 weeks (84 days)
+    final recentWorkouts = ref.watch(recentWorkoutsProvider).valueOrNull ?? [];
+    final completedDates = <String>{};
+    final workoutCounts = <String, int>{};
+    for (final w in recentWorkouts) {
+      final key = '${w.date.year}-${w.date.month}-${w.date.day}';
+      completedDates.add(key);
+      workoutCounts[key] = (workoutCounts[key] ?? 0) + 1;
+    }
+
+    final today = DateTime.now();
+    // Align to start of week (Monday)
+    final startOfThisWeek = today.subtract(Duration(days: today.weekday - 1));
+    final heatmapStart = startOfThisWeek.subtract(const Duration(days: 7 * 11)); // 12 weeks back
+
+    const dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+    return Card(
+      color: context.cardColor,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.r),
+        side: BorderSide(color: context.borderColor, width: 0.5),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Activity',
+              style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w600),
+            ),
+            SizedBox(height: AppSpacing.lg),
+            Row(
+              children: dayLabels.map((label) => Expanded(
+                child: Center(
+                  child: Text(
+                    label,
+                    style: AppTextStyles.caption.copyWith(
+                      color: context.mutedForeground,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              )).toList(),
+            ),
+            SizedBox(height: AppSpacing.sm),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                mainAxisSpacing: 3.r,
+                crossAxisSpacing: 3.r,
+                childAspectRatio: 1,
+              ),
+              itemCount: 84,
+              itemBuilder: (ctx, index) {
+                // index 0 = heatmapStart (Monday of 12 weeks ago)
+                final cellDate = heatmapStart.add(Duration(days: index));
+                final key = '${cellDate.year}-${cellDate.month}-${cellDate.day}';
+                final count = workoutCounts[key] ?? 0;
+                final isFuture = cellDate.isAfter(today);
+
+                Color cellColor;
+                if (isFuture || count == 0) {
+                  cellColor = Theme.of(context).colorScheme.surfaceContainerHighest;
+                } else if (count == 1) {
+                  cellColor = context.primaryColor.withValues(alpha: 0.5);
+                } else {
+                  cellColor = context.primaryColor;
+                }
+
+                return Container(
+                  decoration: BoxDecoration(
+                    color: cellColor,
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
