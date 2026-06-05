@@ -23,6 +23,24 @@ class CustomScaffold extends ConsumerStatefulWidget {
 }
 
 class _CustomScaffoldState extends ConsumerState<CustomScaffold> {
+  static const int _tabCount = 5;
+  // Minimum horizontal velocity (logical pixels/s) to trigger a tab swipe.
+  static const double _swipeVelocityThreshold = 300.0;
+
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0;
+    if (velocity.abs() < _swipeVelocityThreshold) return;
+
+    final current = widget.navigationShell.currentIndex;
+    // Swipe right-to-left (negative velocity) → advance to next tab.
+    // Swipe left-to-right (positive velocity) → go back to previous tab.
+    final next = velocity < 0 ? current + 1 : current - 1;
+    if (next < 0 || next >= _tabCount) return;
+
+    PlatformAdapter.hapticLight();
+    widget.navigationShell.goBranch(next);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -30,31 +48,36 @@ class _CustomScaffoldState extends ConsumerState<CustomScaffold> {
     final activeSession = ref.watch(activeWorkoutSessionProvider);
 
     return Scaffold(
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              const SafeArea(bottom: false, child: OfflineBanner()),
-              Expanded(
-                child: SubscriptionGate(
-                  currentIndex: widget.navigationShell.currentIndex,
-                  child: widget.navigationShell,
+      body: GestureDetector(
+        onHorizontalDragEnd: _onHorizontalDragEnd,
+        // Use translucent so inner scrollables still receive taps.
+        behavior: HitTestBehavior.translucent,
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                const SafeArea(bottom: false, child: OfflineBanner()),
+                Expanded(
+                  child: SubscriptionGate(
+                    currentIndex: widget.navigationShell.currentIndex,
+                    child: widget.navigationShell,
+                  ),
+                ),
+              ],
+            ),
+            // Floating active workout banner
+            if (activeSession != null)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 8.h),
+                  child: const ActiveWorkoutBanner(),
                 ),
               ),
-            ],
-          ),
-          // Floating active workout banner
-          if (activeSession != null)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Padding(
-                padding: EdgeInsets.only(bottom: 8.h),
-                child: const ActiveWorkoutBanner(),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
