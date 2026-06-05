@@ -241,9 +241,16 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  program.name,
-                  style: AppTextStyles.h1.copyWith(color: context.foreground),
+                // GYM-58: Hero tag matches the card in ProgramsScreen
+                Hero(
+                  tag: 'program_title_${program.id}',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Text(
+                      program.name,
+                      style: AppTextStyles.h1.copyWith(color: context.foreground),
+                    ),
+                  ),
                 ),
                 SizedBox(height: AppSpacing.sm),
                 Text(

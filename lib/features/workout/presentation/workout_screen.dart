@@ -13,6 +13,7 @@ import '../../../shared/models/workout.dart';
 import '../../../shared/models/workout_day.dart';
 import '../../../shared/models/enums.dart';
 import '../../../shared/utils/extensions.dart';
+import '../../../shared/utils/platform_adapter.dart';
 import '../../../shared/widgets/custom_badge.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_card.dart';
@@ -211,6 +212,7 @@ class WorkoutScreen extends ConsumerWidget {
           padding: EdgeInsets.only(bottom: AppSpacing.md),
           child: _buildDayRow(
             context,
+            ref,
             isDark,
             dayShort: dayShort,
             dayName: dayName,
@@ -238,6 +240,7 @@ class WorkoutScreen extends ConsumerWidget {
 
   Widget _buildDayRow(
     BuildContext context,
+    WidgetRef ref,
     bool isDark, {
     required String dayShort,
     required String dayName,
@@ -251,18 +254,11 @@ class WorkoutScreen extends ConsumerWidget {
     final isRestDay = workoutDay == null;
     final isMissed = isPast && !isRestDay && !isCompleted;
 
+    // GYM-63: long-press opens day options bottom sheet
     return GestureDetector(
       onLongPress: workoutDay == null
           ? null
-          : () {
-              CalendarSyncService.addWorkoutToCalendar(
-                day: workoutDay,
-                date: date,
-              );
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Opening calendar...')),
-              );
-            },
+          : () => _showDayOptionsSheet(context, ref, workoutDay, date, dayName, isToday),
       child: ScaleTap(
       onTap: isRestDay
           ? null
@@ -363,6 +359,93 @@ class WorkoutScreen extends ConsumerWidget {
       text: 'Scheduled',
       backgroundColor: context.mutedColor,
       textColor: context.mutedForeground,
+    );
+  }
+
+  // GYM-63: day options bottom sheet with Start Workout, Mark as Rest, View History, Add to Calendar
+  void _showDayOptionsSheet(
+    BuildContext context,
+    WidgetRef ref,
+    WorkoutDay workoutDay,
+    DateTime date,
+    String dayName,
+    bool isToday,
+  ) {
+    PlatformAdapter.hapticMedium();
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36.w,
+                  height: 4.h,
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  decoration: BoxDecoration(
+                    color: Theme.of(sheetCtx).dividerColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: Text(
+                    workoutDay.name,
+                    style: AppTextStyles.h4.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                ListTile(
+                  leading: Icon(AppIcons.play, size: 20.r),
+                  title: Text('Start Workout', style: AppTextStyles.bodySmall),
+                  onTap: () {
+                    Navigator.of(sheetCtx).pop();
+                    _onDayTapped(context, dayName, isToday, workoutDay);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(AppIcons.moon, size: 20.r),
+                  title: Text('Mark as Rest', style: AppTextStyles.bodySmall),
+                  onTap: () {
+                    Navigator.of(sheetCtx).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${workoutDay.name} marked as rest day')),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: Icon(AppIcons.clock, size: 20.r),
+                  title: Text('View Day History', style: AppTextStyles.bodySmall),
+                  onTap: () {
+                    Navigator.of(sheetCtx).pop();
+                    context.push('/progress');
+                  },
+                ),
+                ListTile(
+                  leading: Icon(AppIcons.calendar, size: 20.r),
+                  title: Text('Add to Calendar', style: AppTextStyles.bodySmall),
+                  onTap: () {
+                    Navigator.of(sheetCtx).pop();
+                    CalendarSyncService.addWorkoutToCalendar(
+                      day: workoutDay,
+                      date: date,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Opening calendar...')),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
