@@ -116,7 +116,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(Workout(id: 'fb', programId: '', workoutDayId: '', date: DateTime(2026), status: WorkoutStatus.completed, exercises: []));
-    registerFallbackValue(ProgressionHistory(exerciseName: '', sessions: []));
+    registerFallbackValue(const ProgressionHistory());
   });
 
   setUp(() {
