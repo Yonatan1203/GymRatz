@@ -146,13 +146,13 @@ class WorkoutService {
       sets: List.generate(
         numSets,
         (i) {
-          // For sets beyond what the suggestion covers, use same values.
-          final weight = (suggestion != null && i < (lastExercise?.sets.length ?? 0))
-              ? lastExercise!.sets[i].weight
+          // Use per-set history weight where available; fall back to prefillWeight for new sets.
+          final weight = (lastExercise != null && i < lastExercise.sets.length)
+              ? lastExercise.sets[i].weight
               : prefillWeight;
 
           return WorkoutSet(
-            weight: i == 0 ? prefillWeight : weight,
+            weight: weight,
             reps: prefillReps,
             rir: prefillRir,
             equipmentType: pe.equipmentType,
