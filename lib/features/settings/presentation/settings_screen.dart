@@ -1,8 +1,14 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -31,6 +37,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _workoutReminders = true;
   bool _streakReminders = false;
   bool _isDeletingAccount = false;
+  bool _isExportingData = false;
 
   // Reminder time & days — loaded from saved prefs, defaulting to 6pm Mon-Fri.
   TimeOfDay _reminderTime = const TimeOfDay(hour: 18, minute: 0);
@@ -298,7 +305,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     child: Column(
                       children: [
-                        MenuItemWidget(icon: AppIcons.download, label: 'Export Data', onTap: () => _showComingSoon('Data export')),
+                        MenuItemWidget(
+                          icon: AppIcons.download,
+                          label: _isExportingData ? 'Exporting…' : 'Export My Data',
+                          onTap: _isExportingData ? null : _handleExportData,
+                        ),
                         Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
                         MenuItemWidget(
                           icon: AppIcons.trash2,
@@ -398,6 +409,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleExportData() async {
+    setState(() => _isExportingData = true);
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable('exportUserData');
+      final result = await callable.call();
+      final json = jsonEncode(result.data);
+
+      // Write to a temp file so share_plus can attach it.
+      final dir = await getTemporaryDirectory();
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final file = File('${dir.path}/gymratz_export_$timestamp.json');
+      await file.writeAsString(json);
+
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'application/json')],
+        subject: 'GymRatz Data Export',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExportingData = false);
+    }
   }
 
   Future<void> _handleDeleteAccount() async {
