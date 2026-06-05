@@ -57,7 +57,7 @@
 	<key>NSCalendarsWriteOnlyUsageDescription</key>
 	<string>GymRatz adds your scheduled workouts to your calendar so you never miss a session.</string>
 	<key>GIDClientID</key>
-	<string>__IOS_CLIENT_ID__</string>
+	<string>901059241616-l86kji12jkltbp199r9gh2qe9amg268h.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -65,7 +65,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>__REVERSED_CLIENT_ID__</string>
+				<string>com.googleusercontent.apps.901059241616-l86kji12jkltbp199r9gh2qe9amg268h</string>
 			</array>
 		</dict>
 	</array>
