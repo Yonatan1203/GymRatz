@@ -41,10 +41,14 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.3
   flutter_native_splash: ^2.4.6
   fake_cloud_firestore: ^3.1.0
+  mocktail: ^0.3.0
+  firebase_auth_mocks: ^0.14.0
 
 flutter:
   uses-material-design: true
