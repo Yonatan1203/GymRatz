@@ -10,6 +10,7 @@ export {onUserRoleUpdate} from "./auth/onUserRoleUpdate";
 
 // Firestore triggers
 export {onWorkoutComplete} from "./triggers/onWorkoutComplete";
+export {onCoachApplicationUpdate} from "./triggers/onCoachApplicationUpdate";
 
 // HTTP endpoints (post-beta)
 // export {revenueCatWebhook} from "./webhooks/revenueCatWebhook";
