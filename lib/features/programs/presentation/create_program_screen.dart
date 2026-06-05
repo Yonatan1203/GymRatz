@@ -1520,7 +1520,7 @@ class _ExerciseConfig {
   /// When true, sets are logged by duration (seconds) rather than reps.
   bool isTimeBased;
   /// Default duration in seconds for time-based sets.
-  int setDurationSeconds;
+  int setDurationSeconds = 30;
 
   _ExerciseConfig({
     required this.id,
@@ -1536,6 +1536,5 @@ class _ExerciseConfig {
     this.progressionType = ProgressionMode.hypertrophy,
     this.durationMinutes,
     this.isTimeBased = false,
-    this.setDurationSeconds = 30,
   });
 }
