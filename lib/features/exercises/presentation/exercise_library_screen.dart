@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../../theme/app_icons.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 
 import '../../../app/providers.dart';
 import '../../../shared/models/enums.dart';
@@ -74,8 +75,37 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
     }).toList();
   }
 
+  Future<void> _onRefresh() async {
+    ref.invalidate(bundledExercisesProvider);
+    ref.invalidate(userExercisesProvider);
+    // Wait for bundled exercises to reload; stream will re-emit automatically.
+    await ref
+        .read(bundledExercisesProvider.future)
+        .catchError((_) => <Exercise>[]);
+  }
+
+  void _showExerciseDetail(BuildContext context, Exercise exercise) {
+    final activeSession = ref.read(activeWorkoutSessionProvider);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _ExerciseDetailSheet(
+        exercise: exercise,
+        hasActiveWorkout: activeSession != null,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bundledAsync = ref.watch(bundledExercisesProvider);
+    final userAsync = ref.watch(userExercisesProvider);
+    final isLoading = bundledAsync.isLoading || userAsync.isLoading;
+
     final allExercises = ref.watch(exerciseLibraryProvider);
     final favoriteIds = ref.watch(favoriteExerciseIdsProvider).valueOrNull ?? {};
 
@@ -97,28 +127,71 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
         children: [
           _buildStickyHeader(context),
           Expanded(
-            child: filtered.isEmpty
-                ? _buildEmptyState(context)
-                : ListView(
-                    padding: EdgeInsets.all(AppSpacing.screenPadding),
-                    children: [
-                      if (favorites.isNotEmpty) ...[
-                        Text('Favorites', style: AppTextStyles.h2.copyWith(color: context.foreground)),
-                        SizedBox(height: 12.h),
-                        ...favorites.map((ex) => _buildExerciseCard(context, ex)),
-                        SizedBox(height: AppSpacing.sectionGap),
-                      ],
-                      Text(
-                        _selectedCategory == 'All' ? 'All Exercises' : '$_selectedCategory Exercises',
-                        style: AppTextStyles.h2.copyWith(color: context.foreground),
-                      ),
-                      SizedBox(height: 12.h),
-                      ...nonFavorites.map((ex) => _buildExerciseCard(context, ex)),
-                      SizedBox(height: 16.h),
-                    ],
+            child: isLoading && allExercises.isEmpty
+                ? _buildSkeletonList(context)
+                : RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    child: filtered.isEmpty
+                        ? _buildEmptyState(context)
+                        : ListView(
+                            padding: EdgeInsets.all(AppSpacing.screenPadding),
+                            children: [
+                              if (favorites.isNotEmpty) ...[
+                                Text('Favorites', style: AppTextStyles.h2.copyWith(color: context.foreground)),
+                                SizedBox(height: 12.h),
+                                ...favorites.map((ex) => _buildExerciseCard(context, ex)),
+                                SizedBox(height: AppSpacing.sectionGap),
+                              ],
+                              Text(
+                                _selectedCategory == 'All' ? 'All Exercises' : '$_selectedCategory Exercises',
+                                style: AppTextStyles.h2.copyWith(color: context.foreground),
+                              ),
+                              SizedBox(height: 12.h),
+                              ...nonFavorites.map((ex) => _buildExerciseCard(context, ex)),
+                              SizedBox(height: 16.h),
+                            ],
+                          ),
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonList(BuildContext context) {
+    return SkeletonLoader(
+      child: ListView.builder(
+        padding: EdgeInsets.all(AppSpacing.screenPadding),
+        itemCount: 8,
+        itemBuilder: (_, __) => Padding(
+          padding: EdgeInsets.only(bottom: 8.h),
+          child: SkeletonCard(
+            height: 90,
+            child: Padding(
+              padding: EdgeInsets.all(16.r),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SkeletonCircle(size: 32),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SkeletonLine(width: 180.w, height: 14),
+                        SizedBox(height: 8.h),
+                        SkeletonLine(width: 120.w, height: 12),
+                        SizedBox(height: 8.h),
+                        SkeletonLine(width: 64.w, height: 12),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -228,96 +301,106 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
   Widget _buildExerciseCard(BuildContext context, Exercise exercise) {
     return Padding(
       padding: EdgeInsets.only(bottom: 8.h),
-      child: CustomCard(
-        padding: EdgeInsets.all(16.r),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(AppIcons.dumbbell, size: 16.r, color: context.primaryColor),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        child: Text(exercise.name, style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8.h),
-                  Row(
-                    children: [
-                      CustomBadge(text: exercise.type, backgroundColor: context.mutedColor, textColor: context.mutedForeground),
-                      SizedBox(width: 8.w),
-                      Flexible(
-                        child: Text(
-                          '${exercise.muscle} \u2022 ${exercise.equipment}',
-                          style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8.h),
-                  CustomBadge(
-                    text: exercise.difficulty,
-                    backgroundColor: exercise.difficulty == 'Beginner'
-                        ? context.accentColor.withValues(alpha: 0.2)
-                        : exercise.difficulty == 'Intermediate'
-                            ? context.primaryColor.withValues(alpha: 0.2)
-                            : context.secondaryColor.withValues(alpha: 0.2),
-                    textColor: exercise.difficulty == 'Beginner'
-                        ? context.accentColor
-                        : exercise.difficulty == 'Intermediate'
-                            ? context.primaryColor
-                            : context.secondaryColor,
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
+      child: Semantics(
+        button: true,
+        label: 'View details for ${exercise.name}',
+        child: GestureDetector(
+          onTap: () {
+            PlatformAdapter.hapticLight();
+            _showExerciseDetail(context, exercise);
+          },
+          child: CustomCard(
+            padding: EdgeInsets.all(16.r),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Semantics(
-                  button: true,
-                  label: exercise.isFavorite ? 'Remove from favorites' : 'Add to favorites',
-                  child: GestureDetector(
-                    onTap: () {
-                      PlatformAdapter.hapticSelection();
-                      _toggleFavorite(exercise);
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.all(8.r),
-                      child: Icon(
-                        exercise.isFavorite ? Icons.favorite : Icons.favorite_border,
-                        size: 20.r,
-                        color: exercise.isFavorite ? Colors.red : context.mutedForeground,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(AppIcons.dumbbell, size: 16.r, color: context.primaryColor),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(exercise.name, style: AppTextStyles.h4.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
+                          ),
+                        ],
                       ),
-                    ),
+                      SizedBox(height: 8.h),
+                      Row(
+                        children: [
+                          CustomBadge(text: exercise.type, backgroundColor: context.mutedColor, textColor: context.mutedForeground),
+                          SizedBox(width: 8.w),
+                          Flexible(
+                            child: Text(
+                              '${exercise.muscle} • ${exercise.equipment}',
+                              style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8.h),
+                      CustomBadge(
+                        text: exercise.difficulty,
+                        backgroundColor: exercise.difficulty == 'Beginner'
+                            ? context.accentColor.withValues(alpha: 0.2)
+                            : exercise.difficulty == 'Intermediate'
+                                ? context.primaryColor.withValues(alpha: 0.2)
+                                : context.secondaryColor.withValues(alpha: 0.2),
+                        textColor: exercise.difficulty == 'Beginner'
+                            ? context.accentColor
+                            : exercise.difficulty == 'Intermediate'
+                                ? context.primaryColor
+                                : context.secondaryColor,
+                      ),
+                    ],
                   ),
                 ),
-                if (exercise.isDefault == false)
-                  Semantics(
-                    button: true,
-                    label: 'Delete exercise',
-                    child: GestureDetector(
-                      onTap: () => _confirmDeleteExercise(context, exercise),
-                      child: Padding(
-                        padding: EdgeInsets.all(8.r),
-                        child: Icon(
-                          AppIcons.trash2,
-                          size: 16.r,
-                          color: context.destructiveColor,
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Semantics(
+                      button: true,
+                      label: exercise.isFavorite ? 'Remove from favorites' : 'Add to favorites',
+                      child: GestureDetector(
+                        onTap: () {
+                          PlatformAdapter.hapticSelection();
+                          _toggleFavorite(exercise);
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.all(8.r),
+                          child: Icon(
+                            exercise.isFavorite ? Icons.favorite : Icons.favorite_border,
+                            size: 20.r,
+                            color: exercise.isFavorite ? Colors.red : context.mutedForeground,
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                    if (exercise.isDefault == false)
+                      Semantics(
+                        button: true,
+                        label: 'Delete exercise',
+                        child: GestureDetector(
+                          onTap: () => _confirmDeleteExercise(context, exercise),
+                          child: Padding(
+                            padding: EdgeInsets.all(8.r),
+                            child: Icon(
+                              AppIcons.trash2,
+                              size: 16.r,
+                              color: context.destructiveColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -412,6 +495,207 @@ class _ExerciseLibraryScreenState extends ConsumerState<ExerciseLibraryScreen> {
                     if (ctx.mounted) Navigator.of(ctx).pop();
                   },
                   child: const Text('Save Exercise'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Exercise Detail Bottom Sheet ───────────────────────────────────────────
+
+class _ExerciseDetailSheet extends StatelessWidget {
+  final Exercise exercise;
+  final bool hasActiveWorkout;
+
+  const _ExerciseDetailSheet({
+    required this.exercise,
+    required this.hasActiveWorkout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final muscleGroups = [
+      if (exercise.muscle.isNotEmpty) exercise.muscle,
+      ...exercise.muscleGroups.where((m) => m.toLowerCase() != exercise.muscle.toLowerCase()),
+    ];
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      expand: false,
+      builder: (ctx, scrollController) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        child: Scaffold(
+          backgroundColor: context.cardColor,
+          body: Column(
+            children: [
+              // Drag handle
+              Padding(
+                padding: EdgeInsets.only(top: 12.h, bottom: 4.h),
+                child: Center(
+                  child: Container(
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: context.borderColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.screenPadding,
+                    AppSpacing.lg,
+                    AppSpacing.screenPadding,
+                    AppSpacing.xl,
+                  ),
+                  children: [
+                    // Title row
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(10.r),
+                          decoration: BoxDecoration(
+                            color: context.primaryColor.withValues(alpha: 0.15),
+                            borderRadius: AppRadius.borderMd,
+                          ),
+                          child: Icon(AppIcons.dumbbell, size: 24.r, color: context.primaryColor),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(exercise.name, style: AppTextStyles.h2.copyWith(color: context.foreground)),
+                              SizedBox(height: 4.h),
+                              Text(
+                                exercise.category,
+                                style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: AppSpacing.xl),
+
+                    // Chips: category + equipment + difficulty
+                    Wrap(
+                      spacing: 8.w,
+                      runSpacing: 8.h,
+                      children: [
+                        CustomBadge(
+                          text: exercise.category,
+                          backgroundColor: context.primaryColor.withValues(alpha: 0.15),
+                          textColor: context.primaryColor,
+                        ),
+                        CustomBadge(
+                          text: exercise.equipment,
+                          backgroundColor: context.mutedColor,
+                          textColor: context.mutedForeground,
+                        ),
+                        CustomBadge(
+                          text: exercise.difficulty,
+                          backgroundColor: exercise.difficulty == 'Beginner'
+                              ? context.accentColor.withValues(alpha: 0.2)
+                              : exercise.difficulty == 'Intermediate'
+                                  ? context.primaryColor.withValues(alpha: 0.2)
+                                  : context.secondaryColor.withValues(alpha: 0.2),
+                          textColor: exercise.difficulty == 'Beginner'
+                              ? context.accentColor
+                              : exercise.difficulty == 'Intermediate'
+                                  ? context.primaryColor
+                                  : context.secondaryColor,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: AppSpacing.xl),
+
+                    // Muscles worked
+                    if (muscleGroups.isNotEmpty) ...[
+                      Text('Muscles Worked', style: AppTextStyles.h4.copyWith(color: context.foreground)),
+                      SizedBox(height: 8.h),
+                      Wrap(
+                        spacing: 8.w,
+                        runSpacing: 8.h,
+                        children: muscleGroups
+                            .map((m) => CustomBadge(
+                                  text: m,
+                                  backgroundColor: context.mutedColor,
+                                  textColor: context.mutedForeground,
+                                ))
+                            .toList(),
+                      ),
+                      SizedBox(height: AppSpacing.xl),
+                    ],
+
+                    // Description / instructions
+                    Text('Form Tips', style: AppTextStyles.h4.copyWith(color: context.foreground)),
+                    SizedBox(height: 8.h),
+                    Text(
+                      exercise.instructions?.isNotEmpty == true
+                          ? exercise.instructions!
+                          : 'No form tips available for this exercise. Focus on controlled movement, proper breathing, and full range of motion.',
+                      style: AppTextStyles.body.copyWith(color: context.mutedForeground),
+                    ),
+                    SizedBox(height: AppSpacing.xxxl),
+                  ],
+                ),
+              ),
+
+              // Action buttons
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.screenPadding,
+                  0,
+                  AppSpacing.screenPadding,
+                  MediaQuery.of(context).viewPadding.bottom + AppSpacing.xl,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          PlatformAdapter.hapticLight();
+                          Navigator.of(context).pop();
+                          context.push('/programs/create');
+                        },
+                        child: const Text('Add to Program'),
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: hasActiveWorkout
+                            ? () {
+                                PlatformAdapter.hapticLight();
+                                Navigator.of(context).pop();
+                              }
+                            : null,
+                        style: hasActiveWorkout
+                            ? null
+                            : OutlinedButton.styleFrom(
+                                foregroundColor: context.mutedForeground,
+                                side: BorderSide(color: context.borderColor),
+                              ),
+                        child: Text(
+                          hasActiveWorkout ? 'Log in Current Workout' : 'No Active Workout',
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
