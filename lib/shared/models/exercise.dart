@@ -1,5 +1,10 @@
 import 'enums.dart';
 
+/// Core exercise model.
+///
+/// Note: `videoUrl` and `imageUrl` are intentionally absent — exercise videos
+/// are not included in v1. No video/image placeholder UI should reference this
+/// model. See GYM-115.
 class Exercise {
   final String id;
   final String name;
