@@ -227,6 +227,7 @@ class WorkoutService {
           exerciseName: exercise.name,
           weight: set.weight,
           reps: set.reps,
+          unit: unit,
         );
         if (isPR && !newPRs.contains(exercise.name)) {
           newPRs.add(exercise.name);

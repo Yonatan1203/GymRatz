@@ -60,6 +60,21 @@ final recentWorkoutsProvider = StreamProvider<List<Workout>>((ref) {
   return ref.watch(workoutRepositoryProvider).watchRecentWorkouts(uid, limit: 30);
 });
 
+// ─── Activity Heatmap (12 weeks, completed workouts only) ───
+// Separate from recentWorkoutsProvider to avoid inflating the limit used by
+// week-progress and calendar providers which only need the current week.
+final activityHeatmapProvider = StreamProvider<List<Workout>>((ref) {
+  final uid = ref.watch(currentUidProvider);
+  if (uid == null) return Stream.value([]);
+  final now = DateTime.now();
+  final from = now.subtract(const Duration(days: 84));
+  return ref
+      .watch(workoutRepositoryProvider)
+      .watchWorkouts(uid, from, now)
+      .map((workouts) =>
+          workouts.where((w) => w.status == WorkoutStatus.completed).toList());
+});
+
 // ─── Personal Records ───
 final personalRecordsProvider = StreamProvider<List<PersonalRecord>>((ref) {
   final uid = ref.watch(currentUidProvider);
@@ -271,9 +286,12 @@ final weeklyProgramProgressProvider = Provider<({int completed, int scheduled})>
 
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   final scheduledDayNames = activeProgram.days.map((d) => d.dayOfWeek).toSet();
+  final today = DateTime(now.year, now.month, now.day);
   int scheduledThisWeek = 0;
   for (int i = 0; i < 7; i++) {
     final day = weekStart.add(Duration(days: i));
+    // Denominator must not include future days — matches the calendar strip.
+    if (day.isAfter(today)) break;
     final name = dayNames[day.weekday - 1];
     if (scheduledDayNames.contains(name)) scheduledThisWeek++;
   }

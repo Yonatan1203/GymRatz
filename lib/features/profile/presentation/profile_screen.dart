@@ -128,8 +128,10 @@ class ProfileScreen extends ConsumerWidget {
 
   Widget _buildPersonalRecords(BuildContext context, WidgetRef ref) {
     final prsAsync = ref.watch(personalRecordsProvider);
-    final prs = prsAsync.valueOrNull ?? <PersonalRecord>[];
+    final allPrs = prsAsync.valueOrNull ?? <PersonalRecord>[];
     final userUnit = ref.watch(userProfileProvider).valueOrNull?.unit ?? 'lbs';
+    // Show top 5 sorted by most recent; "View All" in the header goes to /progress.
+    final prs = (allPrs.toList()..sort((a, b) => b.date.compareTo(a.date))).take(5).toList();
 
     return Column(
       children: [
@@ -140,58 +142,66 @@ class ProfileScreen extends ConsumerWidget {
             padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
             child: Text('No personal records yet. Complete workouts to set PRs!', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
           ),
-        ...prs.map((pr) => Padding(
-          padding: EdgeInsets.only(bottom: AppSpacing.md),
-          child: ScaleTap(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              context.push('/progress');
-            },
-            child: CustomCard(
-              variant: CardVariant.standard,
-              padding: EdgeInsets.all(AppSpacing.lg),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 40.r,
-                    height: 40.r,
-                    child: Center(child: Icon(AppIcons.trophy, size: 20.r, color: context.primaryColor)),
-                  ),
-                  SizedBox(width: AppSpacing.lg),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(pr.exerciseName, style: AppTextStyles.bodySmall.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
-                        Text('${pr.date.month}/${pr.date.day}/${pr.date.year}', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
-                      ],
+        ...prs.map((pr) {
+          // Convert stored weight to user's current unit when known; for legacy
+          // records without a unit field, display the stored value as-is.
+          final displayWeight = pr.unit.isNotEmpty && pr.unit != userUnit
+              ? WeightUtils.convert(pr.weight, pr.unit, userUnit)
+              : pr.weight;
+          final displayFormatted = WeightUtils.format(displayWeight, userUnit);
+          return Padding(
+            padding: EdgeInsets.only(bottom: AppSpacing.md),
+            child: ScaleTap(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                context.push('/progress');
+              },
+              child: CustomCard(
+                variant: CardVariant.standard,
+                padding: EdgeInsets.all(AppSpacing.lg),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 40.r,
+                      height: 40.r,
+                      child: Center(child: Icon(AppIcons.trophy, size: 20.r, color: context.primaryColor)),
                     ),
-                  ),
-                  Text(
-                    WeightUtils.format(pr.weight, userUnit),
-                    style: AppTextStyles.h4.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600),
-                  ),
-                  SizedBox(width: AppSpacing.md),
-                  GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      Share.share(
-                        '🏆 New PR: ${pr.exerciseName} — ${pr.weight.toInt()} $userUnit × ${pr.reps} reps 💪 #GymRatz',
-                      );
-                    },
-                    child: Icon(AppIcons.share2, size: 16.r, color: context.mutedForeground),
-                  ),
-                ],
+                    SizedBox(width: AppSpacing.lg),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(pr.exerciseName, style: AppTextStyles.bodySmall.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
+                          Text('${pr.date.month}/${pr.date.day}/${pr.date.year}', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      displayFormatted,
+                      style: AppTextStyles.h4.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600),
+                    ),
+                    SizedBox(width: AppSpacing.md),
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        Share.share(
+                          '🏆 New PR: ${pr.exerciseName} — $displayFormatted × ${pr.reps} reps 💪 #GymRatz',
+                        );
+                      },
+                      child: Icon(AppIcons.share2, size: 16.r, color: context.mutedForeground),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        )),
+          );
+        }),
       ],
     );
   }
 
   Widget _buildActivityHeatmap(BuildContext context, WidgetRef ref) {
-    final recentWorkoutsAsync = ref.watch(recentWorkoutsProvider);
+    final recentWorkoutsAsync = ref.watch(activityHeatmapProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
