@@ -1222,6 +1222,41 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     );
   }
 
+  /// Shows last-session weights and PO suggestion as compact context chips.
+  Widget _buildExerciseContext(BuildContext context, WorkoutExercise exercise) {
+    final unit = ref.read(userProfileProvider).valueOrNull?.unit ?? 'lbs';
+    final hasPrev = exercise.previousSets.isNotEmpty;
+    final hasPo = exercise.poSuggestedWeight != null && exercise.poSuggestedWeight! > 0;
+    if (!hasPrev && !hasPo) return const SizedBox.shrink();
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 6.h),
+      child: Wrap(
+        spacing: 8.w,
+        runSpacing: 4.h,
+        children: [
+          if (hasPrev) ...[
+            Text('Last:', style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+            ...exercise.previousSets.take(4).map((s) {
+              final isBw = exercise.equipmentType == EquipmentType.bodyweight;
+              final wStr = (isBw || s.weight <= 0) ? 'BW' : '${_weightText(s.weight)}$unit';
+              return Text(
+                '${s.reps}×$wStr',
+                style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+              );
+            }),
+          ],
+          if (hasPo)
+            CustomBadge(
+              text: 'PO: ${_weightText(exercise.poSuggestedWeight!)} $unit',
+              backgroundColor: context.primaryColor.withValues(alpha: 0.12),
+              textColor: context.primaryColor,
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildExerciseCard(BuildContext context, bool isDark, int exIdx, WorkoutExercise exercise) {
     final isExpanded = _expanded.contains(exIdx);
     final sets = _sets[exIdx];
@@ -1281,6 +1316,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
                   ],
                 ),
               ),
+              _buildExerciseContext(context, exercise),
               // Grid header
               Padding(
                 padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
