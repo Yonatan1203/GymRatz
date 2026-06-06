@@ -39,7 +39,7 @@ class ProgramsScreen extends ConsumerWidget {
                   SizedBox(height: AppSpacing.sectionGap),
                   _buildMyPrograms(context, ref),
                   SizedBox(height: AppSpacing.sectionGap),
-                  _buildExplorePrograms(context),
+                  _buildExplorePrograms(context, ref),
                   SizedBox(height: AppSpacing.xxl),
                 ],
               ),
@@ -361,51 +361,71 @@ class ProgramsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildExplorePrograms(BuildContext context) {
+  Widget _buildExplorePrograms(BuildContext context, WidgetRef ref) {
+    final communityAsync = ref.watch(communityProgramsProvider);
+    final programs = communityAsync.when(
+      data: (list) => list.isNotEmpty ? list : SampleData.explorePrograms,
+      loading: () => null,
+      error: (_, __) => SampleData.explorePrograms,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(title: 'Explore Programs'),
         SizedBox(height: AppSpacing.lg),
-        ...SampleData.explorePrograms.map((p) => Padding(
-              padding: EdgeInsets.only(bottom: AppSpacing.itemGap),
-              child: ScaleTap(
-                onTap: () => context.push('/programs/detail/${p.id}'),
-                child: CustomCard(
-                  variant: CardVariant.standard,
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 48.r,
-                        height: 48.r,
-                        child: Center(child: Icon(AppIcons.dumbbell, size: 24.r, color: context.primaryColor)),
-                      ),
-                      SizedBox(width: AppSpacing.xl),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              p.name,
-                              style: AppTextStyles.h4.copyWith(
-                                color: context.foreground,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            SizedBox(height: AppSpacing.xs),
-                            Text(
-                              '${p.workouts}x/week \u2022 ${p.weeks} weeks',
-                              style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (p.difficulty != null) CustomBadge(text: p.difficulty!),
-                    ],
-                  ),
+        if (programs == null)
+          SkeletonLoader(
+            child: Column(
+              children: List.generate(
+                3,
+                (_) => Padding(
+                  padding: EdgeInsets.only(bottom: AppSpacing.itemGap),
+                  child: SkeletonCard(height: 68),
                 ),
               ),
-            )),
+            ),
+          )
+        else
+          ...programs.map((p) => Padding(
+                padding: EdgeInsets.only(bottom: AppSpacing.itemGap),
+                child: ScaleTap(
+                  onTap: () => context.push('/programs/detail/${p.id}'),
+                  child: CustomCard(
+                    variant: CardVariant.standard,
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 48.r,
+                          height: 48.r,
+                          child: Center(child: Icon(AppIcons.dumbbell, size: 24.r, color: context.primaryColor)),
+                        ),
+                        SizedBox(width: AppSpacing.xl),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                p.name,
+                                style: AppTextStyles.h4.copyWith(
+                                  color: context.foreground,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(height: AppSpacing.xs),
+                              Text(
+                                '${p.workouts}x/week \u2022 ${p.weeks} weeks',
+                                style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (p.difficulty != null) CustomBadge(text: p.difficulty!),
+                      ],
+                    ),
+                  ),
+                ),
+              )),
       ],
     );
   }

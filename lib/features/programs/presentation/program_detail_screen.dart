@@ -38,6 +38,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
   Widget build(BuildContext context) {
     final isDark = context.isDark;
     final programAsync = ref.watch(programByIdProvider(widget.programId));
+    final communityAsync = ref.watch(communityProgramByIdProvider(widget.programId));
 
     return Scaffold(
       body: programAsync.when(
@@ -47,7 +48,14 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
           if (program != null) {
             return _buildBody(context, isDark, program, isUserProgram: true);
           }
-          // Fallback: check sample data for explore programs
+          // Still loading the community program — avoid a premature not-found flash.
+          if (communityAsync.isLoading) return _buildLoading(context, isDark);
+          final community = communityAsync.valueOrNull;
+          if (community != null) {
+            return _buildBody(context, isDark, community, isUserProgram: false);
+          }
+          // No Firestore community program — fall back to hardcoded sample data
+          // (Stronglifts/PHUL/nSuns shipped with the app as a launch bootstrap).
           final sample = _findSampleProgram(widget.programId);
           if (sample != null) {
             return _buildBody(context, isDark, sample, isUserProgram: false);
