@@ -174,6 +174,10 @@ class WorkoutService {
       targetRir: pe.targetRir,
       progressionMode: pe.progressionMode,
       restSeconds: pe.restSeconds,
+      // Only show completed sets from last session — skipped sets have weight/reps 0
+      // and would render as confusing "0×0lbs" in the UI.
+      previousSets: lastExercise?.sets.where((s) => s.completed).toList() ?? const [],
+      poSuggestedWeight: suggestion?.suggestedWeight,
       sets: List.generate(
         numSets,
         (i) {

@@ -14,6 +14,14 @@ class WorkoutExercise {
   final ProgressionMode progressionMode;
   final List<WorkoutSet> sets;
 
+  // Transient — not serialized. Populated during startWorkout via
+  // _buildExerciseFromTemplate so the UI can show last-session context and
+  // the PO suggestion. copyWith cannot clear poSuggestedWeight back to null
+  // (Dart nullable-copyWith limitation) — acceptable since these fields are
+  // written once at construction and never mutated.
+  final List<WorkoutSet> previousSets;
+  final double? poSuggestedWeight;
+
   const WorkoutExercise({
     required this.name,
     required this.equipment,
@@ -25,6 +33,8 @@ class WorkoutExercise {
     this.restSeconds = 120,
     this.progressionMode = ProgressionMode.hypertrophy,
     required this.sets,
+    this.previousSets = const [],
+    this.poSuggestedWeight,
   });
 
   int get completedSets => sets.where((s) => s.completed).length;
@@ -94,6 +104,8 @@ class WorkoutExercise {
     int? restSeconds,
     ProgressionMode? progressionMode,
     List<WorkoutSet>? sets,
+    List<WorkoutSet>? previousSets,
+    double? poSuggestedWeight,
   }) =>
       WorkoutExercise(
         name: name ?? this.name,
@@ -106,5 +118,7 @@ class WorkoutExercise {
         restSeconds: restSeconds ?? this.restSeconds,
         progressionMode: progressionMode ?? this.progressionMode,
         sets: sets ?? this.sets,
+        previousSets: previousSets ?? this.previousSets,
+        poSuggestedWeight: poSuggestedWeight ?? this.poSuggestedWeight,
       );
 }
