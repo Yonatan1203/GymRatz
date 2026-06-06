@@ -58,18 +58,37 @@ class WorkoutRepository {
   }
 
   /// Get most recent completed workouts for a specific program day.
+  ///
+  /// Requires a composite index (programId + workoutDayId + status + date).
+  /// Falls back to a broader completed-workouts query filtered in memory when
+  /// the composite index is missing (e.g. not yet deployed to Firestore).
   Future<List<Workout>> getRecentWorkoutsForDay(
       String uid, String programId, String workoutDayId,
       {int limit = 1}) async {
-    final snap = await _workouts(uid)
-        .where('programId', isEqualTo: programId)
-        .where('workoutDayId', isEqualTo: workoutDayId)
-        .where('status', isEqualTo: WorkoutStatus.completed.name)
-        .orderBy('date', descending: true)
-        .limit(limit)
-        .get();
-
-    return snap.docs.map((d) => Workout.fromJson(d.data())).toList();
+    try {
+      final snap = await _workouts(uid)
+          .where('programId', isEqualTo: programId)
+          .where('workoutDayId', isEqualTo: workoutDayId)
+          .where('status', isEqualTo: WorkoutStatus.completed.name)
+          .orderBy('date', descending: true)
+          .limit(limit)
+          .get();
+      return snap.docs.map((d) => Workout.fromJson(d.data())).toList();
+    } on FirebaseException catch (e) {
+      // Missing composite index → fall back to in-memory filter using the
+      // cheaper status+date index that is always present.
+      if (e.code != 'failed-precondition') rethrow;
+      final snap = await _workouts(uid)
+          .where('status', isEqualTo: WorkoutStatus.completed.name)
+          .orderBy('date', descending: true)
+          .limit(50)
+          .get();
+      return snap.docs
+          .map((d) => Workout.fromJson(d.data()))
+          .where((w) => w.programId == programId && w.workoutDayId == workoutDayId)
+          .take(limit)
+          .toList();
+    }
   }
 
   Future<List<Workout>> getRecentWorkoutsForExercise(
