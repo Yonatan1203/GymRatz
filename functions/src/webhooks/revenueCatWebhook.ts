@@ -33,7 +33,9 @@ const EVENT_STATUS_MAP: Record<string, SubscriptionStatus> = {
   EXPIRATION: "expired",
 };
 
-export const revenueCatWebhook = functions.https.onRequest(async (req, res) => {
+export const revenueCatWebhook = functions
+  .runWith({secrets: ["REVENUECAT_WEBHOOK_SECRET"]})
+  .https.onRequest(async (req, res) => {
   if (req.method !== "POST") {
     res.status(405).send("Method Not Allowed");
     return;
