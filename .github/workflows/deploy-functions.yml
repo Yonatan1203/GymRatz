@@ -1,0 +1,42 @@
+name: Deploy Firebase Functions
+
+on:
+  workflow_dispatch:
+    inputs:
+      functions:
+        description: 'Functions to deploy (blank = all)'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install dependencies
+        working-directory: functions
+        run: npm ci
+
+      - name: Build
+        working-directory: functions
+        run: npm run build
+
+      - name: Deploy to Firebase
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          if [ -n "${{ inputs.functions }}" ]; then
+            npx firebase-tools deploy --only "functions:${{ inputs.functions }}" \
+              --project gymratz-b1a32 --token "$FIREBASE_TOKEN" --non-interactive
+          else
+            npx firebase-tools deploy --only functions \
+              --project gymratz-b1a32 --token "$FIREBASE_TOKEN" --non-interactive
+          fi
