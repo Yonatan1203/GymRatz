@@ -33,6 +33,7 @@ class PrRepository {
     required String exerciseName,
     required double weight,
     required int reps,
+    required String unit,
   }) async {
     final existing = await getPR(uid, exerciseId);
     if (existing == null || weight > existing.weight) {
@@ -44,6 +45,7 @@ class PrRepository {
           weight: weight,
           reps: reps,
           date: DateTime.now(),
+          unit: unit,
         ),
       );
       return true;

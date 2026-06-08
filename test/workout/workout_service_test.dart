@@ -301,6 +301,7 @@ void main() {
             exerciseName: any(named: 'exerciseName'),
             weight: any(named: 'weight'),
             reps: any(named: 'reps'),
+            unit: any(named: 'unit'),
           )).thenAnswer((_) async => false);
 
       // Progression history load succeeds
