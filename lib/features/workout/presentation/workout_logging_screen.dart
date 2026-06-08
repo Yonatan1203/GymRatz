@@ -1672,8 +1672,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
                   icon: AppIcons.share2,
                   onPressed: () {
                     final n = _exercises.length;
-                    final exerciseWord = n == 1 ? 'exercise' : 'exercises';
-                    final text = 'I just completed $_workoutName — $n $exerciseWord 💪 #GymRatz';
+                    final text = 'Just crushed my workout! $n ${n == 1 ? 'exercise' : 'exercises'} done 💪 #GymRatz';
                     Share.share(text);
                   },
                 ),
