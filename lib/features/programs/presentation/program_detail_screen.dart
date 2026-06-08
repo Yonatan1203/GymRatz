@@ -35,6 +35,16 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
   bool _isActivating = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Invalidate so opening the screen always shows the latest progress
+    // (programByIdProvider is a FutureProvider — it caches after first load).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.invalidate(programByIdProvider(widget.programId));
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = context.isDark;
     final programAsync = ref.watch(programByIdProvider(widget.programId));
