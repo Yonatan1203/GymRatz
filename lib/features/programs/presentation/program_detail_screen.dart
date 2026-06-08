@@ -239,7 +239,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                       icon: AppIcons.edit,
                       onTap: () => context.push('/programs/detail/${program.id}/edit', extra: program),
                     ),
-                    SizedBox(width: 16.w),
+                    SizedBox(width: 28.w),
                     _buildHeaderAction(
                       context,
                       icon: AppIcons.trash2,
