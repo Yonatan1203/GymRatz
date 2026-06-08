@@ -119,6 +119,21 @@ final favoriteExerciseIdsProvider = StreamProvider<Set<String>>((ref) {
   return Stream.value(profile.favoriteExerciseIds.toSet());
 });
 
+// ─── Community Programs (Explore tab) ───
+final communityProgramsProvider = StreamProvider<List<Program>>((ref) {
+  return ref.watch(programRepositoryProvider).watchCommunityPrograms();
+});
+
+// Per-ID lookup — detail screen is read-only and short-lived, so a
+// cache-hit from the already-subscribed collection stream is intentionally
+// stale-tolerant. Falls back to a direct doc fetch when stream hasn't loaded.
+final communityProgramByIdProvider =
+    FutureProvider.family<Program?, String>((ref, id) async {
+  final loaded = ref.read(communityProgramsProvider).valueOrNull;
+  if (loaded != null) return loaded.where((p) => p.id == id).firstOrNull;
+  return ref.read(programRepositoryProvider).getCommunityProgram(id);
+});
+
 // ─── Favorite Program IDs ───
 final favoriteProgramIdsProvider = Provider<Set<String>>((ref) {
   final profile = ref.watch(userProfileProvider).valueOrNull;

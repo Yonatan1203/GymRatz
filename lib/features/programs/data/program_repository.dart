@@ -19,7 +19,7 @@ class ProgramRepository {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snap) =>
-            snap.docs.map((d) => Program.fromJson(d.data())).toList());
+            snap.docs.map((d) => Program.fromJson({...d.data(), 'id': d.id})).toList());
   }
 
   Stream<Program?> watchActiveProgram(String uid) {
@@ -29,7 +29,7 @@ class ProgramRepository {
         .snapshots()
         .map((snap) {
       if (snap.docs.isEmpty) return null;
-      return Program.fromJson(snap.docs.first.data());
+      return Program.fromJson({...snap.docs.first.data(), 'id': snap.docs.first.id});
     });
   }
 
@@ -63,5 +63,23 @@ class ProgramRepository {
     final snap = await _programs(uid).doc(programId).get();
     if (!snap.exists || snap.data() == null) return null;
     return Program.fromJson(snap.data()!);
+  }
+
+  Stream<List<Program>> watchCommunityPrograms() {
+    return _firestore
+        .collection('community_programs')
+        .orderBy('name')
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((d) => Program.fromJson({...d.data(), 'id': d.id})).toList());
+  }
+
+  Future<Program?> getCommunityProgram(String programId) async {
+    final snap = await _firestore
+        .collection('community_programs')
+        .doc(programId)
+        .get();
+    if (!snap.exists || snap.data() == null) return null;
+    return Program.fromJson({...snap.data()!, 'id': snap.id});
   }
 }
