@@ -1324,7 +1324,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
                   children: [
                     SizedBox(width: 32.w, child: _gridHeaderText(context, 'SET')),
                     Expanded(flex: 2, child: _gridHeaderText(context, exercise.isTimed ? 'SEC' : 'REPS')),
-                    Expanded(flex: 3, child: _gridHeaderText(context, exercise.equipmentType == EquipmentType.bodyweight ? 'BW +' : 'WEIGHT')),
+                    Expanded(flex: 3, child: _gridHeaderText(context, exercise.equipmentType == EquipmentType.bodyweight ? 'BW' : 'WEIGHT')),
                     Expanded(flex: 2, child: _gridHeaderText(context, 'RIR')),
                     SizedBox(width: 36.w),
                   ],
@@ -1387,10 +1387,10 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
                 ? _numField(context, exIdx, sIdx, 'duration', 'sec')
                 : _numField(context, exIdx, sIdx, 'reps', 'Reps'),
           ),
-          // Weight field with +/- stepper (1.25 increments) and decimal keyboard
           Expanded(
             flex: 3,
-            child: _weightStepperField(context, exIdx, sIdx, isBw: isBw, unit: unit),
+            child: _numField(context, exIdx, sIdx, 'weight', isBw ? '+$unit' : unit,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false)),
           ),
           Expanded(
             flex: 2,
@@ -1493,47 +1493,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
         ),
       ),
     );
-  }
-
-  Widget _weightStepperField(BuildContext context, int exIdx, int sIdx, {required bool isBw, required String unit}) {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: () => _adjustWeight(exIdx, sIdx, -1.25),
-          child: SizedBox(
-            width: 20.r,
-            height: 36.h,
-            child: Center(
-              child: Text('−', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground, fontWeight: FontWeight.w700)),
-            ),
-          ),
-        ),
-        Expanded(
-          child: _numField(context, exIdx, sIdx, 'weight', isBw ? '+$unit' : unit,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false)),
-        ),
-        GestureDetector(
-          onTap: () => _adjustWeight(exIdx, sIdx, 1.25),
-          child: SizedBox(
-            width: 20.r,
-            height: 36.h,
-            child: Center(
-              child: Text('+', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground, fontWeight: FontWeight.w700)),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _adjustWeight(int exIdx, int sIdx, double delta) {
-    final current = _sets[exIdx][sIdx].weight;
-    final raw = (current + delta).clamp(0.0, 999.0);
-    // Round to nearest 0.01 to prevent floating-point drift (e.g. 1.25+1.25 = 2.5000000001)
-    final rounded = (raw * 100).round() / 100.0;
-    final text = _weightText(rounded);
-    _controllers['$exIdx-$sIdx-weight']?.text = text;
-    _updateSet(exIdx, sIdx, 'weight', text);
   }
 
   Widget _buildCompletionScreen(BuildContext context) {
