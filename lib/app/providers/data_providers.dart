@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../shared/models/achievement.dart';
+import '../../shared/models/body_measurement.dart';
 import '../../shared/models/enums.dart';
 import '../../shared/models/exercise.dart';
 import '../../shared/models/personal_record.dart';
@@ -94,6 +95,13 @@ final weightEntriesProvider = StreamProvider<List<WeightEntry>>((ref) {
   final uid = ref.watch(currentUidProvider);
   if (uid == null) return Stream.value([]);
   return ref.watch(weightEntryRepositoryProvider).watchWeightEntries(uid);
+});
+
+// ─── Body Measurements ───
+final bodyMeasurementsProvider = StreamProvider<List<BodyMeasurement>>((ref) {
+  final uid = ref.watch(currentUidProvider);
+  if (uid == null) return Stream.value([]);
+  return ref.watch(bodyMeasurementRepositoryProvider).watchMeasurements(uid);
 });
 
 // ─── Exercise Library ───
