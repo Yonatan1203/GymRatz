@@ -8,7 +8,6 @@ import 'package:uuid/uuid.dart';
 
 import '../../../app/providers.dart';
 import '../../../shared/models/body_measurement.dart';
-import '../../../theme/app_colors.dart';
 import '../../../theme/app_icons.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
