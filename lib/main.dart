@@ -13,7 +13,6 @@ import 'core/constants.dart';
 import 'core/env.dart';
 import 'core/fcm_service.dart';
 import 'core/notification_service.dart';
-import 'core/pip_service.dart';
 import 'features/subscription/data/entitlement_repository.dart';
 import 'features/user/data/user_repository.dart';
 import 'firebase_options.dart';
@@ -108,11 +107,10 @@ Future<void> main() async {
   runApp(const ProviderScope(child: GymRatzApp()));
 }
 
-/// Initialize notifications, FCM, and PiP after the first frame.
+/// Initialize notifications and FCM after the first frame.
 Future<void> _initDeferredServices() async {
   await Future.wait([
     _initNotifications(),
-    _initPip(),
     initFcm(),
   ]);
 }
@@ -154,10 +152,3 @@ Future<void> initFcm() async {
   }
 }
 
-Future<void> _initPip() async {
-  try {
-    await PipService().initialize();
-  } catch (e) {
-    debugPrint('PiP init skipped: $e');
-  }
-}

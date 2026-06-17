@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/pip_service.dart';
 import '../../shared/models/workout_exercise.dart';
 import '../../shared/models/workout_set.dart';
 
@@ -124,22 +123,10 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutSession?> {
       restEndTime: restEndTime,
       clearRestEndTime: clearRestEndTime,
     );
-    // Manage PiP based on timer state
-    _updatePip();
   }
 
   void endSession() {
     state = null;
-    PipService().disable();
-  }
-
-  void _updatePip() {
-    final s = state;
-    if (s != null && s.restActive && s.timerRunning && s.restEndTime != null) {
-      PipService().enable();
-    } else {
-      PipService().disable();
-    }
   }
 }
 

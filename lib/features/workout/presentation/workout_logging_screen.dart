@@ -492,8 +492,8 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     // remaining seconds from DateTime.now() rather than decrementing a counter.
     final endTime = DateTime.now().add(Duration(seconds: _restSeconds));
     setState(() => _timerRunning = true);
-    // Sync restEndTime to the provider so the active-workout banner and PiP
-    // widget can also compute the correct remaining time independently.
+    // Sync restEndTime to the provider so the active-workout banner can also
+    // compute the correct remaining time independently.
     ref.read(activeWorkoutSessionProvider.notifier).syncState(
       restActive: true,
       timerRunning: true,
@@ -526,7 +526,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
         } else {
           NotificationService().cancelRestTimerNotification();
         }
-        // Keep restActive true briefly so banner/PiP shows the completion state.
+        // Keep restActive true briefly so the banner shows the completion state.
         Future.delayed(const Duration(seconds: 2), () {
           if (!mounted) return;
           setState(() { _restActive = false; _timerRunning = false; });
