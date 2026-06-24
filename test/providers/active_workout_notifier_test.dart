@@ -78,14 +78,12 @@ void main() {
       );
     });
 
-    test('clearRestEndTime=true sets restEndTime to null', () {
-      // First set a restEndTime
-      notifier.syncState(restEndTime: DateTime(2030));
-      expect(container.read(activeWorkoutSessionProvider)!.restEndTime, isNotNull);
-
-      // Now clear it
-      notifier.syncState(clearRestEndTime: true);
-      expect(container.read(activeWorkoutSessionProvider)!.restEndTime, isNull);
+    test('updates currentExerciseName', () {
+      notifier.syncState(currentExerciseName: 'Bench');
+      expect(
+        container.read(activeWorkoutSessionProvider)!.currentExerciseName,
+        'Bench',
+      );
     });
   });
 

@@ -11,7 +11,6 @@ import 'package:uuid/uuid.dart';
 import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
-import '../../../core/notification_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_gradients.dart';
 import '../../../theme/app_radius.dart';
@@ -55,13 +54,8 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
   late List<List<WorkoutSet>> _sets;
   late List<WorkoutExercise> _exercises;
   late Set<int> _expanded;
-  int _restSeconds = 120;
-  bool _restActive = false;
-  bool _restMinimized = false;
-  bool _timerRunning = false;
   bool _completed = false;
   bool _saving = false;
-  Timer? _timer;
   Timer? _durationTimer;
   int _elapsedSeconds = 0;
   String _notes = '';
@@ -230,26 +224,8 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
       _exercises = List.from(existingSession.exercises);
       _sets = existingSession.sets.map((s) => List<WorkoutSet>.from(s)).toList();
       _expanded = Set.from(existingSession.expandedIndices);
-      _restActive = existingSession.restActive;
-      _restMinimized = existingSession.restMinimized;
-      _timerRunning = existingSession.timerRunning;
       _notes = existingSession.notes;
       _elapsedSeconds = DateTime.now().difference(_startTime).inSeconds;
-      // Recalculate rest seconds from restEndTime so it stays accurate
-      if (_restActive && _timerRunning && existingSession.restEndTime != null) {
-        final remaining = existingSession.restEndTime!.difference(DateTime.now()).inSeconds;
-        if (remaining > 0) {
-          _restSeconds = remaining;
-          // Defer to avoid modifying provider state during build
-          Future(_beginCountdown);
-        } else {
-          _restActive = false;
-          _timerRunning = false;
-          Future(_syncToProvider);
-        }
-      } else {
-        _restSeconds = existingSession.restSeconds;
-      }
     } else {
       _startTime = DateTime.now();
 
@@ -413,10 +389,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
       exercises: List.from(_exercises),
       sets: _sets.map((s) => List<WorkoutSet>.from(s)).toList(),
       expandedIndices: Set.from(_expanded),
-      restSeconds: _restSeconds,
-      restActive: _restActive,
-      restMinimized: _restMinimized,
-      timerRunning: _timerRunning,
       currentExerciseName: currentExercise,
       notes: _notes,
     );
@@ -441,7 +413,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
 
   @override
   void dispose() {
-    _timer?.cancel();
     _durationTimer?.cancel();
     for (final c in _controllers.values) {
       c.dispose();
@@ -475,70 +446,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     _completionAnimController.forward();
   }
 
-  void _showRestTimer() {
-    _timer?.cancel();
-    setState(() {
-      _restActive = true;
-      _timerRunning = false;
-      _restSeconds = _expanded.isNotEmpty ? _exercises[_expanded.first].restSeconds : 120;
-      _restMinimized = false;
-    });
-    _syncToProvider();
-  }
-
-  void _beginCountdown() {
-    // Compute the absolute end time so the countdown stays accurate even when
-    // the phone locks and the Dart isolate is paused. Each tick re-derives
-    // remaining seconds from DateTime.now() rather than decrementing a counter.
-    final endTime = DateTime.now().add(Duration(seconds: _restSeconds));
-    setState(() => _timerRunning = true);
-    // Sync restEndTime to the provider so the active-workout banner can also
-    // compute the correct remaining time independently.
-    ref.read(activeWorkoutSessionProvider.notifier).syncState(
-      restActive: true,
-      timerRunning: true,
-      restSeconds: _restSeconds,
-      restEndTime: endTime,
-    );
-    // Schedule a local notification at endTime. The notification is delivered
-    // by the OS even when the app is backgrounded or the phone is locked.
-    NotificationService().showRestTimerNotification(_restSeconds);
-    bool _completionFired = false;
-    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted) {
-        t.cancel();
-        return;
-      }
-      // Derive remaining time from the absolute end time — survives phone lock.
-      final remaining = endTime.difference(DateTime.now()).inSeconds;
-      if (remaining > 0) {
-        setState(() => _restSeconds = remaining);
-      } else if (!_completionFired) {
-        _completionFired = true;
-        t.cancel();
-        setState(() => _restSeconds = 0);
-        PlatformAdapter.hapticSelection();
-        final soundEnabled = ref.read(timerSettingsProvider).soundEnabled;
-        // If the app is in the foreground, fire an immediate alert. If it was
-        // backgrounded, the OS already delivered the scheduled notification.
-        if (soundEnabled) {
-          NotificationService().showRestCompleteNow();
-        } else {
-          NotificationService().cancelRestTimerNotification();
-        }
-        // Keep restActive true briefly so the banner shows the completion state.
-        Future.delayed(const Duration(seconds: 2), () {
-          if (!mounted) return;
-          setState(() { _restActive = false; _timerRunning = false; });
-          _syncToProvider();
-          if (soundEnabled) {
-            NotificationService().cancelRestTimerNotification();
-          }
-        });
-      }
-    });
-  }
-
   void _toggleSet(int exIdx, int setIdx) {
     PlatformAdapter.hapticLight();
     final current = _sets[exIdx][setIdx];
@@ -549,27 +456,8 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     });
 
     if (!wasCompleted) {
-      // Completing a set — cancel the current rest timer notification and
-      // either restart the timer (auto-start) or let the user start it manually.
-      // Either way the previous scheduled "Rest Complete" notification is stale.
-      if (_restActive && _timerRunning) {
-        // User started a new set before rest ended — cancel the scheduled alert.
-        _timer?.cancel();
-        NotificationService().cancelRestTimerNotification();
-        setState(() { _restActive = false; _timerRunning = false; _restSeconds = 120; });
-        ref.read(activeWorkoutSessionProvider.notifier).syncState(
-          restActive: false,
-          timerRunning: false,
-          clearRestEndTime: true,
-        );
-      }
       _syncToProvider();
       _saveWorkoutState();
-      final autoStart = ref.read(timerSettingsProvider).autoStartOnSetComplete;
-      if (autoStart && !_restActive) {
-        _showRestTimer();
-        _beginCountdown();
-      }
       // Auto-advance: if all sets of this exercise are done, expand the next one.
       final allDone = _sets[exIdx].every((s) => s.completed);
       if (allDone && exIdx + 1 < _exercises.length) {
@@ -608,7 +496,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
 
     setState(() => _saving = true);
 
-    _timer?.cancel();
     _durationTimer?.cancel();
 
     final uid = ref.read(currentUidProvider);
@@ -841,27 +728,13 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     final isDark = context.isDark;
     final exercises = _exercises;
 
-    final bool timerVisible = _restActive && _timerRunning;
-
     return Scaffold(
       body: Column(
         children: [
           _buildHeader(context, isDark),
           Expanded(
-            child: Stack(
-              children: [
-                ListView(
-                  padding: EdgeInsets.only(
-                    left: AppSpacing.screenPadding,
-                    right: AppSpacing.screenPadding,
-                    // Extra bottom padding when timer overlay is visible (GYM-125)
-                    bottom: timerVisible ? 80.h : AppSpacing.screenPadding,
-                    top: (_restActive && !_timerRunning && !_restMinimized)
-                        ? 72.h
-                        : (_restActive && !_timerRunning && _restMinimized)
-                            ? 52.h
-                            : AppSpacing.screenPadding,
-                  ),
+            child: ListView(
+              padding: EdgeInsets.all(AppSpacing.screenPadding),
                   children: [
                     if (_showFirstTimeTips) _buildFirstTimeTips(context, isDark),
                     if (widget.isFreeWorkout && exercises.isEmpty)
@@ -897,21 +770,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
                     SizedBox(height: 60.h),
                   ],
                 ),
-                // Top timer: shown only when timer is not yet running (adjust mode)
-                if (_restActive && !_timerRunning && !_restMinimized)
-                  Positioned(top: 0, left: 0, right: 0, child: _buildRestTimer(context)),
-                if (_restActive && !_timerRunning && _restMinimized)
-                  Positioned(top: 0, left: 0, right: 0, child: _buildMinimizedTimer(context)),
-                // GYM-125: bottom overlay when timer is actively counting down
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 300),
-                  bottom: timerVisible ? 0 : -100,
-                  left: 0,
-                  right: 0,
-                  child: _buildTimerBottomOverlay(context),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -959,22 +817,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
                   ],
                 ),
               ),
-              Semantics(
-                button: true,
-                label: 'Open rest timer',
-                child: GestureDetector(
-                  onTap: () {
-                    PlatformAdapter.hapticLight();
-                    _showRestTimer();
-                  },
-                  child: Container(
-                    width: 40.r, height: 40.r,
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: AppRadius.borderLg),
-                    child: Icon(AppIcons.timer, size: 20.r, color: Colors.white),
-                  ),
-                ),
-              ),
-              SizedBox(width: 8.w),
               Semantics(
                 button: true,
                 label: 'Finish workout',
@@ -1077,148 +919,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildRestTimer(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: context.primaryColor.withValues(alpha: 0.9),
-        borderRadius: AppRadius.borderXl,
-        boxShadow: AppShadows.md,
-      ),
-      child: Row(
-        children: [
-          Text(
-            Formatters.timer(_restSeconds),
-            style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.w700, color: Colors.white, fontFeatures: const [FontFeature.tabularFigures()]),
-          ),
-          SizedBox(width: 12.w),
-          if (!_timerRunning) ...[
-            GestureDetector(
-              onTap: () => setState(() => _restSeconds = (_restSeconds - 10).clamp(0, 999)),
-              child: Icon(AppIcons.minusCircle, color: Colors.white70, size: 22.r),
-            ),
-            SizedBox(width: 8.w),
-            GestureDetector(
-              onTap: () => setState(() => _restSeconds += 10),
-              child: Icon(AppIcons.plusCircle, color: Colors.white70, size: 22.r),
-            ),
-          ],
-          const Spacer(),
-          if (!_timerRunning)
-            GestureDetector(
-              onTap: _beginCountdown,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: AppRadius.borderFull,
-                ),
-                child: Text('Start', style: AppTextStyles.bodySmall.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600)),
-              ),
-            )
-          else ...[
-            Semantics(
-              button: true,
-              label: 'Minimize timer',
-              child: GestureDetector(
-                onTap: () => setState(() => _restMinimized = true),
-                child: Icon(AppIcons.minimize2, size: 18.r, color: Colors.white70),
-              ),
-            ),
-            SizedBox(width: 12.w),
-          ],
-          SizedBox(width: 8.w),
-          Semantics(
-            button: true,
-            label: 'Dismiss timer',
-            child: GestureDetector(
-              onTap: () {
-                _timer?.cancel();
-                NotificationService().cancelRestTimerNotification();
-                setState(() { _restActive = false; _timerRunning = false; });
-                ref.read(activeWorkoutSessionProvider.notifier).syncState(
-                  restActive: false, timerRunning: false, clearRestEndTime: true,
-                );
-              },
-              child: Icon(AppIcons.x, size: 18.r, color: Colors.white70),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMinimizedTimer(BuildContext context) {
-    return GestureDetector(
-      onTap: () => setState(() => _restMinimized = false),
-      child: Container(
-        width: double.infinity,
-        margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-        decoration: BoxDecoration(
-          color: context.primaryColor.withValues(alpha: 0.9),
-          borderRadius: AppRadius.borderXl,
-          boxShadow: AppShadows.md,
-        ),
-        child: Row(
-          children: [
-            Icon(AppIcons.timer, size: 16.r, color: Colors.white),
-            SizedBox(width: 8.w),
-            Text(
-              Formatters.timer(_restSeconds),
-              style: AppTextStyles.bodySmall.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
-            ),
-            const Spacer(),
-            Icon(AppIcons.chevronDown, size: 18.r, color: Colors.white70),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// GYM-125: persistent bottom overlay shown when rest timer is actively counting down.
-  Widget _buildTimerBottomOverlay(BuildContext context) {
-    return Container(
-      color: Theme.of(context).colorScheme.primaryContainer,
-      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h + MediaQuery.of(context).padding.bottom),
-      child: Row(
-        children: [
-          Icon(AppIcons.timer, size: 20.r, color: Theme.of(context).colorScheme.onPrimaryContainer),
-          SizedBox(width: 8.w),
-          Expanded(
-            child: Text(
-              'Rest: ${Formatters.timer(_restSeconds)}',
-              style: AppTextStyles.bodySmall.copyWith(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              _timer?.cancel();
-              NotificationService().cancelRestTimerNotification();
-              setState(() { _restActive = false; _timerRunning = false; });
-              ref.read(activeWorkoutSessionProvider.notifier).syncState(
-                restActive: false, timerRunning: false, clearRestEndTime: true,
-              );
-            },
-            child: Text(
-              'Skip',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 

@@ -264,18 +264,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             await NotificationService().cancelStreakReminder();
                           }
                         }),
-                        Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
-                        _toggleRow(
-                          'Rest Timer Sound',
-                          ref.watch(timerSettingsProvider).soundEnabled,
-                          (v) => ref.read(timerSettingsProvider.notifier).setSoundEnabled(v),
-                        ),
-                        Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
-                        _toggleRow(
-                          'Auto-Start Rest Timer',
-                          ref.watch(timerSettingsProvider).autoStartOnSetComplete,
-                          (v) => ref.read(timerSettingsProvider.notifier).setAutoStartOnSetComplete(v),
-                        ),
                       ],
                     ),
                   ),

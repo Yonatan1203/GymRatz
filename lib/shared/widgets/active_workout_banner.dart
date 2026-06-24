@@ -11,7 +11,6 @@ import '../../theme/app_shadows.dart';
 import '../../theme/app_text_styles.dart';
 import '../utils/extensions.dart';
 import '../utils/platform_adapter.dart';
-import 'package:flutter/services.dart';
 
 class ActiveWorkoutBanner extends ConsumerStatefulWidget {
   const ActiveWorkoutBanner({super.key});
@@ -21,26 +20,12 @@ class ActiveWorkoutBanner extends ConsumerStatefulWidget {
 }
 
 class _ActiveWorkoutBannerState extends ConsumerState<ActiveWorkoutBanner> {
-  bool _hasVibrated = false;
-
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(activeWorkoutSessionProvider);
     if (session == null) return const SizedBox.shrink();
 
     final isDark = context.isDark;
-    final restTimerValue = ref.watch(restTimerSecondsProvider).valueOrNull;
-    final restActive = session.restActive && session.timerRunning && restTimerValue != null;
-    final restSeconds = restTimerValue ?? 0;
-    final timerDone = restActive && restSeconds == 0;
-
-    // Vibrate once when timer reaches zero
-    if (timerDone && !_hasVibrated) {
-      _hasVibrated = true;
-      HapticFeedback.heavyImpact();
-    } else if (!timerDone) {
-      _hasVibrated = false;
-    }
 
     return GestureDetector(
       onTap: () {
@@ -88,19 +73,6 @@ class _ActiveWorkoutBannerState extends ConsumerState<ActiveWorkoutBanner> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      SizedBox(width: 8.w),
-                      if (restActive)
-                        timerDone
-                            ? Icon(AppIcons.bell, size: 22.r, color: context.coralColor)
-                            : Text(
-                                _formatTimer(restSeconds),
-                                style: TextStyle(
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: context.foreground,
-                                  fontFeatures: const [FontFeature.tabularFigures()],
-                                ),
-                              ),
                     ],
                   ),
                   if (session.currentExerciseName.isNotEmpty)
@@ -128,12 +100,6 @@ class _ActiveWorkoutBannerState extends ConsumerState<ActiveWorkoutBanner> {
         ),
       ),
     );
-  }
-
-  String _formatTimer(int totalSeconds) {
-    final m = totalSeconds ~/ 60;
-    final s = totalSeconds % 60;
-    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
   void _showDiscardDialog(BuildContext context, WidgetRef ref) {

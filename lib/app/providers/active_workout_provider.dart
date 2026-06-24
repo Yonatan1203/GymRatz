@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../shared/models/workout_exercise.dart';
@@ -13,13 +11,7 @@ class ActiveWorkoutSession {
   final List<WorkoutExercise> exercises;
   final List<List<WorkoutSet>> sets;
   final Set<int> expandedIndices;
-  final int restSeconds;
-  final bool restActive;
-  final bool restMinimized;
-  final bool timerRunning;
   final String notes;
-  /// When the rest timer will reach zero (set when countdown begins).
-  final DateTime? restEndTime;
 
   const ActiveWorkoutSession({
     required this.dayId,
@@ -29,12 +21,7 @@ class ActiveWorkoutSession {
     this.exercises = const [],
     this.sets = const [],
     this.expandedIndices = const {},
-    this.restSeconds = 120,
-    this.restActive = false,
-    this.restMinimized = false,
-    this.timerRunning = false,
     this.notes = '',
-    this.restEndTime,
   });
 
   ActiveWorkoutSession copyWith({
@@ -45,13 +32,7 @@ class ActiveWorkoutSession {
     List<WorkoutExercise>? exercises,
     List<List<WorkoutSet>>? sets,
     Set<int>? expandedIndices,
-    int? restSeconds,
-    bool? restActive,
-    bool? restMinimized,
-    bool? timerRunning,
     String? notes,
-    DateTime? restEndTime,
-    bool clearRestEndTime = false,
   }) {
     return ActiveWorkoutSession(
       dayId: dayId ?? this.dayId,
@@ -61,12 +42,7 @@ class ActiveWorkoutSession {
       exercises: exercises ?? this.exercises,
       sets: sets ?? this.sets,
       expandedIndices: expandedIndices ?? this.expandedIndices,
-      restSeconds: restSeconds ?? this.restSeconds,
-      restActive: restActive ?? this.restActive,
-      restMinimized: restMinimized ?? this.restMinimized,
-      timerRunning: timerRunning ?? this.timerRunning,
       notes: notes ?? this.notes,
-      restEndTime: clearRestEndTime ? null : (restEndTime ?? this.restEndTime),
     );
   }
 }
@@ -100,28 +76,16 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutSession?> {
     List<WorkoutExercise>? exercises,
     List<List<WorkoutSet>>? sets,
     Set<int>? expandedIndices,
-    int? restSeconds,
-    bool? restActive,
-    bool? restMinimized,
-    bool? timerRunning,
     String? currentExerciseName,
     String? notes,
-    DateTime? restEndTime,
-    bool clearRestEndTime = false,
   }) {
     if (state == null) return;
     state = state!.copyWith(
       exercises: exercises,
       sets: sets,
       expandedIndices: expandedIndices,
-      restSeconds: restSeconds,
-      restActive: restActive,
-      restMinimized: restMinimized,
-      timerRunning: timerRunning,
       currentExerciseName: currentExerciseName,
       notes: notes,
-      restEndTime: restEndTime,
-      clearRestEndTime: clearRestEndTime,
     );
   }
 
@@ -140,16 +104,5 @@ final workoutElapsedSecondsProvider = StreamProvider<int>((ref) {
   if (session == null) return const Stream.empty();
   return Stream.periodic(const Duration(seconds: 1), (_) {
     return DateTime.now().difference(session.startTime).inSeconds;
-  });
-});
-
-/// Live countdown of rest timer seconds remaining (derived from restEndTime).
-final restTimerSecondsProvider = StreamProvider<int>((ref) {
-  final session = ref.watch(activeWorkoutSessionProvider);
-  if (session == null || session.restEndTime == null || !session.timerRunning) {
-    return const Stream.empty();
-  }
-  return Stream.periodic(const Duration(seconds: 1), (_) {
-    return max(0, session.restEndTime!.difference(DateTime.now()).inSeconds);
   });
 });
