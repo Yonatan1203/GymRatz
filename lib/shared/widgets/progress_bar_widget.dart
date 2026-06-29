@@ -4,6 +4,13 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_gradients.dart';
 import '../../theme/app_radius.dart';
 
+/// Concrete horizontal progress bar with app gradient fill and ARIA semantics.
+///
+/// Covers the common case: a track + animated fill using the primary gradient.
+/// Accepts an optional [trackColor] and [fillGradient] for overrides.
+///
+/// Use [AnimatedProgress] instead when you need a custom builder (e.g. an
+/// animated text counter or non-bar visualisation).
 class ProgressBarWidget extends StatelessWidget {
   final double progress; // 0.0 to 1.0
   final double height;

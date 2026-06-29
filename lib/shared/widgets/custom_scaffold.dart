@@ -13,6 +13,10 @@ import 'active_workout_banner.dart';
 import '../../features/subscription/presentation/subscription_gate.dart';
 import 'offline_banner.dart';
 
+/// Number of tabs in the main user shell. Keep in sync with the StatefulShellRoute
+/// branch count in the router. Used by the indicator pill generator and nav row.
+const _kNavTabCount = 5;
+
 class CustomScaffold extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
 
@@ -116,7 +120,6 @@ class _CustomScaffoldState extends ConsumerState<CustomScaffold> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final tabCount = 5;
                     final activeIndex = widget.navigationShell.currentIndex;
 
                     return Column(
@@ -124,7 +127,7 @@ class _CustomScaffoldState extends ConsumerState<CustomScaffold> {
                       children: [
                         // Animated active indicator pill
                         Row(
-                          children: List.generate(tabCount, (index) {
+                          children: List.generate(_kNavTabCount, (index) {
                             return Expanded(
                               child: Center(
                                 child: AnimatedContainer(
