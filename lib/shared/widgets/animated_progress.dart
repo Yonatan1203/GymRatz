@@ -1,5 +1,14 @@
 import 'package:flutter/material.dart';
 
+/// Generic animated value widget.
+///
+/// Use [AnimatedProgress] when you need full control over how the animated
+/// value is rendered — the [builder] callback receives the interpolated double
+/// each frame so the caller can produce any widget (e.g. a text counter, a
+/// custom painter, or a sized box).
+///
+/// Use [ProgressBarWidget] instead when you just want a standard horizontal
+/// fill bar with the app gradient and built-in semantics.
 class AnimatedProgress extends StatefulWidget {
   final double value;
   final Duration duration;
