@@ -10,6 +10,7 @@ import '../../features/auth/domain/auth_service.dart';
 import '../../features/subscription/domain/entitlement_service.dart';
 import '../../features/subscription/data/entitlement_repository.dart';
 import '../../features/user/data/user_repository.dart';
+import 'service_providers.dart';
 
 /// Returns null when Firebase hasn't been initialized (no google-services.json yet).
 final firebaseAuthProvider = Provider<FirebaseAuth?>((ref) {
@@ -46,6 +47,7 @@ final authServiceProvider = Provider<AuthService>((ref) {
   service.setAchievementService(
     AchievementService(AchievementRepository(firestore)),
   );
+  service.setAnalyticsService(ref.read(analyticsServiceProvider));
   return service;
 });
 
