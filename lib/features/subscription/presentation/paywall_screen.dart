@@ -54,7 +54,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
         ref.invalidate(isProProvider);
         ref.invalidate(subscriptionStateProvider);
         ref.read(analyticsServiceProvider)
-            .logSubscriptionStarted(package.storeProduct.productIdentifier)
+            .logSubscriptionStarted(package.storeProduct.identifier)
             .ignore();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Purchase successful! Welcome to Pro.')),
