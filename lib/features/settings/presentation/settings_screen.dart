@@ -98,12 +98,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  void _showComingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature is coming soon!')),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDark;
