@@ -6,6 +6,7 @@ import '../../theme/app_icons.dart';
 
 import '../../app/providers.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_durations.dart';
 import '../../theme/app_shadows.dart';
 import '../utils/extensions.dart';
 import '../utils/platform_adapter.dart';
@@ -52,7 +53,7 @@ class _CustomScaffoldState extends ConsumerState<CustomScaffold> {
                 child: SubscriptionGate(
                   currentIndex: currentIndex,
                   child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
+                    duration: AppDurations.fast,
                     switchInCurve: Curves.easeOut,
                     switchOutCurve: Curves.easeIn,
                     transitionBuilder: (child, animation) {
@@ -208,7 +209,7 @@ class _NavItemState extends State<_NavItem>
     super.initState();
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 150),
+      duration: AppDurations.extraFast,
     );
     _pulseAnimation = TweenSequence<double>([
       TweenSequenceItem(

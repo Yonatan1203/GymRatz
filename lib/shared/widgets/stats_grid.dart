@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../theme/app_colors.dart';
+import '../../theme/app_durations.dart';
 import '../../theme/app_radius.dart';
 import '../../theme/app_shadows.dart';
 import '../../theme/app_text_styles.dart';
+import '../utils/extensions.dart';
 
 class StatsGridItem {
   final IconData icon;
@@ -34,13 +36,25 @@ class StatsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Color helpers — resolved once per build, used inside the map closure.
+    // useTransparentBg is for overlay contexts (e.g. gradient headers) where the
+    // card sits on top of a colored background and must be semi-transparent.
+    final valueColor = useTransparentBg && isDark ? Colors.white : context.foreground;
+    final labelColor =
+        useTransparentBg && isDark ? Colors.white70 : context.mutedForeground;
+
     return IntrinsicHeight(
       child: Row(
         children: items.map((item) {
-          // GYM-56: wrap each stat in Semantics so screen readers announce value + label
+          final numericValue = double.tryParse(item.value);
+
           return Expanded(
             child: Semantics(
+              // GYM-56: announce the composed value + label as a single unit.
+              // excludeSemantics prevents the icon and individual Text widgets
+              // from being read a second time by TalkBack / VoiceOver.
               label: '${item.value} ${item.label}',
+              excludeSemantics: true,
               child: Container(
                 margin: EdgeInsets.symmetric(horizontal: 4.w),
                 padding: EdgeInsets.all(12.r),
@@ -49,7 +63,7 @@ class StatsGrid extends StatelessWidget {
                       ? (isDark
                           ? Colors.white.withValues(alpha: 0.1)
                           : AppColors.lightPrimary.withValues(alpha: 0.18))
-                      : (isDark ? AppColors.darkCard : AppColors.lightCard),
+                      : context.cardColor,
                   borderRadius: AppRadius.borderXl,
                   border: useTransparentBg
                       ? Border.all(
@@ -57,61 +71,38 @@ class StatsGrid extends StatelessWidget {
                               ? Colors.white.withValues(alpha: 0.15)
                               : AppColors.lightPrimary.withValues(alpha: 0.3),
                         )
-                      : Border.all(
-                          color: isDark
-                              ? AppColors.darkBorder
-                              : AppColors.lightBorder,
-                        ),
+                      : Border.all(color: context.borderColor),
                   boxShadow: useTransparentBg ? null : AppShadows.md,
                 ),
                 child: Column(
                   children: [
                     Icon(item.icon, size: 20.r, color: item.iconColor),
                     SizedBox(height: 8.h),
-                    Builder(builder: (context) {
-                      final numericValue = double.tryParse(item.value);
-                      if (numericValue != null) {
-                        return TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0, end: numericValue),
-                          duration: const Duration(milliseconds: 200),
-                          curve: Curves.easeOut,
-                          builder: (context, value, _) {
-                            return Text(
-                              value.toStringAsFixed(0),
-                              style: AppTextStyles.h2.copyWith(
-                                color: useTransparentBg
-                                    ? (isDark ? Colors.white : AppColors.lightForeground)
-                                    : (isDark
-                                        ? AppColors.darkForeground
-                                        : AppColors.lightForeground),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            );
-                          },
-                        );
-                      }
-                      return Text(
+                    if (numericValue != null)
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: numericValue),
+                        duration: AppDurations.fast,
+                        curve: Curves.easeOut,
+                        builder: (context, value, _) => Text(
+                          value.toStringAsFixed(0),
+                          style: AppTextStyles.h2.copyWith(
+                            color: valueColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                    else
+                      Text(
                         item.value,
                         style: AppTextStyles.h2.copyWith(
-                          color: useTransparentBg
-                              ? (isDark ? Colors.white : AppColors.lightForeground)
-                              : (isDark
-                                  ? AppColors.darkForeground
-                                  : AppColors.lightForeground),
+                          color: valueColor,
                           fontWeight: FontWeight.w600,
                         ),
-                      );
-                    }),
+                      ),
                     SizedBox(height: 2.h),
                     Text(
                       item.label,
-                      style: AppTextStyles.caption.copyWith(
-                        color: useTransparentBg
-                            ? (isDark ? Colors.white70 : AppColors.lightMutedForeground)
-                            : (isDark
-                                ? AppColors.darkMutedForeground
-                                : AppColors.lightMutedForeground),
-                      ),
+                      style: AppTextStyles.caption.copyWith(color: labelColor),
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

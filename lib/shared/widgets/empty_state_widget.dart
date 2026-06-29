@@ -78,27 +78,36 @@ class EmptyStateWidget extends StatelessWidget {
             ),
             if (actionLabel != null && onAction != null) ...[
               SizedBox(height: 24.h),
-              // Coral action button
+              // Coral action button — InkWell provides splash, semantics, and
+              // keyboard accessibility; Semantics adds an explicit button role.
               SlideUp(
                 delay: const Duration(milliseconds: 300),
-                child: GestureDetector(
-                  onTap: onAction,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 20.w,
-                      vertical: 10.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: context.coralColor.withValues(alpha: 0.08),
+                child: Semantics(
+                  button: true,
+                  label: actionLabel,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onAction,
                       borderRadius: AppRadius.borderLg,
-                      border: Border.all(
-                        color: context.coralColor.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: Text(
-                      actionLabel!,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: context.coralColor,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20.w,
+                          vertical: 10.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: context.coralColor.withValues(alpha: 0.08),
+                          borderRadius: AppRadius.borderLg,
+                          border: Border.all(
+                            color: context.coralColor.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Text(
+                          actionLabel!,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: context.coralColor,
+                          ),
+                        ),
                       ),
                     ),
                   ),

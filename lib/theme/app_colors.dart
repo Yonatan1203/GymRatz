@@ -77,4 +77,16 @@ class AppColors {
   // Missed day indicator (orange)
   static const lightMissedDay = Color(0xFFEA6D0A);
   static const darkMissedDay = Color(0xFFF97316);
+
+  // ─── Showcase screen feature-icon colors ───
+  // Named here so AppGradients can reference constants instead of raw hex literals.
+  static const showcaseGreenStart = Color(0xFF22C55E);
+  static const showcaseGreenEnd = Color(0xFF10B981);
+  static const showcasePurpleStart = Color(0xFFA855F7);
+  static const showcasePurpleEnd = Color(0xFFEC4899);
+  static const showcaseYellowEnd = Color(0xFFEAB308);
+
+  // ─── Health screen ───
+  static const healthStart = Color(0xFFEF4444);
+  static const healthEnd = Color(0xFFEC4899);
 }

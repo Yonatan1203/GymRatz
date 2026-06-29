@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../theme/app_durations.dart';
 import '../../theme/app_radius.dart';
+import '../../theme/app_shadows.dart';
 import '../utils/extensions.dart';
 
 class SkeletonLoader extends StatefulWidget {
@@ -22,7 +24,7 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: AppDurations.skeleton,
     )..repeat();
   }
 
@@ -114,12 +116,14 @@ class SkeletonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Mirror CustomCard's shadow so skeleton → real card has no layout jump.
     return Container(
       height: height?.r,
       decoration: BoxDecoration(
         color: context.cardColor,
         borderRadius: AppRadius.borderXl,
         border: Border.all(color: context.borderColor),
+        boxShadow: AppShadows.md,
       ),
       child: child,
     );

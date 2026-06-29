@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
+import '../../theme/app_durations.dart';
 import '../../theme/app_gradients.dart';
 import '../../theme/app_radius.dart';
 
@@ -34,7 +35,7 @@ class ProgressBarWidget extends StatelessWidget {
         ),
         child: TweenAnimationBuilder<double>(
           tween: Tween(begin: 0, end: progress.clamp(0.0, 1.0)),
-          duration: const Duration(milliseconds: 250),
+          duration: AppDurations.medium,
           curve: Curves.easeOut,
           builder: (context, animatedValue, _) {
             return FractionallySizedBox(

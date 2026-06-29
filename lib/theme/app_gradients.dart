@@ -80,25 +80,25 @@ class AppGradients {
   static const LinearGradient showcaseGreen = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF22C55E), Color(0xFF10B981)],
+    colors: [AppColors.showcaseGreenStart, AppColors.showcaseGreenEnd],
   );
 
   static const LinearGradient showcasePurple = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFA855F7), Color(0xFFEC4899)],
+    colors: [AppColors.showcasePurpleStart, AppColors.showcasePurpleEnd],
   );
 
   static const LinearGradient showcaseYellow = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFA8B8C8), Color(0xFFEAB308)],
+    colors: [AppColors.lightSecondary, AppColors.showcaseYellowEnd],
   );
 
   // Health screen: bg-gradient-to-br from-red-500 to-pink-500
   static const LinearGradient health = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFEF4444), Color(0xFFEC4899)],
+    colors: [AppColors.healthStart, AppColors.healthEnd],
   );
 }

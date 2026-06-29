@@ -70,28 +70,23 @@ class GradientHeader extends StatelessWidget {
                   child: Row(
                     children: [
                       if (showBackButton)
-                        Semantics(
-                          button: true,
-                          label: 'Go back',
-                          child: GestureDetector(
-                          onTap: () {
+                        // IconButton: 48×48 tap target, Material ripple, and
+                        // tooltip → correct semantics for TalkBack/VoiceOver.
+                        IconButton(
+                          onPressed: () {
                             PlatformAdapter.hapticLight();
                             context.pop();
                           },
-                          child: SizedBox(
-                            width: 40.r,
-                            height: 40.r,
-                            child: Center(
-                              child: Icon(
-                                AppIcons.arrowLeft,
-                                color: variant == HeaderVariant.hero
-                                    ? Colors.white
-                                    : context.foreground,
-                                size: 20.r,
-                              ),
-                            ),
+                          tooltip: 'Go back',
+                          padding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                          icon: Icon(
+                            AppIcons.arrowLeft,
+                            color: variant == HeaderVariant.hero
+                                ? Colors.white
+                                : context.foreground,
+                            size: 20.r,
                           ),
-                        ),
                         ),
                       const Spacer(),
                       if (actions != null) ...actions!,
