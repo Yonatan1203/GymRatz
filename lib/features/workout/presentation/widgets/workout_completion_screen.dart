@@ -12,7 +12,7 @@ import '../../../../shared/models/workout_exercise.dart';
 import '../../../../shared/models/workout_set.dart';
 import '../../../../shared/utils/extensions.dart';
 import '../../../../shared/widgets/custom_button.dart';
-import '../domain/workout_summary.dart';
+import '../../domain/workout_summary.dart';
 
 /// Full-screen workout completion UI with staggered stat card animations (GYM-59).
 ///
