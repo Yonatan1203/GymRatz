@@ -17,10 +17,14 @@ import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
 import '../../../shared/utils/formatters.dart';
+import '../../../shared/widgets/app_bottom_sheet.dart';
 import '../../../shared/widgets/custom_badge.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_card.dart';
 import '../../../shared/widgets/custom_input.dart';
+import '../../../shared/widgets/select_field.dart';
+import 'widgets/program_info_card.dart';
+import 'widgets/program_screen_header.dart';
 
 class CreateProgramScreen extends ConsumerStatefulWidget {
   const CreateProgramScreen({super.key, this.forCoach = false, this.editProgram});
@@ -426,12 +430,31 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
         top: false,
         child: Column(
           children: [
-            _buildHeader(context),
+            ProgramScreenHeader(
+              isEditing: widget.isEditing,
+              saving: _saving,
+              onSave: _saveProgram,
+            ),
             Expanded(
               child: ListView(
                 padding: EdgeInsets.all(AppSpacing.screenPadding),
                 children: [
-                  _buildProgramInfoSection(context),
+                  ProgramInfoCard(
+                    nameController: _nameController,
+                    weeksController: _weeksController,
+                    descriptionController: _descriptionController,
+                    nameFocus: _nameFocus,
+                    weeksFocus: _weeksFocus,
+                    difficulty: _difficulty,
+                    onDifficultyChanged: (v) => setState(() => _difficulty = v),
+                    forCoach: widget.forCoach,
+                    weightAutofillMode: _weightAutofillMode,
+                    onWeightAutofillChanged: (on) => setState(() {
+                      _weightAutofillMode = on
+                          ? WeightAutofillMode.systemSuggested
+                          : WeightAutofillMode.manual;
+                    }),
+                  ),
                   SizedBox(height: AppSpacing.sectionGap),
                   ..._workoutDays.map((day) => _buildWorkoutDayCard(context, context.isDark, day)),
                   SizedBox(height: 16.h),
@@ -462,147 +485,6 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.cardColor,
-        border: Border(bottom: BorderSide(color: context.borderColor)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(AppSpacing.screenPadding, 8.h, AppSpacing.screenPadding, 16.h),
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: () => context.pop(),
-                child: Padding(
-                  padding: EdgeInsets.all(8.r),
-                  child: Icon(AppIcons.arrowLeft, size: 20.r, color: context.foreground),
-                ),
-              ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Text(widget.isEditing ? 'Edit Program' : 'Create Program', style: AppTextStyles.h2.copyWith(color: context.foreground)),
-              ),
-              GestureDetector(
-                onTap: _saving ? null : _saveProgram,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    color: _saving ? context.mutedForeground : context.primaryColor,
-                    borderRadius: AppRadius.borderLg,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_saving)
-                        SizedBox(
-                          width: 16.r,
-                          height: 16.r,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.onPrimary),
-                        )
-                      else
-                        Icon(AppIcons.save, size: 16.r, color: Theme.of(context).colorScheme.onPrimary),
-                      SizedBox(width: 4.w),
-                      Text(
-                        _saving ? 'Saving...' : 'Save',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgramInfoSection(BuildContext context) {
-    return CustomCard(
-      padding: EdgeInsets.all(16.r),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CustomInput(
-            controller: _nameController,
-            label: 'Program Name',
-            hint: 'e.g., Push Pull Legs',
-            focusNode: _nameFocus,
-            textInputAction: TextInputAction.next,
-            onFieldSubmitted: (_) => _weeksFocus.requestFocus(),
-          ),
-          SizedBox(height: 12.h),
-          Row(
-            children: [
-              Expanded(
-                child: CustomInput(
-                  controller: _weeksController,
-                  label: 'Duration (weeks)',
-                  keyboardType: TextInputType.number,
-                  focusNode: _weeksFocus,
-                  textInputAction: TextInputAction.done,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: _buildSelectField(
-                  context: context,
-                  label: 'Difficulty',
-                  value: _difficulty,
-                  options: const ['Beginner', 'Intermediate', 'Advanced'],
-                  onChanged: (v) => setState(() => _difficulty = v),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          CustomInput(
-            controller: _descriptionController,
-            label: 'Description (optional)',
-            hint: 'Brief description of this program',
-            maxLines: 2,
-          ),
-          if (widget.forCoach) ...[
-            SizedBox(height: 12.h),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                'Auto-suggest weights',
-                style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
-              ),
-              subtitle: Text(
-                _weightAutofillMode == WeightAutofillMode.systemSuggested
-                    ? 'PO engine pre-fills weights for athletes'
-                    : 'Athletes enter weights manually from scratch',
-                style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
-              ),
-              value: _weightAutofillMode == WeightAutofillMode.systemSuggested,
-              activeColor: context.primaryColor,
-              onChanged: (on) => setState(() {
-                _weightAutofillMode = on
-                    ? WeightAutofillMode.systemSuggested
-                    : WeightAutofillMode.manual;
-              }),
-            ),
-          ],
-        ],
       ),
     );
   }
@@ -659,8 +541,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                           ),
                         ),
                         SizedBox(height: 8.h),
-                        _buildSelectField(
-                          context: context,
+                        SelectField(
                           label: '',
                           value: day.dayOfWeek,
                           options: _daysOfWeek,
@@ -815,12 +696,14 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
               ),
               SizedBox(height: 8.h),
               GestureDetector(
-                onTap: () => _showConfigSheet(
+                onTap: () => showAppBottomSheet(
                   context,
-                  'Progression Type',
-                  ex.progressionType.label,
-                  ProgressionMode.values.map((m) => m.label).toList(),
-                  (v) => setState(() => ex.progressionType = ProgressionMode.values.firstWhere((m) => m.label == v)),
+                  title: 'Progression Type',
+                  currentValue: ex.progressionType.label,
+                  options: ProgressionMode.values.map((m) => m.label).toList(),
+                  onChanged: (v) => setState(
+                    () => ex.progressionType = ProgressionMode.values.firstWhere((m) => m.label == v),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -924,20 +807,24 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
   void _openConfigSheet(BuildContext context, _ExerciseConfig ex, String label) {
     switch (label) {
       case 'Sets':
-        _showConfigSheet(
-          context, 'Sets', '${ex.sets}',
-          List.generate(10, (i) => '${i + 1}'),
-          (v) => setState(() => ex.sets = int.parse(v)),
+        showAppBottomSheet(
+          context,
+          title: 'Sets',
+          currentValue: '${ex.sets}',
+          options: List.generate(10, (i) => '${i + 1}'),
+          onChanged: (v) => setState(() => ex.sets = int.parse(v)),
         );
       case 'Reps':
-        _showConfigSheet(
-          context, 'Reps', Formatters.reps(ex.repMin, ex.repMax),
-          const [
+        showAppBottomSheet(
+          context,
+          title: 'Reps',
+          currentValue: Formatters.reps(ex.repMin, ex.repMax),
+          options: const [
             '1', '2', '3', '5', '6', '8', '10', '12', '15', '20',
             '1-3', '1-5', '3-5', '3-6', '4-6', '5-8', '6-8', '6-10',
             '8-10', '8-12', '10-12', '10-15', '12-15', '15-20', '20-30',
           ],
-          (v) {
+          onChanged: (v) {
             setState(() {
               if (v.contains('-')) {
                 final parts = v.split('-');
@@ -952,137 +839,41 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
           },
         );
       case 'RIR':
-        _showConfigSheet(
-          context, 'RIR (Reps in Reserve)', '${ex.targetRir}',
-          const ['0', '1', '2', '3', '4', '5'],
-          (v) => setState(() => ex.targetRir = int.parse(v)),
+        showAppBottomSheet(
+          context,
+          title: 'RIR (Reps in Reserve)',
+          currentValue: '${ex.targetRir}',
+          options: const ['0', '1', '2', '3', '4', '5'],
+          onChanged: (v) => setState(() => ex.targetRir = int.parse(v)),
         );
       case 'Rest':
-        _showConfigSheet(
-          context, 'Rest (seconds)', '${ex.restSeconds}s',
-          const ['30', '45', '60', '90', '120', '150', '180', '240', '300'],
-          (v) => setState(() => ex.restSeconds = int.parse(v)),
+        showAppBottomSheet(
+          context,
+          title: 'Rest (seconds)',
+          currentValue: '${ex.restSeconds}s',
+          options: const ['30', '45', '60', '90', '120', '150', '180', '240', '300'],
+          onChanged: (v) => setState(() => ex.restSeconds = int.parse(v)),
           displayTransform: (v) => '${v}s',
         );
       case 'Duration':
-        _showConfigSheet(
-          context, 'Duration (minutes)', '${ex.durationMinutes} min',
-          const ['10', '15', '20', '25', '30', '35', '40', '45', '50', '60', '75', '90'],
-          (v) => setState(() => ex.durationMinutes = int.parse(v)),
+        showAppBottomSheet(
+          context,
+          title: 'Duration (minutes)',
+          currentValue: '${ex.durationMinutes} min',
+          options: const ['10', '15', '20', '25', '30', '35', '40', '45', '50', '60', '75', '90'],
+          onChanged: (v) => setState(() => ex.durationMinutes = int.parse(v)),
           displayTransform: (v) => '$v min',
         );
       case 'Sec':
-        _showConfigSheet(
-          context, 'Set Duration (seconds)', '${ex.setDurationSeconds}s',
-          const ['10', '15', '20', '30', '40', '45', '60', '90', '120'],
-          (v) => setState(() => ex.setDurationSeconds = int.parse(v)),
+        showAppBottomSheet(
+          context,
+          title: 'Set Duration (seconds)',
+          currentValue: '${ex.setDurationSeconds}s',
+          options: const ['10', '15', '20', '30', '40', '45', '60', '90', '120'],
+          onChanged: (v) => setState(() => ex.setDurationSeconds = int.parse(v)),
           displayTransform: (v) => '${v}s',
         );
     }
-  }
-
-  /// Bottom sheet picker for exercise config — uses sheet's own context
-  /// for all InheritedWidget access to avoid _dependents.isEmpty crashes.
-  void _showConfigSheet(
-    BuildContext context,
-    String title,
-    String currentValue,
-    List<String> options,
-    ValueChanged<String> onChanged, {
-    String Function(String)? displayTransform,
-  }) {
-    // Dismiss keyboard before opening sheet
-    FocusManager.instance.primaryFocus?.unfocus();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).cardColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        final theme = Theme.of(ctx);
-        final colorScheme = theme.colorScheme;
-        final fg = colorScheme.onSurface;
-        final mutedFg = colorScheme.onSurfaceVariant;
-        final primaryColor = colorScheme.primary;
-
-        return SafeArea(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(ctx).size.height * 0.5,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: mutedFg.withValues(alpha: 0.3),
-                    borderRadius: AppRadius.borderFull,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                  child: Row(
-                    children: [
-                      Text(title, style: AppTextStyles.h3.copyWith(color: fg)),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(ctx),
-                        child: Icon(AppIcons.x, size: 20, color: mutedFg),
-                      ),
-                    ],
-                  ),
-                ),
-                Divider(color: mutedFg.withValues(alpha: 0.15), height: 1),
-                Flexible(
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: options.map((option) {
-                      final isSelected = option == currentValue || (displayTransform != null && displayTransform(option) == currentValue);
-                      return InkWell(
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (mounted) onChanged(option);
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: isSelected ? primaryColor.withValues(alpha: 0.08) : null,
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  displayTransform != null ? displayTransform(option) : option,
-                                  style: AppTextStyles.body.copyWith(
-                                    color: isSelected ? primaryColor : fg,
-                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(AppIcons.check, size: 20, color: primaryColor),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   Widget _buildExercisePicker(BuildContext context, String dayId) {
@@ -1275,8 +1066,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
           Row(
             children: [
               Expanded(
-                child: _buildSelectField(
-                  context: context,
+                child: SelectField(
                   label: 'Category',
                   value: _customCategory,
                   options: const ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core'],
@@ -1285,8 +1075,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
               ),
               SizedBox(width: 12.w),
               Expanded(
-                child: _buildSelectField(
-                  context: context,
+                child: SelectField(
                   label: 'Equipment',
                   value: _customEquipment,
                   options: const ['Dumbbell', 'Barbell', 'Machine', 'Body Weight'],
@@ -1306,185 +1095,6 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
     );
   }
 
-  // ─── Reusable Select Field (replaces ugly DropdownButton) ───
-
-  Widget _buildSelectField({
-    required BuildContext context,
-    required String label,
-    required String value,
-    required List<String> options,
-    required ValueChanged<String> onChanged,
-    bool onDark = false,
-    IconData? icon,
-    String? sheetTitle,
-  }) {
-    final onPrimary = Theme.of(context).colorScheme.onPrimary;
-    final onPrimaryMuted = onPrimary.withValues(alpha: 0.7);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (label.isNotEmpty) ...[
-          Text(
-            label,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: onDark ? onPrimaryMuted : context.mutedForeground,
-            ),
-          ),
-          SizedBox(height: 8.h),
-        ],
-        GestureDetector(
-          onTap: () => _showSelectionSheet(
-            context,
-            sheetTitle ?? label,
-            value,
-            options,
-            onChanged,
-          ),
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-            decoration: BoxDecoration(
-              color: onDark
-                  ? onPrimary.withValues(alpha: 0.1)
-                  : context.mutedColor,
-              borderRadius: AppRadius.borderLg,
-              border: Border.all(
-                color: onDark
-                    ? onPrimary.withValues(alpha: 0.2)
-                    : context.borderColor,
-              ),
-            ),
-            child: Row(
-              children: [
-                if (icon != null) ...[
-                  Icon(
-                    icon,
-                    size: 16.r,
-                    color: onDark ? onPrimaryMuted : context.mutedForeground,
-                  ),
-                  SizedBox(width: 8.w),
-                ],
-                Expanded(
-                  child: Text(
-                    value,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: onDark ? onPrimary : context.foreground,
-                    ),
-                  ),
-                ),
-                Icon(
-                  AppIcons.chevronDown,
-                  size: 16.r,
-                  color: onDark ? onPrimaryMuted : context.mutedForeground,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showSelectionSheet(
-    BuildContext context,
-    String title,
-    String currentValue,
-    List<String> options,
-    ValueChanged<String> onChanged,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).cardColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        // Use the sheet's own context for all InheritedWidget lookups
-        // to avoid cross-boundary dependencies that cause _dependents.isEmpty
-        final theme = Theme.of(ctx);
-        final colorScheme = theme.colorScheme;
-        final fg = colorScheme.onSurface;
-        final mutedFg = colorScheme.onSurfaceVariant;
-        final primaryColor = colorScheme.primary;
-
-        return SafeArea(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(ctx).size.height * 0.5,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: mutedFg.withValues(alpha: 0.3),
-                    borderRadius: AppRadius.borderFull,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                  child: Row(
-                    children: [
-                      Text(title, style: AppTextStyles.h3.copyWith(color: fg)),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(ctx),
-                        child: Icon(AppIcons.x, size: 20, color: mutedFg),
-                      ),
-                    ],
-                  ),
-                ),
-                Divider(color: mutedFg.withValues(alpha: 0.15), height: 1),
-                Flexible(
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: options.map((option) {
-                      final isSelected = option == currentValue;
-                      return InkWell(
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (mounted) onChanged(option);
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? primaryColor.withValues(alpha: 0.08)
-                                : null,
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  option,
-                                  style: AppTextStyles.body.copyWith(
-                                    color: isSelected ? primaryColor : fg,
-                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(AppIcons.check, size: 20, color: primaryColor),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
 
 class _WorkoutDay {

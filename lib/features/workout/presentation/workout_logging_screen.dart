@@ -25,6 +25,8 @@ import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_card.dart';
 import '../../../shared/widgets/custom_input.dart';
 import '../../../shared/widgets/skeleton_loader.dart';
+import 'widgets/first_time_workout_tips.dart';
+import 'widgets/workout_screen_header.dart';
 
 import '../../../shared/models/enums.dart';
 import '../../../shared/models/exercise.dart';
@@ -731,12 +733,24 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     return Scaffold(
       body: Column(
         children: [
-          _buildHeader(context, isDark),
+          WorkoutScreenHeader(
+            workoutName: _workoutName,
+            formattedElapsed: _formatElapsed(_elapsedSeconds),
+            saving: _saving,
+            onBack: () {
+              _syncToProvider();
+              context.pop();
+            },
+            onFinish: _confirmFinish,
+          ),
           Expanded(
             child: ListView(
               padding: EdgeInsets.all(AppSpacing.screenPadding),
                   children: [
-                    if (_showFirstTimeTips) _buildFirstTimeTips(context, isDark),
+                    if (_showFirstTimeTips)
+                      FirstTimeWorkoutTips(
+                        onClose: () => setState(() => _showFirstTimeTips = false),
+                      ),
                     if (widget.isFreeWorkout && exercises.isEmpty)
                       _buildFreeWorkoutEmptyState(context),
                     ...List.generate(exercises.length, (i) => _buildExerciseCard(context, isDark, i, exercises[i])),
@@ -776,112 +790,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isDark) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: AppGradients.primary(isDark: isDark),
-        boxShadow: AppShadows.lg,
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
-          child: Row(
-            children: [
-              Semantics(
-                button: true,
-                label: 'Go back',
-                child: GestureDetector(
-                  onTap: () {
-                    PlatformAdapter.hapticLight();
-                    _syncToProvider();
-                    context.pop();
-                  },
-                  child: Container(
-                    width: 40.r, height: 40.r,
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: AppRadius.borderLg),
-                    child: Icon(AppIcons.arrowLeft, size: 20.r, color: Colors.white),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(_workoutName, style: AppTextStyles.h3.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
-                    Text(
-                      _formatElapsed(_elapsedSeconds),
-                      style: AppTextStyles.tabular.copyWith(color: Colors.white70, fontSize: 14.sp),
-                    ),
-                  ],
-                ),
-              ),
-              Semantics(
-                button: true,
-                label: 'Finish workout',
-                child: GestureDetector(
-                  onTap: _saving ? null : () {
-                    PlatformAdapter.hapticMedium();
-                    _confirmFinish();
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: AppRadius.borderLg),
-                    child: _saving
-                        ? SizedBox(width: 20.r, height: 20.r, child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text('Finish', style: AppTextStyles.bodySmall.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFirstTimeTips(BuildContext context, bool isDark) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 12.h),
-      child: CustomCard(
-        padding: EdgeInsets.all(16.r),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(AppIcons.info, size: 18.r, color: context.primaryColor),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Text(
-                    'Quick Start Guide',
-                    style: AppTextStyles.h4.copyWith(
-                      color: context.foreground,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => setState(() => _showFirstTimeTips = false),
-                  child: Icon(AppIcons.x, size: 18.r, color: context.mutedForeground),
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            _tipRow(context, AppIcons.check, 'Tap the circle to complete a set'),
-            SizedBox(height: 8.h),
-            _tipRow(context, AppIcons.edit, 'Edit weight, reps, and RIR for each set'),
-            SizedBox(height: 8.h),
-            _tipRow(context, AppIcons.timer, 'Rest timer starts automatically after each set'),
-            SizedBox(height: 8.h),
-            _tipRow(context, AppIcons.trendingUp, 'Weights auto-adjust next session based on performance'),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildFreeWorkoutEmptyState(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
@@ -904,21 +812,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
           ],
         ),
       ),
-    );
-  }
-
-  Widget _tipRow(BuildContext context, IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 14.r, color: context.primaryColor),
-        SizedBox(width: 8.w),
-        Expanded(
-          child: Text(
-            text,
-            style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
-          ),
-        ),
-      ],
     );
   }
 
