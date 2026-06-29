@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -14,7 +13,6 @@ import '../../../app/providers.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_gradients.dart';
 import '../../../theme/app_radius.dart';
-import '../../../theme/app_shadows.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../shared/utils/extensions.dart';
@@ -26,6 +24,7 @@ import '../../../shared/widgets/custom_card.dart';
 import '../../../shared/widgets/custom_input.dart';
 import '../../../shared/widgets/skeleton_loader.dart';
 import 'widgets/first_time_workout_tips.dart';
+import 'widgets/workout_completion_screen.dart';
 import 'widgets/workout_screen_header.dart';
 
 import '../../../shared/models/enums.dart';
@@ -68,11 +67,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
   late DateTime _startTime;
   WorkoutSummary? _workoutSummary;
   static const _workoutCacheKeyPrefix = 'in_progress_workout';
-
-  // GYM-59: completion screen animation controllers
-  late AnimationController _completionAnimController;
-  final List<Animation<double>> _statCardFades = [];
-  final List<Animation<Offset>> _statCardSlides = [];
 
   String get _workoutCacheKey {
     final uid = ref.read(currentUidProvider) ?? '';
@@ -409,8 +403,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
   @override
   void initState() {
     super.initState();
-    // GYM-59: pre-create a dummy controller; it gets replaced when completion triggers
-    _completionAnimController = AnimationController(vsync: this, duration: Duration.zero);
   }
 
   @override
@@ -420,32 +412,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
       c.dispose();
     }
     _controllers.clear();
-    _completionAnimController.dispose();
     super.dispose();
-  }
-
-  // GYM-59: build staggered entrance animations for the 6 stat cards
-  void _initCompletionAnimations() {
-    _completionAnimController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    );
-    _statCardFades.clear();
-    _statCardSlides.clear();
-    for (int i = 0; i < 6; i++) {
-      final start = (i * 150) / 1500.0;
-      final end = (start + 400 / 1500.0).clamp(0.0, 1.0);
-      final interval = CurvedAnimation(
-        parent: _completionAnimController,
-        curve: Interval(start, end, curve: Curves.easeOut),
-      );
-      _statCardFades.add(interval);
-      _statCardSlides.add(
-        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
-            .animate(interval),
-      );
-    }
-    _completionAnimController.forward();
   }
 
   void _toggleSet(int exIdx, int setIdx) {
@@ -531,7 +498,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
         if (mounted) {
           PlatformAdapter.hapticMedium();
           SharedPreferences.getInstance().then((p) => p.setBool('has_completed_workout', true));
-          _initCompletionAnimations();
           setState(() {
             _workoutSummary = summary;
             _completed = true;
@@ -540,7 +506,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
         }
       } catch (e) {
         if (mounted) {
-          _initCompletionAnimations();
           setState(() {
             _completed = true;
             _saving = false;
@@ -552,7 +517,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
       }
     } else {
       // Not authenticated — still show completion
-      _initCompletionAnimations();
       setState(() {
         _completed = true;
         _saving = false;
@@ -701,7 +665,15 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
   @override
   Widget build(BuildContext context) {
     _initFromProvider();
-    if (_completed) return _buildCompletionScreen(context);
+    if (_completed) return WorkoutCompletionScreen(
+      workoutName: _workoutName,
+      exercises: _exercises,
+      sets: _sets,
+      startTime: _startTime,
+      workoutSummary: _workoutSummary,
+      unit: ref.read(userProfileProvider).valueOrNull?.unit ?? 'lbs',
+      onHome: () => context.go('/home'),
+    );
     if (_loadingExercises) {
       return Scaffold(
         body: SafeArea(
@@ -1088,209 +1060,4 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     );
   }
 
-  Widget _buildCompletionScreen(BuildContext context) {
-    final isDark = context.isDark;
-    final completedSets = _sets.fold<int>(0, (sum, ex) => sum + ex.where((s) => s.completed).length);
-    final totalSets = _sets.fold<int>(0, (sum, ex) => sum + ex.length);
-    final totalReps = _workoutSummary?.totalReps ?? _sets.fold<int>(0, (sum, ex) => sum + ex.fold<int>(0, (s, set) => s + set.reps));
-    final totalVolume = _workoutSummary?.totalVolume ?? _sets.fold<double>(0, (sum, ex) => sum + ex.fold<double>(0, (s, set) => s + (set.weight * set.reps)));
-    final duration = DateTime.now().difference(_startTime);
-    final durationStr = '${duration.inMinutes}m ${(duration.inSeconds % 60).toString().padLeft(2, '0')}s';
-    final completionPct = totalSets > 0 ? ((completedSets / totalSets) * 100).round() : 0;
-    final newPRs = _workoutSummary?.newPRs ?? [];
-
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              context.primaryColor.withValues(alpha: 0.15),
-              isDark ? Colors.black : Colors.white,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(AppSpacing.screenPadding),
-            child: Column(
-              children: [
-                SizedBox(height: 32.h),
-                // Trophy icon with glow
-                Container(
-                  width: 120.r, height: 120.r,
-                  decoration: BoxDecoration(
-                    gradient: AppGradients.primary(isDark: isDark),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: context.primaryColor.withValues(alpha: 0.4),
-                        blurRadius: 40,
-                        spreadRadius: 8,
-                      ),
-                    ],
-                  ),
-                  child: Icon(AppIcons.trophy, size: 56.r, color: Colors.white),
-                ),
-                SizedBox(height: 24.h),
-                Text('Workout Complete!', style: AppTextStyles.h1.copyWith(color: context.foreground, fontWeight: FontWeight.w700)),
-                SizedBox(height: 4.h),
-                Text('You absolutely crushed it today', style: AppTextStyles.body.copyWith(color: context.mutedForeground)),
-                SizedBox(height: 8.h),
-                // Completion badge
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-                  decoration: BoxDecoration(
-                    color: context.primaryColor.withValues(alpha: 0.15),
-                    borderRadius: AppRadius.borderFull,
-                  ),
-                  child: Text(
-                    '$completionPct% completed',
-                    style: AppTextStyles.bodySmall.copyWith(color: context.primaryColor, fontWeight: FontWeight.w600),
-                  ),
-                ),
-                // New PRs
-                if (newPRs.isNotEmpty) ...[
-                  SizedBox(height: 16.h),
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(16.r),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [context.coralColor.withValues(alpha: 0.15), context.coralColor.withValues(alpha: 0.08)],
-                      ),
-                      borderRadius: AppRadius.borderXl,
-                      border: Border.all(color: context.coralColor.withValues(alpha: 0.3)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(AppIcons.trophy, size: 18.r, color: context.coralColor),
-                            SizedBox(width: 8.w),
-                            Text('New Personal Records!', style: AppTextStyles.h4.copyWith(color: context.coralColor, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
-                        SizedBox(height: 8.h),
-                        ...newPRs.map((pr) => Padding(
-                          padding: EdgeInsets.only(bottom: 4.h),
-                          child: Text(pr, style: AppTextStyles.bodySmall.copyWith(color: context.foreground)),
-                        )),
-                      ],
-                    ),
-                  ),
-                ],
-                SizedBox(height: 28.h),
-                // Stats grid — 2x3 with staggered entrance animations (GYM-59)
-                Row(
-                  children: [
-                    Expanded(child: _completionStatCardAnimated(context, isDark, 0, AppIcons.clock, 'Duration', durationStr)),
-                    SizedBox(width: 12.w),
-                    Expanded(child: _completionStatCardAnimated(context, isDark, 1, AppIcons.layers, 'Sets', '$completedSets / $totalSets')),
-                  ],
-                ),
-                SizedBox(height: 12.h),
-                Row(
-                  children: [
-                    Expanded(child: _completionStatCardAnimated(context, isDark, 2, AppIcons.repeat, 'Total Reps', null, countValue: totalReps)),
-                    SizedBox(width: 12.w),
-                    Expanded(child: _completionStatCardAnimated(context, isDark, 3, AppIcons.barChart2, 'Volume', null, countValue: totalVolume.toInt(), countSuffix: ' ${ref.read(userProfileProvider).valueOrNull?.unit ?? 'lbs'}')),
-                  ],
-                ),
-                SizedBox(height: 12.h),
-                Row(
-                  children: [
-                    Expanded(child: _completionStatCardAnimated(context, isDark, 4, AppIcons.dumbbell, 'Exercises', null, countValue: _exercises.length)),
-                    SizedBox(width: 12.w),
-                    Expanded(child: _completionStatCardAnimated(context, isDark, 5, AppIcons.flame, 'Intensity', completionPct >= 80 ? 'High' : completionPct >= 50 ? 'Medium' : 'Light')),
-                  ],
-                ),
-                SizedBox(height: 32.h),
-                // Buttons
-                CustomButton(
-                  text: 'Back to Home',
-                  variant: ButtonVariant.gradient,
-                  icon: AppIcons.home,
-                  onPressed: () => context.go('/home'),
-                ),
-                SizedBox(height: 12.h),
-                CustomButton(
-                  text: 'Share Workout',
-                  variant: ButtonVariant.outline,
-                  icon: AppIcons.share2,
-                  onPressed: () {
-                    final n = _exercises.length;
-                    final exerciseWord = n == 1 ? 'exercise' : 'exercises';
-                    final text = 'I just completed $_workoutName — $n $exerciseWord 💪 #GymRatz';
-                    Share.share(text);
-                  },
-                ),
-                SizedBox(height: 32.h),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // GYM-59: animated version with staggered fade+slide and optional counting value
-  Widget _completionStatCardAnimated(
-    BuildContext context,
-    bool isDark,
-    int index,
-    IconData icon,
-    String label,
-    String? staticValue, {
-    int? countValue,
-    String countSuffix = '',
-  }) {
-    final cardContent = Container(
-      padding: EdgeInsets.all(16.r),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.lightCard,
-        borderRadius: AppRadius.borderXl,
-        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
-        boxShadow: AppShadows.sm,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20.r, color: context.primaryColor),
-          SizedBox(height: 8.h),
-          if (countValue != null)
-            TweenAnimationBuilder<int>(
-              tween: IntTween(begin: 0, end: countValue),
-              duration: const Duration(milliseconds: 800),
-              builder: (_, val, __) => Text(
-                '$val$countSuffix',
-                style: AppTextStyles.h3.copyWith(color: context.foreground, fontWeight: FontWeight.w700),
-              ),
-            )
-          else
-            Text(
-              staticValue ?? '',
-              style: AppTextStyles.h3.copyWith(color: context.foreground, fontWeight: FontWeight.w700),
-            ),
-          SizedBox(height: 2.h),
-          Text(label, style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
-        ],
-      ),
-    );
-
-    // Guard: animations may not be set up yet on first frame
-    if (_statCardFades.length <= index) return cardContent;
-
-    return FadeTransition(
-      opacity: _statCardFades[index],
-      child: SlideTransition(
-        position: _statCardSlides[index],
-        child: cardContent,
-      ),
-    );
-  }
 }

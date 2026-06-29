@@ -21,8 +21,9 @@ import '../../../shared/widgets/app_bottom_sheet.dart';
 import '../../../shared/widgets/custom_badge.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_card.dart';
-import '../../../shared/widgets/custom_input.dart';
 import '../../../shared/widgets/select_field.dart';
+import 'widgets/custom_exercise_form_card.dart';
+import 'widgets/exercise_library_picker.dart';
 import 'widgets/program_info_card.dart';
 import 'widgets/program_screen_header.dart';
 
@@ -51,8 +52,6 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
   final _weeksFocus = FocusNode();
   String? _pickerOpenForDay;
   String? _customFormOpenForDay;
-  String _exerciseSearchQuery = '';
-  String? _selectedCategory;
   String _difficulty = 'Intermediate';
   /// Weight autofill mode for coach-created programs.
   /// Only used when [CreateProgramScreen.forCoach] is true.
@@ -62,10 +61,6 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
   /// guards against duplicate writes from rapid double-taps before the
   /// Firestore-backed library provider reflects the new entry.
   final Set<String> _persistedExerciseNames = {};
-
-  final _customName = TextEditingController();
-  String _customCategory = 'Chest';
-  String _customEquipment = 'Dumbbell';
 
   final _daysOfWeek = const [
     'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
@@ -138,7 +133,6 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
     _descriptionController.dispose();
     _nameFocus.dispose();
     _weeksFocus.dispose();
-    _customName.dispose();
     for (final c in _dayNameControllers.values) {
       c.dispose();
     }
@@ -200,17 +194,12 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
         ));
       }
       _pickerOpenForDay = null;
-      _exerciseSearchQuery = '';
-      _selectedCategory = null;
     });
   }
 
-  void _addCustomExercise(String dayId) {
-    final name = _customName.text.trim();
+  void _addCustomExercise(String dayId, String name, String category, String equipment) {
     if (name.isEmpty) return;
-    final category = _customCategory;
-    final equipment = _customEquipment;
-    final equipmentType = _mapEquipmentType(_customEquipment);
+    final equipmentType = _mapEquipmentType(equipment);
     setState(() {
       final day = _workoutDays.firstWhere((d) => d.id == dayId);
       day.exercises.add(_ExerciseConfig(
@@ -227,7 +216,6 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
         progressionType: ref.read(userProfileProvider).valueOrNull?.defaultProgressionMode
             ?? ProgressionMode.hypertrophy,
       ));
-      _customName.clear();
       _customFormOpenForDay = null;
     });
     // Also persist to the user's exercise library so it is reusable (GYM-123).
@@ -592,19 +580,27 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                     ...day.exercises.map((ex) => _buildExerciseConfig(context, day.id, ex)),
                   SizedBox(height: 8.h),
                   if (_customFormOpenForDay == day.id)
-                    _buildCustomExerciseForm(context, day.id)
+                    CustomExerciseFormCard(
+                      onSubmit: (name, category, equipment) =>
+                          _addCustomExercise(day.id, name, category, equipment),
+                      onCancel: () => setState(() => _customFormOpenForDay = null),
+                    )
                   else if (_pickerOpenForDay == day.id)
-                    _buildExercisePicker(context, day.id)
+                    ExerciseLibraryPicker(
+                      exercises: _cachedExercises,
+                      onExerciseSelected: (ex) => _addExerciseFromLibrary(day.id, ex),
+                      onCustomRequested: () => setState(() {
+                        _pickerOpenForDay = null;
+                        _customFormOpenForDay = day.id;
+                      }),
+                      onCancel: () => setState(() => _pickerOpenForDay = null),
+                    )
                   else
                     CustomButton(
                       text: '+ Add Exercise',
                       variant: ButtonVariant.dashed,
                       icon: AppIcons.plus,
-                      onPressed: () => setState(() {
-                        _pickerOpenForDay = day.id;
-                        _exerciseSearchQuery = '';
-                        _selectedCategory = null;
-                      }),
+                      onPressed: () => setState(() => _pickerOpenForDay = day.id),
                     ),
                 ],
               ),
@@ -874,225 +870,6 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
           displayTransform: (v) => '${v}s',
         );
     }
-  }
-
-  Widget _buildExercisePicker(BuildContext context, String dayId) {
-    final allExercises = _cachedExercises;
-    final categories = allExercises.map((e) => e.category).toSet().toList()..sort();
-
-    final filtered = allExercises.where((e) {
-      final matchesSearch = _exerciseSearchQuery.isEmpty ||
-          e.name.toLowerCase().contains(_exerciseSearchQuery.toLowerCase());
-      final matchesCategory = _selectedCategory == null || e.category == _selectedCategory;
-      return matchesSearch && matchesCategory;
-    }).toList();
-
-    return CustomCard(
-      padding: EdgeInsets.all(12.r),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Select Exercise',
-                style: AppTextStyles.h4.copyWith(
-                  color: context.foreground,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              GestureDetector(
-                onTap: () => setState(() {
-                  _pickerOpenForDay = null;
-                  _exerciseSearchQuery = '';
-                  _selectedCategory = null;
-                }),
-                child: Text(
-                  'Cancel',
-                  style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8.h),
-          // Search field
-          TextField(
-            onChanged: (v) => setState(() => _exerciseSearchQuery = v),
-            decoration: InputDecoration(
-              hintText: 'Search exercises...',
-              hintStyle: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
-              prefixIcon: Icon(AppIcons.search, size: 18.r),
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-              border: OutlineInputBorder(borderRadius: AppRadius.borderLg),
-            ),
-            style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
-          ),
-          SizedBox(height: 8.h),
-          // Category filter chips
-          SizedBox(
-            height: 32.h,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _filterChip(context, 'All', _selectedCategory == null, () {
-                  setState(() => _selectedCategory = null);
-                }),
-                ...categories.map((c) => _filterChip(context, c, _selectedCategory == c, () {
-                      setState(() => _selectedCategory = _selectedCategory == c ? null : c);
-                    })),
-              ],
-            ),
-          ),
-          SizedBox(height: 8.h),
-          // Exercise list
-          SizedBox(
-            height: 200.h,
-            child: filtered.isEmpty
-                ? Center(
-                    child: Text(
-                      'No exercises found',
-                      style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final ex = filtered[index];
-                      return InkWell(
-                        onTap: () => _addExerciseFromLibrary(dayId, ex),
-                        borderRadius: AppRadius.borderLg,
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      ex.name,
-                                      style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
-                                    ),
-                                    Text(
-                                      '${ex.muscle} \u2022 ${ex.equipment}',
-                                      style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              CustomBadge(text: ex.category),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-          SizedBox(height: 8.h),
-          CustomButton(
-            text: '+ Create Custom Exercise',
-            variant: ButtonVariant.dashed,
-            icon: AppIcons.plus,
-            onPressed: () => setState(() {
-              _pickerOpenForDay = null;
-              _customFormOpenForDay = dayId;
-            }),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _filterChip(BuildContext context, String label, bool isSelected, VoidCallback onTap) {
-    return Padding(
-      padding: EdgeInsets.only(right: 6.w),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-          decoration: BoxDecoration(
-            color: isSelected ? context.primaryColor : context.mutedColor,
-            borderRadius: AppRadius.borderFull,
-            border: Border.all(
-              color: isSelected ? context.primaryColor : context.borderColor,
-            ),
-          ),
-          child: Text(
-            label,
-            style: AppTextStyles.caption.copyWith(
-              color: isSelected ? Theme.of(context).colorScheme.onPrimary : context.mutedForeground,
-              fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCustomExerciseForm(BuildContext context, String dayId) {
-    return CustomCard(
-      padding: EdgeInsets.all(16.r),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Create Custom Exercise',
-                style: AppTextStyles.h4.copyWith(
-                  color: context.foreground,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              GestureDetector(
-                onTap: () => setState(() => _customFormOpenForDay = null),
-                child: Text(
-                  'Cancel',
-                  style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          CustomInput(
-            controller: _customName,
-            label: 'Exercise Name',
-            hint: 'e.g., Dumbbell Press',
-          ),
-          SizedBox(height: 12.h),
-          Row(
-            children: [
-              Expanded(
-                child: SelectField(
-                  label: 'Category',
-                  value: _customCategory,
-                  options: const ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core'],
-                  onChanged: (v) => setState(() => _customCategory = v),
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: SelectField(
-                  label: 'Equipment',
-                  value: _customEquipment,
-                  options: const ['Dumbbell', 'Barbell', 'Machine', 'Body Weight'],
-                  onChanged: (v) => setState(() => _customEquipment = v),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          CustomButton(
-            text: 'Add Custom Exercise',
-            variant: ButtonVariant.primary,
-            onPressed: () => _addCustomExercise(dayId),
-          ),
-        ],
-      ),
-    );
   }
 
 }
