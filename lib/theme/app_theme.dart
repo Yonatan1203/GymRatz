@@ -76,13 +76,6 @@ class AppTheme {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           ),
         ),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: AppColors.lightCard,
-          selectedItemColor: AppColors.lightPrimary,
-          unselectedItemColor: AppColors.lightMutedForeground,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-        ),
         dividerTheme: const DividerThemeData(
           color: AppColors.lightBorder,
           thickness: 1,
@@ -158,13 +151,6 @@ class AppTheme {
             shape: RoundedRectangleBorder(borderRadius: AppRadius.borderLg),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           ),
-        ),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: AppColors.darkCard,
-          selectedItemColor: AppColors.darkPrimary,
-          unselectedItemColor: AppColors.darkMutedForeground,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
         ),
         dividerTheme: const DividerThemeData(
           color: AppColors.darkBorder,

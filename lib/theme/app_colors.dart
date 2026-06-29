@@ -27,6 +27,10 @@ class AppColors {
   static const darkForeground = Color(0xFFE5E7E9);
   static const darkCard = Color(0xFF1A1D1F);
   static const darkPrimary = Color(0xFF2A5A5A);
+  // Selected/active foreground in dark mode (nav icons, active indicators).
+  // darkPrimary (#2A5A5A) on darkCard (#1A1D1F) is only ~1.9:1 — fails WCAG AA.
+  // This lighter teal reaches ~9:1 on darkCard, meeting both AA and AAA.
+  static const darkNavSelected = Color(0xFF8FC4C4);
   static const darkPrimaryForeground = Color(0xFFFFFFFF);
   static const darkSecondary = Color(0xFF3A4A5A);
   static const darkSecondaryForeground = Color(0xFFFFFFFF);
