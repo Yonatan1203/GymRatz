@@ -57,7 +57,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
   bool _completed = false;
   bool _saving = false;
   Timer? _durationTimer;
-  int _elapsedSeconds = 0;
   String _notes = '';
   String _workoutName = 'Workout';
   bool _initialized = false;
@@ -81,7 +80,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     final data = {
       'dayId': widget.dayId,
       'workoutName': _workoutName,
-      'elapsedSeconds': _elapsedSeconds,
+      'startTime': _startTime.toIso8601String(),
       'exercises': _exercises.map((e) => e.toJson()).toList(),
       'sets': _sets
           .map((exSets) => exSets.map((s) => s.toJson()).toList())
@@ -131,7 +130,15 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
       if (mounted) {
         setState(() {
           _workoutName = data['workoutName'] as String? ?? _workoutName;
-          _elapsedSeconds = data['elapsedSeconds'] as int? ?? _elapsedSeconds;
+          // Restore the original startTime so elapsed is correct after recovery.
+          // Legacy caches have elapsedSeconds instead; reconstruct startTime from it.
+          final rawStartTime = data['startTime'] as String?;
+          if (rawStartTime != null) {
+            _startTime = DateTime.parse(rawStartTime);
+          } else {
+            final elapsed = data['elapsedSeconds'] as int? ?? 0;
+            _startTime = DateTime.now().subtract(Duration(seconds: elapsed));
+          }
           _exercises = exercisesList;
           _sets = setsList;
         });
@@ -220,7 +227,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
       _sets = existingSession.sets.map((s) => List<WorkoutSet>.from(s)).toList();
       _expanded = Set.from(existingSession.expandedIndices);
       _notes = existingSession.notes;
-      _elapsedSeconds = DateTime.now().difference(_startTime).inSeconds;
     } else {
       _startTime = DateTime.now();
 
@@ -335,8 +341,11 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
       });
     }
 
+    // Trigger a rebuild every second so the elapsed display stays current.
+    // Elapsed is computed as DateTime.now().difference(_startTime) in build,
+    // so it is always accurate even after the app is backgrounded (GYM-146).
     _durationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _elapsedSeconds++);
+      if (mounted) setState(() {});
     });
 
     // Check for recoverable workout state from a previous session.
@@ -706,7 +715,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
         children: [
           WorkoutScreenHeader(
             workoutName: _workoutName,
-            formattedElapsed: _formatElapsed(_elapsedSeconds),
+            formattedElapsed: _formatElapsed(DateTime.now().difference(_startTime).inSeconds),
             saving: _saving,
             onBack: () {
               _syncToProvider();
