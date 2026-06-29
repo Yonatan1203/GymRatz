@@ -475,17 +475,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  /// Escapes a CSV field by wrapping in quotes if it contains a comma,
-  /// quote, or newline.
-  String _csvEscape(String value) {
-    if (value.contains(',') ||
-        value.contains('"') ||
-        value.contains('\n')) {
-      return '"${value.replaceAll('"', '""')}"';
-    }
-    return value;
-  }
-
   Widget _buildCoachSection(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(userProfileProvider).valueOrNull;
     final hasCoach = profile?.coachId != null;
