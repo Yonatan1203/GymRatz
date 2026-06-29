@@ -17,3 +17,6 @@ export {scheduledFirestoreBackup} from "./backup/scheduledBackup";
 
 // HTTP endpoints
 export {revenueCatWebhook} from "./webhooks/revenueCatWebhook";
+
+// Callable functions
+export {exportUserData} from "./http/exportUserData";
