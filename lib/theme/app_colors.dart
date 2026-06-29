@@ -27,6 +27,10 @@ class AppColors {
   static const darkForeground = Color(0xFFE5E7E9);
   static const darkCard = Color(0xFF1A1D1F);
   static const darkPrimary = Color(0xFF2A5A5A);
+  // Selected/active foreground in dark mode (nav icons, active indicators).
+  // darkPrimary (#2A5A5A) on darkCard (#1A1D1F) is only ~1.9:1 — fails WCAG AA.
+  // This lighter teal reaches ~9:1 on darkCard, meeting both AA and AAA.
+  static const darkNavSelected = Color(0xFF8FC4C4);
   static const darkPrimaryForeground = Color(0xFFFFFFFF);
   static const darkSecondary = Color(0xFF3A4A5A);
   static const darkSecondaryForeground = Color(0xFFFFFFFF);
@@ -77,4 +81,16 @@ class AppColors {
   // Missed day indicator (orange)
   static const lightMissedDay = Color(0xFFEA6D0A);
   static const darkMissedDay = Color(0xFFF97316);
+
+  // ─── Showcase screen feature-icon colors ───
+  // Named here so AppGradients can reference constants instead of raw hex literals.
+  static const showcaseGreenStart = Color(0xFF22C55E);
+  static const showcaseGreenEnd = Color(0xFF10B981);
+  static const showcasePurpleStart = Color(0xFFA855F7);
+  static const showcasePurpleEnd = Color(0xFFEC4899);
+  static const showcaseYellowEnd = Color(0xFFEAB308);
+
+  // ─── Health screen ───
+  static const healthStart = Color(0xFFEF4444);
+  static const healthEnd = Color(0xFFEC4899);
 }

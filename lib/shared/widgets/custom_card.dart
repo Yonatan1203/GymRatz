@@ -12,6 +12,10 @@ class CustomCard extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
   final VoidCallback? onTap;
+  /// Accessibility label announced by TalkBack / VoiceOver when the card is
+  /// tappable. Required whenever [onTap] is set — without it the card is
+  /// announced as "Button, unlabeled" which is useless to screen-reader users.
+  final String? semanticLabel;
   final Color? backgroundColor;
   final Gradient? gradient;
   final BorderRadius? borderRadius;
@@ -25,6 +29,7 @@ class CustomCard extends StatelessWidget {
     this.padding,
     this.margin,
     this.onTap,
+    this.semanticLabel,
     this.backgroundColor,
     this.gradient,
     this.borderRadius,
@@ -84,6 +89,7 @@ class CustomCard extends StatelessWidget {
       ),
       child: Semantics(
         button: onTap != null,
+        label: semanticLabel,
         child: Material(
           color: Colors.transparent,
           child: InkWell(

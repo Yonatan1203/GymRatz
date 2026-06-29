@@ -72,6 +72,15 @@ class AppTextStyles {
       );
 
   // ─── Special ───
+
+  /// Bottom navigation bar label. 10sp keeps 5 labels legible without crowding.
+  static TextStyle get navLabel => TextStyle(
+        fontFamily: fontFamily,
+        fontSize: 10.sp,
+        fontWeight: FontWeight.w400,
+        height: 1.0,
+      );
+
   static TextStyle get buttonText => TextStyle(
         fontFamily: fontFamily,
         fontSize: 16.sp,

@@ -25,4 +25,9 @@ extension BuildContextX on BuildContext {
   Color get coralColor => isDark ? AppColors.darkCoral : AppColors.lightCoral;
   Color get coralForeground => isDark ? AppColors.darkCoralForeground : AppColors.lightCoralForeground;
   Color get missedDayColor => isDark ? AppColors.darkMissedDay : AppColors.lightMissedDay;
+  /// Active/selected state color for nav items and active indicators.
+  /// Uses a lighter teal in dark mode so contrast on darkCard (#1A1D1F) reaches
+  /// ~9:1 — darkPrimary alone was only ~1.9:1 (WCAG AA fail for UI components).
+  Color get navActiveColor =>
+      isDark ? AppColors.darkNavSelected : AppColors.lightPrimary;
 }
