@@ -56,6 +56,8 @@
 	<string>GymRatz adds your scheduled workouts to your calendar so you never miss a session.</string>
 	<key>NSCalendarsWriteOnlyUsageDescription</key>
 	<string>GymRatz adds your scheduled workouts to your calendar so you never miss a session.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>GymRatz reads your calendar to show which workouts are already synced and avoids creating duplicates.</string>
 	<key>GIDClientID</key>
 	<string>901059241616-l86kji12jkltbp199r9gh2qe9amg268h.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>

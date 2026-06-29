@@ -20,6 +20,10 @@ import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/scale_tap.dart';
 import '../../../shared/widgets/staggered_list.dart';
 
+final _calendarSyncStateProvider = FutureProvider.autoDispose<Set<String>>((ref) {
+  return CalendarSyncService.syncedEventKeys();
+});
+
 class WorkoutScreen extends ConsumerWidget {
   const WorkoutScreen({super.key});
 
@@ -176,6 +180,8 @@ class WorkoutScreen extends ConsumerWidget {
         ? DateTime(activatedAt.year, activatedAt.month, activatedAt.day)
         : null;
 
+    final syncedKeys = ref.watch(_calendarSyncStateProvider).valueOrNull ?? {};
+
     // Map dayOfWeek string to WorkoutDay
     final dayMap = <String, WorkoutDay>{};
     for (final day in days) {
@@ -206,6 +212,7 @@ class WorkoutScreen extends ConsumerWidget {
       final isPast = date.isBefore(DateTime(now.year, now.month, now.day)) && !isToday
           && (activationDate != null && !date.isBefore(activationDate));
 
+      final isSynced = syncedKeys.contains(CalendarSyncService.eventKey(scheduledDay.id, date));
       dayRows.add(
         Padding(
           padding: EdgeInsets.only(bottom: AppSpacing.md),
@@ -221,6 +228,7 @@ class WorkoutScreen extends ConsumerWidget {
             isPast: isPast,
             workoutDay: scheduledDay,
             isCompleted: isCompleted,
+            isSynced: isSynced,
           ),
         ),
       );
@@ -240,7 +248,7 @@ class WorkoutScreen extends ConsumerWidget {
           ...dayRows,
           SizedBox(height: AppSpacing.md),
           CustomButton(
-            text: 'Add Week to Calendar',
+            text: 'Sync Week to Calendar',
             variant: ButtonVariant.outline,
             icon: AppIcons.calendar,
             onPressed: workoutDays.isEmpty
@@ -249,7 +257,9 @@ class WorkoutScreen extends ConsumerWidget {
                     await CalendarSyncService.addWeekToCalendar(
                       days: workoutDays,
                       dayDates: dayDates,
+                      alreadySyncedKeys: syncedKeys,
                     );
+                    ref.invalidate(_calendarSyncStateProvider);
                   },
           ),
           SizedBox(height: AppSpacing.xxl),
@@ -270,6 +280,7 @@ class WorkoutScreen extends ConsumerWidget {
     required bool isPast,
     required WorkoutDay? workoutDay,
     required bool isCompleted,
+    bool isSynced = false,
   }) {
     final isRestDay = workoutDay == null;
     final isMissed = isPast && !isRestDay && !isCompleted;
@@ -339,18 +350,28 @@ class WorkoutScreen extends ConsumerWidget {
             // Status badge
             if (!isRestDay)
               _buildStatusBadge(context, isCompleted: isCompleted, isMissed: isMissed, isToday: isToday),
-            // Calendar icon
+            // Calendar sync toggle
             if (!isRestDay) ...[
               SizedBox(width: AppSpacing.sm),
               GestureDetector(
-                onTap: () => CalendarSyncService.addWorkoutToCalendar(
-                  day: workoutDay,
-                  date: date,
-                ),
+                onTap: () async {
+                  if (isSynced) {
+                    await CalendarSyncService.removeWorkoutFromCalendar(
+                      dayId: workoutDay.id,
+                      date: date,
+                    );
+                  } else {
+                    await CalendarSyncService.addWorkoutToCalendar(
+                      day: workoutDay,
+                      date: date,
+                    );
+                  }
+                  ref.invalidate(_calendarSyncStateProvider);
+                },
                 child: Icon(
                   AppIcons.calendar,
                   size: 18.r,
-                  color: context.mutedForeground,
+                  color: isSynced ? context.primaryColor : context.mutedForeground,
                 ),
               ),
             ],
