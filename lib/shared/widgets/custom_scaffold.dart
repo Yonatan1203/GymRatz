@@ -8,6 +8,7 @@ import '../../app/providers.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_durations.dart';
 import '../../theme/app_shadows.dart';
+import '../../theme/app_text_styles.dart';
 import '../utils/extensions.dart';
 import '../utils/platform_adapter.dart';
 import 'active_workout_banner.dart';
@@ -135,7 +136,7 @@ class _CustomScaffoldState extends ConsumerState<CustomScaffold> {
                                   height: 3,
                                   decoration: BoxDecoration(
                                     color: index == activeIndex
-                                        ? context.primaryColor
+                                        ? context.navActiveColor
                                         : Colors.transparent,
                                     borderRadius: BorderRadius.circular(1.5),
                                   ),
@@ -147,11 +148,11 @@ class _CustomScaffoldState extends ConsumerState<CustomScaffold> {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            _expandedNavItem(AppIcons.dumbbell, 'Workout', activeIndex == 0, () => widget.navigationShell.goBranch(0), isDark),
-                            _expandedNavItem(AppIcons.calendar, 'Calendar', activeIndex == 1, () => widget.navigationShell.goBranch(1), isDark),
-                            _expandedNavItem(AppIcons.home, 'Home', activeIndex == 2, () => widget.navigationShell.goBranch(2), isDark),
-                            _expandedNavItem(AppIcons.library, 'Programs', activeIndex == 3, () => widget.navigationShell.goBranch(3), isDark),
-                            _expandedNavItem(AppIcons.user, 'Profile', activeIndex == 4, () => widget.navigationShell.goBranch(4), isDark),
+                            _expandedNavItem(AppIcons.dumbbell, 'Workout', activeIndex == 0, () => widget.navigationShell.goBranch(0)),
+                            _expandedNavItem(AppIcons.calendar, 'Calendar', activeIndex == 1, () => widget.navigationShell.goBranch(1)),
+                            _expandedNavItem(AppIcons.home, 'Home', activeIndex == 2, () => widget.navigationShell.goBranch(2)),
+                            _expandedNavItem(AppIcons.library, 'Programs', activeIndex == 3, () => widget.navigationShell.goBranch(3)),
+                            _expandedNavItem(AppIcons.user, 'Profile', activeIndex == 4, () => widget.navigationShell.goBranch(4)),
                           ],
                         ),
                       ],
@@ -168,14 +169,13 @@ class _CustomScaffoldState extends ConsumerState<CustomScaffold> {
 
 }
 
-Widget _expandedNavItem(IconData icon, String label, bool isActive, VoidCallback onTap, bool isDark) {
+Widget _expandedNavItem(IconData icon, String label, bool isActive, VoidCallback onTap) {
   return Expanded(
     child: _NavItem(
       icon: icon,
       label: label,
       isActive: isActive,
       onTap: onTap,
-      isDark: isDark,
     ),
   );
 }
@@ -185,14 +185,12 @@ class _NavItem extends StatefulWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
-  final bool isDark;
 
   const _NavItem({
     required this.icon,
     required this.label,
     required this.isActive,
     required this.onTap,
-    required this.isDark,
   });
 
   @override
@@ -240,11 +238,8 @@ class _NavItemState extends State<_NavItem>
 
   @override
   Widget build(BuildContext context) {
-    final activeColor =
-        widget.isDark ? AppColors.darkPrimary : AppColors.lightPrimary;
-    final inactiveColor = widget.isDark
-        ? AppColors.darkMutedForeground
-        : AppColors.lightMutedForeground;
+    final activeColor = context.navActiveColor;
+    final inactiveColor = context.mutedForeground;
 
     return Semantics(
       button: true,
@@ -272,7 +267,7 @@ class _NavItemState extends State<_NavItem>
               },
               child: Icon(
                 widget.icon,
-                size: 20,
+                size: 20.r,
                 color: widget.isActive ? activeColor : inactiveColor,
               ),
             ),
@@ -281,8 +276,7 @@ class _NavItemState extends State<_NavItem>
               fit: BoxFit.scaleDown,
               child: Text(
                 widget.label,
-                style: TextStyle(
-                  fontSize: 10,
+                style: AppTextStyles.navLabel.copyWith(
                   color: widget.isActive ? activeColor : inactiveColor,
                   fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w400,
                 ),
