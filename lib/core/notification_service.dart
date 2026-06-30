@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -58,12 +59,12 @@ class NotificationService {
   /// Safe to call while the app is backgrounded — fires even if force-quit.
   Future<void> scheduleRestTimerNotification(int seconds) async {
     await _plugin.cancel(_restTimerNotifId);
-    await _plugin.zonedSchedule(
-      _restTimerNotifId,
-      'Rest over!',
-      'Time to hit your next set 💪',
-      tz.TZDateTime.now(tz.local).add(Duration(seconds: seconds)),
-      const NotificationDetails(
+    await _zonedSchedule(
+      id: _restTimerNotifId,
+      title: 'Rest over!',
+      body: 'Time to hit your next set 💪',
+      scheduledDate: tz.TZDateTime.now(tz.local).add(Duration(seconds: seconds)),
+      details: const NotificationDetails(
         android: AndroidNotificationDetails(
           'rest_timer',
           'Rest Timer',
@@ -75,9 +76,6 @@ class NotificationService {
           interruptionLevel: InterruptionLevel.timeSensitive,
         ),
       ),
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.wallClockTime,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 
@@ -94,12 +92,12 @@ class NotificationService {
     await cancelWorkoutReminders();
 
     for (final day in weekdays) {
-      await _plugin.zonedSchedule(
-        day, // unique ID per day
-        'Time to train!',
-        'Your workout is waiting. Let\'s go!',
-        _nextInstanceOfDayTime(day, hour, minute),
-        const NotificationDetails(
+      await _zonedSchedule(
+        id: day, // unique ID per day
+        title: 'Time to train!',
+        body: 'Your workout is waiting. Let\'s go!',
+        scheduledDate: _nextInstanceOfDayTime(day, hour, minute),
+        details: const NotificationDetails(
           android: AndroidNotificationDetails(
             'workout_reminders',
             'Workout Reminders',
@@ -109,10 +107,7 @@ class NotificationService {
           ),
           iOS: DarwinNotificationDetails(),
         ),
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.wallClockTime,
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
     }
 
@@ -143,12 +138,12 @@ class NotificationService {
       scheduled = scheduled.add(const Duration(days: 1));
     }
 
-    await _plugin.zonedSchedule(
-      _streakNotifId,
-      'Keep your streak alive!',
-      'Log a workout today to maintain your streak.',
-      scheduled,
-      const NotificationDetails(
+    await _zonedSchedule(
+      id: _streakNotifId,
+      title: 'Keep your streak alive!',
+      body: 'Log a workout today to maintain your streak.',
+      scheduledDate: scheduled,
+      details: const NotificationDetails(
         android: AndroidNotificationDetails(
           'streak_reminders',
           'Streak Reminders',
@@ -158,10 +153,7 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.wallClockTime,
       matchDateTimeComponents: DateTimeComponents.time,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
 
     final prefs = await SharedPreferences.getInstance();
@@ -232,5 +224,43 @@ class NotificationService {
       scheduled = scheduled.add(const Duration(days: 7));
     }
     return scheduled;
+  }
+
+  /// Schedules a notification with exact timing, falling back to inexact if the
+  /// SCHEDULE_EXACT_ALARM permission has been revoked on Android 12+.
+  Future<void> _zonedSchedule({
+    required int id,
+    required String title,
+    required String body,
+    required tz.TZDateTime scheduledDate,
+    required NotificationDetails details,
+    DateTimeComponents? matchDateTimeComponents,
+  }) async {
+    try {
+      await _plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledDate,
+        details,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.wallClockTime,
+        matchDateTimeComponents: matchDateTimeComponents,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+    } on PlatformException {
+      // SCHEDULE_EXACT_ALARM permission not granted or revoked — use inexact.
+      await _plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledDate,
+        details,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.wallClockTime,
+        matchDateTimeComponents: matchDateTimeComponents,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    }
   }
 }
