@@ -479,7 +479,8 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
 
   Widget _buildWorkoutDayCard(BuildContext context, bool isDark, _WorkoutDay day) {
     final nameController = _dayNameControllers[day.id]!;
-    final onGradient = Theme.of(context).colorScheme.onPrimary;
+    // Light-mode gradient (#8FC4C4→#B8D8D8) is pale teal — white text is invisible.
+    final onGradient = isDark ? Colors.white : context.foreground;
     final onGradientMuted = onGradient.withValues(alpha: 0.7);
 
     return Padding(
@@ -534,7 +535,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                           value: day.dayOfWeek,
                           options: _daysOfWeek,
                           onChanged: (v) => setState(() => day.dayOfWeek = v),
-                          onDark: true,
+                          onDark: isDark,
                           icon: AppIcons.calendar,
                           sheetTitle: 'Select Day',
                         ),
