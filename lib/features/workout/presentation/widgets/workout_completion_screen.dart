@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_gradients.dart';
@@ -47,6 +50,7 @@ class _WorkoutCompletionScreenState extends State<WorkoutCompletionScreen>
   late final AnimationController _controller;
   late final List<Animation<double>> _fades;
   late final List<Animation<Offset>> _slides;
+  final ScreenshotController _screenshotController = ScreenshotController();
 
   @override
   void initState() {
@@ -118,117 +122,145 @@ class _WorkoutCompletionScreenState extends State<WorkoutCompletionScreen>
             padding: EdgeInsets.all(AppSpacing.screenPadding),
             child: Column(
               children: [
-                SizedBox(height: 32.h),
-                Container(
-                  width: 120.r,
-                  height: 120.r,
-                  decoration: BoxDecoration(
-                    gradient: AppGradients.primary(isDark: isDark),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: context.primaryColor.withValues(alpha: 0.4),
-                        blurRadius: 40,
-                        spreadRadius: 8,
-                      ),
-                    ],
-                  ),
-                  child: Icon(AppIcons.trophy, size: 56.r, color: Colors.white),
-                ),
-                SizedBox(height: 24.h),
-                Text(
-                  'Workout Complete!',
-                  style: AppTextStyles.h1.copyWith(
-                    color: context.foreground,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  'You absolutely crushed it today',
-                  style: AppTextStyles.body.copyWith(color: context.mutedForeground),
-                ),
-                SizedBox(height: 8.h),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-                  decoration: BoxDecoration(
-                    color: context.primaryColor.withValues(alpha: 0.15),
-                    borderRadius: AppRadius.borderFull,
-                  ),
-                  child: Text(
-                    '$completionPct% completed',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: context.primaryColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                if (newPRs.isNotEmpty) ...[
-                  SizedBox(height: 16.h),
-                  Container(
+                Screenshot(
+                  controller: _screenshotController,
+                  child: Container(
                     width: double.infinity,
-                    padding: EdgeInsets.all(16.r),
+                    padding: EdgeInsets.symmetric(vertical: 28.h, horizontal: 4.w),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                         colors: [
-                          context.coralColor.withValues(alpha: 0.15),
-                          context.coralColor.withValues(alpha: 0.08),
+                          context.primaryColor.withValues(alpha: 0.15),
+                          isDark ? Colors.black : Colors.white,
                         ],
                       ),
-                      borderRadius: AppRadius.borderXl,
-                      border: Border.all(color: context.coralColor.withValues(alpha: 0.3)),
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Icon(AppIcons.trophy, size: 18.r, color: context.coralColor),
-                            SizedBox(width: 8.w),
-                            Text(
-                              'New Personal Records!',
-                              style: AppTextStyles.h4.copyWith(
-                                color: context.coralColor,
-                                fontWeight: FontWeight.w600,
+                        Container(
+                          width: 120.r,
+                          height: 120.r,
+                          decoration: BoxDecoration(
+                            gradient: AppGradients.primary(isDark: isDark),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: context.primaryColor.withValues(alpha: 0.4),
+                                blurRadius: 40,
+                                spreadRadius: 8,
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          child: Icon(AppIcons.trophy, size: 56.r, color: Colors.white),
+                        ),
+                        SizedBox(height: 24.h),
+                        Text(
+                          'Workout Complete!',
+                          style: AppTextStyles.h1.copyWith(
+                            color: context.foreground,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          widget.workoutName,
+                          style: AppTextStyles.body.copyWith(color: context.mutedForeground),
                         ),
                         SizedBox(height: 8.h),
-                        ...newPRs.map((pr) => Padding(
-                              padding: EdgeInsets.only(bottom: 4.h),
-                              child: Text(
-                                pr,
-                                style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                          decoration: BoxDecoration(
+                            color: context.primaryColor.withValues(alpha: 0.15),
+                            borderRadius: AppRadius.borderFull,
+                          ),
+                          child: Text(
+                            '$completionPct% completed',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: context.primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        if (newPRs.isNotEmpty) ...[
+                          SizedBox(height: 16.h),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(16.r),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  context.coralColor.withValues(alpha: 0.15),
+                                  context.coralColor.withValues(alpha: 0.08),
+                                ],
                               ),
-                            )),
+                              borderRadius: AppRadius.borderXl,
+                              border: Border.all(color: context.coralColor.withValues(alpha: 0.3)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(AppIcons.trophy, size: 18.r, color: context.coralColor),
+                                    SizedBox(width: 8.w),
+                                    Text(
+                                      'New Personal Records!',
+                                      style: AppTextStyles.h4.copyWith(
+                                        color: context.coralColor,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 8.h),
+                                ...newPRs.map((pr) => Padding(
+                                      padding: EdgeInsets.only(bottom: 4.h),
+                                      child: Text(
+                                        pr,
+                                        style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
+                                      ),
+                                    )),
+                              ],
+                            ),
+                          ),
+                        ],
+                        SizedBox(height: 28.h),
+                        Row(
+                          children: [
+                            Expanded(child: _statCard(context, isDark, 0, AppIcons.clock, 'Duration', durationStr)),
+                            SizedBox(width: 12.w),
+                            Expanded(child: _statCard(context, isDark, 1, AppIcons.layers, 'Sets', '$completedSets / $totalSets')),
+                          ],
+                        ),
+                        SizedBox(height: 12.h),
+                        Row(
+                          children: [
+                            Expanded(child: _statCard(context, isDark, 2, AppIcons.repeat, 'Total Reps', null, countValue: totalReps)),
+                            SizedBox(width: 12.w),
+                            Expanded(child: _statCard(context, isDark, 3, AppIcons.barChart2, 'Volume', null, countValue: totalVolume.toInt(), countSuffix: ' ${widget.unit}')),
+                          ],
+                        ),
+                        SizedBox(height: 12.h),
+                        Row(
+                          children: [
+                            Expanded(child: _statCard(context, isDark, 4, AppIcons.dumbbell, 'Exercises', null, countValue: widget.exercises.length)),
+                            SizedBox(width: 12.w),
+                            Expanded(child: _statCard(context, isDark, 5, AppIcons.flame, 'Intensity', completionPct >= 80 ? 'High' : completionPct >= 50 ? 'Medium' : 'Light')),
+                          ],
+                        ),
+                        SizedBox(height: 16.h),
+                        Text(
+                          '#GymRatz',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: context.primaryColor.withValues(alpha: 0.6),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ],
-                SizedBox(height: 28.h),
-                Row(
-                  children: [
-                    Expanded(child: _statCard(context, isDark, 0, AppIcons.clock, 'Duration', durationStr)),
-                    SizedBox(width: 12.w),
-                    Expanded(child: _statCard(context, isDark, 1, AppIcons.layers, 'Sets', '$completedSets / $totalSets')),
-                  ],
-                ),
-                SizedBox(height: 12.h),
-                Row(
-                  children: [
-                    Expanded(child: _statCard(context, isDark, 2, AppIcons.repeat, 'Total Reps', null, countValue: totalReps)),
-                    SizedBox(width: 12.w),
-                    Expanded(child: _statCard(context, isDark, 3, AppIcons.barChart2, 'Volume', null, countValue: totalVolume.toInt(), countSuffix: ' ${widget.unit}')),
-                  ],
-                ),
-                SizedBox(height: 12.h),
-                Row(
-                  children: [
-                    Expanded(child: _statCard(context, isDark, 4, AppIcons.dumbbell, 'Exercises', null, countValue: widget.exercises.length)),
-                    SizedBox(width: 12.w),
-                    Expanded(child: _statCard(context, isDark, 5, AppIcons.flame, 'Intensity', completionPct >= 80 ? 'High' : completionPct >= 50 ? 'Medium' : 'Light')),
-                  ],
                 ),
                 SizedBox(height: 32.h),
                 CustomButton(
@@ -242,11 +274,7 @@ class _WorkoutCompletionScreenState extends State<WorkoutCompletionScreen>
                   text: 'Share Workout',
                   variant: ButtonVariant.outline,
                   icon: AppIcons.share2,
-                  onPressed: () {
-                    final n = widget.exercises.length;
-                    final word = n == 1 ? 'exercise' : 'exercises';
-                    Share.share('I just completed ${widget.workoutName} — $n $word 💪 #GymRatz');
-                  },
+                  onPressed: _shareWorkout,
                 ),
                 SizedBox(height: 32.h),
               ],
@@ -255,6 +283,26 @@ class _WorkoutCompletionScreenState extends State<WorkoutCompletionScreen>
         ),
       ),
     );
+  }
+
+  Future<void> _shareWorkout() async {
+    try {
+      final bytes = await _screenshotController.capture(pixelRatio: 2.5);
+      if (bytes == null) return;
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/gymratz_workout.png');
+      await file.writeAsBytes(bytes);
+      final n = widget.exercises.length;
+      final word = n == 1 ? 'exercise' : 'exercises';
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'I just crushed ${widget.workoutName} — $n $word 💪 #GymRatz',
+      );
+    } catch (_) {
+      final n = widget.exercises.length;
+      final word = n == 1 ? 'exercise' : 'exercises';
+      await Share.share('I just completed ${widget.workoutName} — $n $word 💪 #GymRatz');
+    }
   }
 
   Widget _statCard(
