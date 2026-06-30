@@ -10,6 +10,7 @@ import 'package:gymratz/features/progression/data/progression_repository.dart';
 import 'package:gymratz/features/progression/domain/progression_suggestion.dart';
 import 'package:gymratz/features/progression/domain/models/progression_history.dart';
 import 'package:gymratz/features/progress/data/pr_repository.dart';
+import 'package:gymratz/features/programs/data/program_repository.dart';
 import 'package:gymratz/features/workout/data/workout_repository.dart';
 import 'package:gymratz/features/workout/domain/workout_service.dart';
 import 'package:gymratz/shared/models/enums.dart';
@@ -34,6 +35,8 @@ class MockProgressionRepository extends Mock
 class MockAchievementService extends Mock implements AchievementService {}
 
 class MockAnalyticsService extends Mock implements AnalyticsService {}
+
+class MockProgramRepository extends Mock implements ProgramRepository {}
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -112,6 +115,7 @@ void main() {
   late MockProgressionRepository progressionRepo;
   late MockAchievementService achievementService;
   late MockAnalyticsService analyticsService;
+  late MockProgramRepository programRepo;
   late WorkoutService sut;
 
   setUpAll(() {
@@ -126,6 +130,7 @@ void main() {
     progressionRepo = MockProgressionRepository();
     achievementService = MockAchievementService();
     analyticsService = MockAnalyticsService();
+    programRepo = MockProgramRepository();
 
     sut = WorkoutService(
       workoutRepo,
@@ -133,7 +138,10 @@ void main() {
       progressionRepo,
       achievementService,
       analyticsService,
+      programRepo,
     );
+
+    when(() => programRepo.getProgram(any(), any())).thenAnswer((_) async => null);
 
     // Default analytics stubs (non-fatal fire-and-forget)
     when(() => analyticsService.logWorkoutStarted(

@@ -17,6 +17,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:gymratz/core/analytics_service.dart';
 import 'package:gymratz/features/achievements/domain/achievement_service.dart';
+import 'package:gymratz/features/programs/data/program_repository.dart';
 import 'package:gymratz/features/progression/data/progression_repository.dart';
 import 'package:gymratz/features/progress/data/pr_repository.dart';
 import 'package:gymratz/features/workout/data/workout_repository.dart';
@@ -103,6 +104,7 @@ void main() {
       progressionRepo,
       achievementService,
       analyticsService,
+      ProgramRepository(fakeFirestore),
     );
 
     when(() => analyticsService.logWorkoutStarted(

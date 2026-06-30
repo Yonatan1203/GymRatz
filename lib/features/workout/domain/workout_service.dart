@@ -325,16 +325,17 @@ class WorkoutService {
     await _workoutRepo.completeWorkout(uid, completed);
 
     // Update program progress when this workout belongs to a program.
-    if (workout.programId.isNotEmpty) {
+    final programId = workout.programId;
+    if (programId != null && programId.isNotEmpty) {
       try {
-        final program = await _programRepo.getProgram(uid, workout.programId);
+        final program = await _programRepo.getProgram(uid, programId);
         if (program != null) {
           final totalSessions = program.weeks * program.days.length;
           if (totalSessions > 0) {
             final completedCount =
-                await _workoutRepo.getCompletedCountForProgram(uid, workout.programId);
+                await _workoutRepo.getCompletedCountForProgram(uid, programId);
             final progress = (completedCount / totalSessions * 100).clamp(0, 100).round();
-            await _programRepo.updateProgram(uid, workout.programId, {'progress': progress});
+            await _programRepo.updateProgram(uid, programId, {'progress': progress});
           }
         }
       } catch (e) {
