@@ -39,11 +39,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _isDeletingAccount = false;
   bool _isExportingData = false;
 
-  // Reminder time & days — loaded from saved prefs, defaulting to 6pm Mon-Fri.
+  // Reminder time — loaded from saved prefs, defaulting to 6pm.
+  // Days are derived from the active program, not stored separately.
   TimeOfDay _reminderTime = const TimeOfDay(hour: 18, minute: 0);
-  Set<int> _reminderDays = {1, 2, 3, 4, 5}; // 1=Mon … 7=Sun
-
-  static const _dayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   @override
   void initState() {
@@ -65,6 +63,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     });
   }
 
+  List<int> _activeProgramWeekdays() {
+    final program = ref.read(activeProgramProvider).valueOrNull;
+    if (program == null) return [];
+    return NotificationService.weekdaysFromDayNames(
+      program.days.map((d) => d.dayOfWeek).toList(),
+    );
+  }
+
   Future<void> _pickReminderTime() async {
     final picked = await showTimePicker(
       context: context,
@@ -73,28 +79,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (picked == null) return;
     setState(() => _reminderTime = picked);
     if (_workoutReminders) {
-      NotificationService().scheduleWorkoutReminder(
-        hour: picked.hour,
-        minute: picked.minute,
-        weekdays: _reminderDays.toList(),
-      );
-    }
-  }
-
-  void _toggleReminderDay(int day) {
-    setState(() {
-      if (_reminderDays.contains(day)) {
-        if (_reminderDays.length > 1) _reminderDays.remove(day);
-      } else {
-        _reminderDays.add(day);
+      final weekdays = _activeProgramWeekdays();
+      if (weekdays.isNotEmpty) {
+        NotificationService().scheduleWorkoutReminder(
+          hour: picked.hour,
+          minute: picked.minute,
+          weekdays: weekdays,
+        );
       }
-    });
-    if (_workoutReminders) {
-      NotificationService().scheduleWorkoutReminder(
-        hour: _reminderTime.hour,
-        minute: _reminderTime.minute,
-        weekdays: _reminderDays.toList(),
-      );
     }
   }
 
@@ -191,12 +183,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           final prefs = await SharedPreferences.getInstance();
                           await prefs.setBool('notif_workout_enabled', v);
                           if (v) {
-                            NotificationService().requestPermission();
-                            NotificationService().scheduleWorkoutReminder(
-                              hour: _reminderTime.hour,
-                              minute: _reminderTime.minute,
-                              weekdays: _reminderDays.toList(),
-                            );
+                            await NotificationService().requestPermission();
+                            final weekdays = _activeProgramWeekdays();
+                            if (weekdays.isNotEmpty) {
+                              NotificationService().scheduleWorkoutReminder(
+                                hour: _reminderTime.hour,
+                                minute: _reminderTime.minute,
+                                weekdays: weekdays,
+                              );
+                            }
                           } else {
                             NotificationService().cancelWorkoutReminders();
                           }
@@ -207,49 +202,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             padding: EdgeInsets.symmetric(vertical: 12.h),
                             child: Row(
                               children: [
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: _pickReminderTime,
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.access_time_rounded, size: 16.r, color: context.mutedForeground),
-                                        SizedBox(width: 8.w),
-                                        Text(
-                                          _reminderTime.format(context),
-                                          style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
-                                        ),
-                                        SizedBox(width: 4.w),
-                                        Icon(Icons.chevron_right_rounded, size: 16.r, color: context.mutedForeground),
-                                      ],
-                                    ),
+                                GestureDetector(
+                                  onTap: _pickReminderTime,
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.access_time_rounded, size: 16.r, color: context.mutedForeground),
+                                      SizedBox(width: 8.w),
+                                      Text(
+                                        _reminderTime.format(context),
+                                        style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      Icon(Icons.chevron_right_rounded, size: 16.r, color: context.mutedForeground),
+                                    ],
                                   ),
                                 ),
-                                Row(
-                                  children: List.generate(7, (i) {
-                                    final day = i + 1;
-                                    final selected = _reminderDays.contains(day);
-                                    return GestureDetector(
-                                      onTap: () => _toggleReminderDay(day),
-                                      child: Container(
-                                        margin: EdgeInsets.only(left: 4.w),
-                                        width: 26.r,
-                                        height: 26.r,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: selected ? context.primaryColor : context.mutedForeground.withValues(alpha: 0.15),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            _dayLabels[i],
-                                            style: AppTextStyles.caption.copyWith(
-                                              color: selected ? Colors.white : context.mutedForeground,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }),
+                                const Spacer(),
+                                Text(
+                                  'On workout days',
+                                  style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
                                 ),
                               ],
                             ),
