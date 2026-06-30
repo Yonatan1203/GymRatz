@@ -17,6 +17,7 @@ class NotificationService {
   static const _keyReminderMinute = 'notif_reminder_minute';
   static const _keyStreakEnabled = 'notif_streak_enabled';
 
+  static const _restTimerNotifId = 100;
   static const _streakNotifId = 200;
 
   Future<void> initialize() async {
@@ -53,6 +54,37 @@ class NotificationService {
     return false;
   }
 
+  /// Schedule a one-shot notification to fire when the rest timer ends.
+  /// Safe to call while the app is backgrounded — fires even if force-quit.
+  Future<void> scheduleRestTimerNotification(int seconds) async {
+    await _plugin.cancel(_restTimerNotifId);
+    await _plugin.zonedSchedule(
+      _restTimerNotifId,
+      'Rest over!',
+      'Time to hit your next set 💪',
+      tz.TZDateTime.now(tz.local).add(Duration(seconds: seconds)),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'rest_timer',
+          'Rest Timer',
+          channelDescription: 'Fires when your rest period ends',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(
+          interruptionLevel: InterruptionLevel.timeSensitive,
+        ),
+      ),
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.wallClockTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
+  Future<void> cancelRestTimer() async {
+    await _plugin.cancel(_restTimerNotifId);
+  }
+
   Future<void> scheduleWorkoutReminder({
     required int hour,
     required int minute,
@@ -80,7 +112,7 @@ class NotificationService {
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.wallClockTime,
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
     }
 
@@ -129,7 +161,7 @@ class NotificationService {
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.wallClockTime,
       matchDateTimeComponents: DateTimeComponents.time,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
 
     final prefs = await SharedPreferences.getInstance();
@@ -172,6 +204,20 @@ class NotificationService {
       ),
       payload: payload,
     );
+  }
+
+  static const _dayNameToInt = {
+    'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+    'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7,
+  };
+
+  /// Convert a list of day-of-week names (e.g. ['Monday', 'Wednesday']) to
+  /// the integer weekday values used by [scheduleWorkoutReminder].
+  static List<int> weekdaysFromDayNames(List<String> dayNames) {
+    return dayNames
+        .map((n) => _dayNameToInt[n])
+        .whereType<int>()
+        .toList();
   }
 
   tz.TZDateTime _nextInstanceOfDayTime(int weekday, int hour, int minute) {

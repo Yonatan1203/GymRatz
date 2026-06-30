@@ -91,6 +91,15 @@ class WorkoutRepository {
     }
   }
 
+  Future<int> getCompletedCountForProgram(String uid, String programId) async {
+    final snap = await _workouts(uid)
+        .where('programId', isEqualTo: programId)
+        .where('status', isEqualTo: WorkoutStatus.completed.name)
+        .count()
+        .get();
+    return snap.count ?? 0;
+  }
+
   Future<List<Workout>> getRecentWorkoutsForExercise(
       String uid, String exerciseName,
       {int limit = 5}) async {

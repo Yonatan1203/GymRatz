@@ -9,6 +9,7 @@ import 'package:gymratz/features/progression/data/progression_repository.dart';
 import 'package:gymratz/features/progression/domain/models/progression_history.dart';
 import 'package:gymratz/features/progression/domain/progression_suggestion.dart';
 import 'package:gymratz/features/progress/data/pr_repository.dart';
+import 'package:gymratz/features/programs/data/program_repository.dart';
 import 'package:gymratz/features/workout/data/workout_repository.dart';
 import 'package:gymratz/features/workout/domain/workout_service.dart';
 import 'package:gymratz/shared/models/enums.dart';
@@ -76,6 +77,7 @@ void main() {
         ProgressionRepository(fakeFs),
         AchievementService(AchievementRepository(fakeFs)),
         AnalyticsService(), // Firebase errors discarded via async+.ignore()
+        ProgramRepository(fakeFs),
       );
 
       await expectLater(
@@ -97,6 +99,7 @@ void main() {
         _ThrowingProgressionRepository(fakeFs),
         AchievementService(AchievementRepository(fakeFs)),
         AnalyticsService(),
+        ProgramRepository(fakeFs),
       );
 
       // Should complete without throwing even if progression write fails

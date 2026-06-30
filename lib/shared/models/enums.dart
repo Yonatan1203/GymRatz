@@ -1,3 +1,32 @@
+/// Cardio session intensity level.
+enum CardioIntensity {
+  lit,
+  hit,
+  hiit;
+
+  String get label {
+    switch (this) {
+      case lit:
+        return 'LIT';
+      case hit:
+        return 'HIT';
+      case hiit:
+        return 'HIIT';
+    }
+  }
+
+  String get description {
+    switch (this) {
+      case lit:
+        return 'Low Intensity';
+      case hit:
+        return 'High Intensity';
+      case hiit:
+        return 'Intervals';
+    }
+  }
+}
+
 /// Whether an exercise is measured by reps or by time.
 enum ExerciseType {
   reps,

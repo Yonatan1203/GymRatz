@@ -6,6 +6,12 @@
     <!-- Required for device_calendar two-way calendar sync -->
     <uses-permission android:name="android.permission.READ_CALENDAR"/>
     <uses-permission android:name="android.permission.WRITE_CALENDAR"/>
+    <!-- Required for exact alarm scheduling on Android 12+ (API 31+). User must approve
+         in system settings if denied; check with canScheduleExactNotifications(). -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <!-- Required for the flutter_local_notifications boot receiver to reschedule
+         zonedSchedule() notifications after device reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
     <application
         android:label="GymRatz"

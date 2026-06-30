@@ -169,42 +169,158 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
 
   Widget _buildExerciseFilters(BuildContext context) {
     final filters = ref.watch(exerciseFilterProvider);
-    return SizedBox(
-      height: 36.h,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: filters.length,
-        separatorBuilder: (_, _) => SizedBox(width: 8.w),
-        itemBuilder: (context, index) {
-          final isSelected = _selectedExercise == filters[index];
-          return Semantics(
-            button: true,
-            label: filters[index],
-            selected: isSelected,
-            child: GestureDetector(
-              onTap: () {
-                PlatformAdapter.hapticSelection();
-                setState(() => _selectedExercise = filters[index]);
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                decoration: BoxDecoration(
-                  color: isSelected ? context.primaryColor : context.cardColor,
-                  borderRadius: AppRadius.borderFull,
-                  border: isSelected ? null : Border.all(color: context.borderColor),
-                ),
-                child: Center(
-                  child: Text(filters[index], style: AppTextStyles.bodySmall.copyWith(
-                    color: isSelected ? Colors.white : context.mutedForeground,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  )),
-                ),
+    final isAll = _selectedExercise == 'All';
+
+    return GestureDetector(
+      onTap: () => _showExercisePicker(context, filters),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          color: isAll ? context.mutedColor : context.primaryColor.withValues(alpha: 0.12),
+          borderRadius: AppRadius.borderFull,
+          border: Border.all(
+            color: isAll ? context.borderColor : context.primaryColor,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              AppIcons.dumbbell,
+              size: 14.r,
+              color: isAll ? context.mutedForeground : context.primaryColor,
+            ),
+            SizedBox(width: 8.w),
+            Text(
+              _selectedExercise,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: isAll ? context.mutedForeground : context.primaryColor,
+                fontWeight: isAll ? FontWeight.w400 : FontWeight.w600,
               ),
             ),
-          );
-        },
+            SizedBox(width: 4.w),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 16.r,
+              color: isAll ? context.mutedForeground : context.primaryColor,
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Future<void> _showExercisePicker(BuildContext context, List<String> exercises) async {
+    PlatformAdapter.hapticLight();
+    final searchController = TextEditingController();
+    String query = '';
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            final filtered = query.isEmpty
+                ? exercises
+                : exercises
+                    .where((e) => e.toLowerCase().contains(query.toLowerCase()))
+                    .toList();
+
+            return DraggableScrollableSheet(
+              initialChildSize: 0.6,
+              minChildSize: 0.4,
+              maxChildSize: 0.9,
+              expand: false,
+              builder: (ctx, scrollController) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: ctx.cardColor,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+                  ),
+                  child: Column(
+                    children: [
+                      SizedBox(height: 12.h),
+                      Container(
+                        width: 36.w,
+                        height: 4.h,
+                        decoration: BoxDecoration(
+                          color: ctx.mutedForeground.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(2.r),
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: Text(
+                          'Select Exercise',
+                          style: AppTextStyles.h3.copyWith(color: ctx.foreground),
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: TextField(
+                          controller: searchController,
+                          autofocus: true,
+                          decoration: InputDecoration(
+                            hintText: 'Search exercises…',
+                            hintStyle: AppTextStyles.bodySmall.copyWith(color: ctx.mutedForeground),
+                            prefixIcon: Icon(Icons.search_rounded, size: 18.r, color: ctx.mutedForeground),
+                            filled: true,
+                            fillColor: ctx.mutedColor,
+                            border: OutlineInputBorder(
+                              borderRadius: AppRadius.borderLg,
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                          ),
+                          style: AppTextStyles.body.copyWith(color: ctx.foreground),
+                          onChanged: (v) => setModalState(() => query = v),
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Expanded(
+                        child: ListView.builder(
+                          controller: scrollController,
+                          itemCount: filtered.length,
+                          itemBuilder: (_, i) {
+                            final name = filtered[i];
+                            final isSelected = name == _selectedExercise;
+                            return ListTile(
+                              title: Text(
+                                name,
+                                style: AppTextStyles.body.copyWith(
+                                  color: isSelected ? ctx.primaryColor : ctx.foreground,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                ),
+                              ),
+                              trailing: isSelected
+                                  ? Icon(Icons.check_rounded, size: 18.r, color: ctx.primaryColor)
+                                  : null,
+                              onTap: () {
+                                PlatformAdapter.hapticSelection();
+                                setState(() => _selectedExercise = name);
+                                Navigator.of(ctx).pop();
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(height: MediaQuery.of(ctx).padding.bottom + 8.h),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+
+    searchController.dispose();
   }
 
   Widget _buildChart(BuildContext context) {
