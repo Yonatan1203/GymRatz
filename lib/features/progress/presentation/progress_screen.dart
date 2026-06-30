@@ -151,10 +151,13 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                   borderRadius: AppRadius.borderLg,
                 ),
                 child: Center(
-                  child: Text(v, style: AppTextStyles.bodySmall.copyWith(
-                    color: isSelected ? Colors.white : context.mutedForeground,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  )),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(v, style: AppTextStyles.bodySmall.copyWith(
+                      color: isSelected ? Colors.white : context.mutedForeground,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    )),
+                  ),
                 ),
               ),
             ),

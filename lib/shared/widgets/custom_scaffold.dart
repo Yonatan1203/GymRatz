@@ -59,20 +59,26 @@ class _CustomScaffoldState extends ConsumerState<CustomScaffold> {
                   currentIndex: currentIndex,
                   child: AnimatedSwitcher(
                     duration: AppDurations.fast,
-                    switchInCurve: Curves.easeOut,
-                    switchOutCurve: Curves.easeIn,
+                    // Curves handled inside transitionBuilder — keep linear here
+                    // to avoid double-curving incoming and outgoing children.
+                    switchInCurve: Curves.linear,
+                    switchOutCurve: Curves.linear,
                     transitionBuilder: (child, animation) {
-                      // Horizontal slide + fade: slides in from right when going
-                      // to a higher tab index, from left when going lower.
-                      final offsetBegin = slideRight
-                          ? const Offset(0.08, 0)
-                          : const Offset(-0.08, 0);
+                      // When transitionBuilder is called, animation.value is 0 for
+                      // the incoming child and 1 for the outgoing child. Using this
+                      // to give each child the correct slide direction.
+                      final isOutgoing = animation.value > 0.5;
+                      final begin = isOutgoing
+                          ? (slideRight ? const Offset(-0.22, 0) : const Offset(0.22, 0))
+                          : (slideRight ? const Offset(0.22, 0) : const Offset(-0.22, 0));
                       final slide = Tween<Offset>(
-                        begin: offsetBegin,
+                        begin: begin,
                         end: Offset.zero,
                       ).animate(CurvedAnimation(
                         parent: animation,
-                        curve: Curves.easeOut,
+                        // easeOutCubic for incoming (0→1) = fast start, gentle settle.
+                        // For outgoing (1→0 reversed) this naturally becomes easeInCubic.
+                        curve: Curves.easeOutCubic,
                       ));
                       return SlideTransition(
                         position: slide,
