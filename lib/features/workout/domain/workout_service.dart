@@ -15,6 +15,7 @@ import '../../progression/domain/progression_engine.dart';
 import '../../progression/domain/progression_suggestion.dart';
 import '../../progression/domain/models/progression_history.dart';
 import '../../progress/data/pr_repository.dart';
+import '../../programs/data/program_repository.dart';
 import '../data/workout_repository.dart';
 import 'workout_summary.dart';
 
@@ -24,6 +25,7 @@ class WorkoutService {
   final ProgressionRepository _progressionRepo;
   final AchievementService _achievementService;
   final AnalyticsService _analyticsService;
+  final ProgramRepository _programRepo;
   static const _uuid = Uuid();
 
   WorkoutService(
@@ -32,6 +34,7 @@ class WorkoutService {
     this._progressionRepo,
     this._achievementService,
     this._analyticsService,
+    this._programRepo,
   );
 
   /// Create a new free-form workout not tied to any program day.
@@ -320,6 +323,24 @@ class WorkoutService {
       completedAt: DateTime.now(),
     );
     await _workoutRepo.completeWorkout(uid, completed);
+
+    // Update program progress when this workout belongs to a program.
+    if (workout.programId.isNotEmpty) {
+      try {
+        final program = await _programRepo.getProgram(uid, workout.programId);
+        if (program != null) {
+          final totalSessions = program.weeks * program.days.length;
+          if (totalSessions > 0) {
+            final completedCount =
+                await _workoutRepo.getCompletedCountForProgram(uid, workout.programId);
+            final progress = (completedCount / totalSessions * 100).clamp(0, 100).round();
+            await _programRepo.updateProgram(uid, workout.programId, {'progress': progress});
+          }
+        }
+      } catch (e) {
+        debugPrint('completeWorkout: failed to update program progress: $e');
+      }
+    }
 
     // Best-effort achievement check after save. Uses month-scoped workout count
     // and per-session volume/PRs — cumulative stats require a future dedicated

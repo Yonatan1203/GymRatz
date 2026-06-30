@@ -80,7 +80,7 @@ class NotificationService {
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.wallClockTime,
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
     }
 
@@ -129,7 +129,7 @@ class NotificationService {
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.wallClockTime,
       matchDateTimeComponents: DateTimeComponents.time,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
 
     final prefs = await SharedPreferences.getInstance();
@@ -172,6 +172,20 @@ class NotificationService {
       ),
       payload: payload,
     );
+  }
+
+  static const _dayNameToInt = {
+    'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+    'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7,
+  };
+
+  /// Convert a list of day-of-week names (e.g. ['Monday', 'Wednesday']) to
+  /// the integer weekday values used by [scheduleWorkoutReminder].
+  static List<int> weekdaysFromDayNames(List<String> dayNames) {
+    return dayNames
+        .map((n) => _dayNameToInt[n])
+        .whereType<int>()
+        .toList();
   }
 
   tz.TZDateTime _nextInstanceOfDayTime(int weekday, int hour, int minute) {
