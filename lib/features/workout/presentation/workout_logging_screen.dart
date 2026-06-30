@@ -73,6 +73,9 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
   int _restTotalSeconds = 0;
   bool _restTimerActive = false;
 
+  bool _isCardioDay = false;
+  CardioIntensity _cardioIntensity = CardioIntensity.lit;
+  final Map<int, TextEditingController> _cardioMinControllers = {};
   static const _workoutCacheKeyPrefix = 'in_progress_workout';
 
   String get _workoutCacheKey {
@@ -261,22 +264,39 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
         if (matchingDay != null && matchingDay.isNotEmpty) {
           final day = matchingDay.first;
           _workoutName = day.name;
+          _isCardioDay = day.isCardio;
           // Start with template defaults synchronously (weight=0).
           _exercises = day.exercises.map((pe) => WorkoutExercise(
             name: pe.name,
-            equipment: pe.equipment ?? 'Barbell',
+            equipment: pe.equipment ?? 'Cardio',
             equipmentType: pe.equipmentType,
             exerciseType: pe.isTimeBased ? ExerciseType.timed : ExerciseType.reps,
             repRange: Formatters.reps(pe.repMin, pe.repMax),
             targetRir: pe.targetRir,
             restSeconds: pe.restSeconds,
-            sets: List.generate(pe.sets, (_) => const WorkoutSet()),
+            sets: List.generate(pe.sets > 0 ? pe.sets : 1, (_) => const WorkoutSet()),
           )).toList();
           _sets = _exercises.map((e) => List<WorkoutSet>.from(e.sets)).toList();
 
+          if (_isCardioDay) {
+            _sets = List.generate(day.exercises.length, (i) {
+              final mins = day.exercises[i].durationMinutes ?? 30;
+              _cardioMinControllers[i] = TextEditingController(text: '$mins');
+              return [WorkoutSet(durationSeconds: mins * 60)];
+            });
+            Future(() {
+              ref.read(activeWorkoutSessionProvider.notifier).startSession(
+                dayId: widget.dayId,
+                workoutName: _workoutName,
+                exercises: _exercises,
+                sets: _sets,
+              );
+            });
+          }
+
           // Async: load PO-prefilled exercises from WorkoutService.
           final uid = ref.read(currentUidProvider);
-          if (uid != null) {
+          if (uid != null && !_isCardioDay) {
             _loadingExercises = true;
             Future(() async {
               try {
@@ -320,7 +340,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
                 }
               }
             });
-          } else {
+          } else if (!_isCardioDay) {
             // No uid — use template defaults.
             Future(() {
               ref.read(activeWorkoutSessionProvider.notifier).startSession(
@@ -431,6 +451,10 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
       c.dispose();
     }
     _controllers.clear();
+    for (final c in _cardioMinControllers.values) {
+      c.dispose();
+    }
+    _cardioMinControllers.clear();
     super.dispose();
   }
 
@@ -547,6 +571,9 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
         ? ''
         : (ref.read(activeProgramProvider).valueOrNull?.id ?? '');
     final workoutDayId = widget.isFreeWorkout ? '' : widget.dayId;
+    final effectiveNotes = _isCardioDay
+        ? '[${_cardioIntensity.label}]${_notes.isNotEmpty ? ' $_notes' : ''}'
+        : (_notes.isNotEmpty ? _notes : null);
     final workout = Workout(
       id: const Uuid().v4(),
       programId: programId,
@@ -555,7 +582,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
       status: WorkoutStatus.completed,
       exercises: exercises,
       completedAt: DateTime.now(),
-      notes: _notes.isNotEmpty ? _notes : null,
+      notes: effectiveNotes,
     );
 
     ref.read(activeWorkoutSessionProvider.notifier).endSession();
@@ -796,7 +823,12 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
                       ),
                     if (widget.isFreeWorkout && exercises.isEmpty)
                       _buildFreeWorkoutEmptyState(context),
-                    ...List.generate(exercises.length, (i) => _buildExerciseCard(context, isDark, i, exercises[i])),
+                    if (_isCardioDay) ...[
+                      _buildCardioIntensitySelector(context),
+                      ...List.generate(exercises.length, (i) => _buildCardioExerciseCard(context, isDark, i, exercises[i])),
+                    ] else ...[
+                      ...List.generate(exercises.length, (i) => _buildExerciseCard(context, isDark, i, exercises[i])),
+                    ],
                     CustomCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -818,12 +850,13 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
                       ),
                     ),
                     SizedBox(height: 12.h),
-                    CustomButton(
-                      text: '+ Add Exercise',
-                      variant: ButtonVariant.dashed,
-                      icon: AppIcons.plus,
-                      onPressed: _showAddExerciseSheet,
-                    ),
+                    if (!_isCardioDay)
+                      CustomButton(
+                        text: '+ Add Exercise',
+                        variant: ButtonVariant.dashed,
+                        icon: AppIcons.plus,
+                        onPressed: _showAddExerciseSheet,
+                      ),
                     SizedBox(height: 60.h),
                   ],
                 ),
@@ -1079,6 +1112,151 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCardioIntensitySelector(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12.h),
+      child: Row(
+        children: CardioIntensity.values.map((intensity) {
+          final isSelected = _cardioIntensity == intensity;
+          return Expanded(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4.w),
+              child: GestureDetector(
+                onTap: () => setState(() => _cardioIntensity = intensity),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.symmetric(vertical: 10.h),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? context.primaryColor
+                        : context.primaryColor.withValues(alpha: 0.08),
+                    borderRadius: AppRadius.borderXl,
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        intensity.label,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: isSelected ? Colors.white : context.primaryColor,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        intensity.description,
+                        style: AppTextStyles.caption.copyWith(
+                          color: isSelected
+                              ? Colors.white.withValues(alpha: 0.8)
+                              : context.mutedForeground,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCardioExerciseCard(BuildContext context, bool isDark, int exIdx, WorkoutExercise exercise) {
+    final set = _sets[exIdx].isNotEmpty ? _sets[exIdx][0] : const WorkoutSet();
+    final isCompleted = set.completed;
+    final minCtrl = _cardioMinControllers.putIfAbsent(
+      exIdx,
+      () => TextEditingController(text: '${(set.durationSeconds / 60).round()}'),
+    );
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12.h),
+      child: CustomCard(
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    exercise.name,
+                    style: AppTextStyles.h4.copyWith(
+                      color: context.foreground,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 80.w,
+                        height: 36.h,
+                        child: TextField(
+                          controller: minCtrl,
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.body.copyWith(color: context.foreground),
+                          onChanged: (v) {
+                            final mins = int.tryParse(v) ?? 30;
+                            if (_sets[exIdx].isNotEmpty) {
+                              _sets[exIdx][0] = _sets[exIdx][0].copyWith(durationSeconds: mins * 60);
+                              _syncToProvider();
+                            }
+                          },
+                          decoration: InputDecoration(
+                            hintText: '30',
+                            hintStyle: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
+                            isDense: true,
+                            border: OutlineInputBorder(
+                              borderRadius: AppRadius.borderSm,
+                              borderSide: BorderSide(color: context.borderColor),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: AppRadius.borderSm,
+                              borderSide: BorderSide(color: context.borderColor),
+                            ),
+                            filled: true,
+                            fillColor: context.mutedColor,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Text('min', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Semantics(
+              button: true,
+              label: isCompleted ? 'Undo ${exercise.name}' : 'Complete ${exercise.name}',
+              child: GestureDetector(
+                onTap: () => _toggleSet(exIdx, 0),
+                child: Container(
+                  width: 36.r,
+                  height: 36.r,
+                  decoration: BoxDecoration(
+                    color: isCompleted ? context.primaryColor : Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isCompleted ? context.primaryColor : context.borderColor,
+                      width: 2,
+                    ),
+                  ),
+                  child: isCompleted
+                      ? Icon(AppIcons.check, size: 20.r, color: Colors.white)
+                      : null,
+                ),
+              ),
+            ),
           ],
         ),
       ),
