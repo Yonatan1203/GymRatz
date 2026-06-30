@@ -17,6 +17,7 @@ class NotificationService {
   static const _keyReminderMinute = 'notif_reminder_minute';
   static const _keyStreakEnabled = 'notif_streak_enabled';
 
+  static const _restTimerNotifId = 100;
   static const _streakNotifId = 200;
 
   Future<void> initialize() async {
@@ -51,6 +52,37 @@ class NotificationService {
       return granted ?? false;
     }
     return false;
+  }
+
+  /// Schedule a one-shot notification to fire when the rest timer ends.
+  /// Safe to call while the app is backgrounded — fires even if force-quit.
+  Future<void> scheduleRestTimerNotification(int seconds) async {
+    await _plugin.cancel(_restTimerNotifId);
+    await _plugin.zonedSchedule(
+      _restTimerNotifId,
+      'Rest over!',
+      'Time to hit your next set 💪',
+      tz.TZDateTime.now(tz.local).add(Duration(seconds: seconds)),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'rest_timer',
+          'Rest Timer',
+          channelDescription: 'Fires when your rest period ends',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(
+          interruptionLevel: InterruptionLevel.timeSensitive,
+        ),
+      ),
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.wallClockTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
+  Future<void> cancelRestTimer() async {
+    await _plugin.cancel(_restTimerNotifId);
   }
 
   Future<void> scheduleWorkoutReminder({

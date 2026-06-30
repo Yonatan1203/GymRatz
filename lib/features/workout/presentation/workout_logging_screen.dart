@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' show max;
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import 'package:uuid/uuid.dart';
 import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
+import '../../../core/notification_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
@@ -64,6 +66,13 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
   bool _showFirstTimeTips = false;
   late DateTime _startTime;
   WorkoutSummary? _workoutSummary;
+
+  // Rest timer state
+  Timer? _restTimer;
+  int _restSecondsRemaining = 0;
+  int _restTotalSeconds = 0;
+  bool _restTimerActive = false;
+
   static const _workoutCacheKeyPrefix = 'in_progress_workout';
 
   String get _workoutCacheKey {
@@ -416,11 +425,57 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
   @override
   void dispose() {
     _durationTimer?.cancel();
+    _restTimer?.cancel();
+    NotificationService().cancelRestTimer();
     for (final c in _controllers.values) {
       c.dispose();
     }
     _controllers.clear();
     super.dispose();
+  }
+
+  void _startRestTimer(int seconds) {
+    if (seconds <= 0) return;
+    _restTimer?.cancel();
+    NotificationService().cancelRestTimer();
+    NotificationService().scheduleRestTimerNotification(seconds);
+
+    setState(() {
+      _restTimerActive = true;
+      _restSecondsRemaining = seconds;
+      _restTotalSeconds = seconds;
+    });
+
+    _restTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) { t.cancel(); return; }
+      if (_restSecondsRemaining <= 1) {
+        t.cancel();
+        _restTimer = null;
+        if (mounted) {
+          setState(() {
+            _restTimerActive = false;
+            _restSecondsRemaining = 0;
+            _restTotalSeconds = 0;
+          });
+          PlatformAdapter.hapticMedium();
+        }
+      } else {
+        setState(() => _restSecondsRemaining--);
+      }
+    });
+  }
+
+  void _stopRestTimer() {
+    _restTimer?.cancel();
+    _restTimer = null;
+    NotificationService().cancelRestTimer();
+    if (mounted) {
+      setState(() {
+        _restTimerActive = false;
+        _restSecondsRemaining = 0;
+        _restTotalSeconds = 0;
+      });
+    }
   }
 
   void _toggleSet(int exIdx, int setIdx) {
@@ -435,6 +490,11 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     if (!wasCompleted) {
       _syncToProvider();
       _saveWorkoutState();
+      // Start rest timer using the exercise's configured rest time (default 60s).
+      final restSecs = (_exercises[exIdx].restSeconds > 0)
+          ? _exercises[exIdx].restSeconds
+          : 60;
+      _startRestTimer(restSecs);
       // Auto-advance: if all sets of this exercise are done, expand the next one.
       final allDone = _sets[exIdx].every((s) => s.completed);
       if (allDone && exIdx + 1 < _exercises.length) {
@@ -474,6 +534,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     setState(() => _saving = true);
 
     _durationTimer?.cancel();
+    _stopRestTimer();
 
     final uid = ref.read(currentUidProvider);
     final profile = ref.read(userProfileProvider).valueOrNull;
@@ -711,8 +772,10 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     final exercises = _exercises;
 
     return Scaffold(
-      body: Column(
+      body: Stack(
         children: [
+          Column(
+            children: [
           WorkoutScreenHeader(
             workoutName: _workoutName,
             formattedElapsed: _formatElapsed(DateTime.now().difference(_startTime).inSeconds),
@@ -765,7 +828,102 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
                   ],
                 ),
           ),
+            ],
+          ),
+          // Rest timer — overlaid at the bottom when active
+          if (_restTimerActive)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _buildRestTimerBanner(context),
+            ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRestTimerBanner(BuildContext context) {
+    final progress = _restTotalSeconds > 0
+        ? _restSecondsRemaining / _restTotalSeconds
+        : 0.0;
+    final minutes = _restSecondsRemaining ~/ 60;
+    final seconds = _restSecondsRemaining % 60;
+    final timeStr = '$minutes:${seconds.toString().padLeft(2, '0')}';
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: context.cardColor,
+          borderRadius: AppRadius.borderLg,
+          border: Border.all(color: context.primaryColor.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 36.r,
+              height: 36.r,
+              child: Stack(
+                children: [
+                  CircularProgressIndicator(
+                    value: progress.clamp(0.0, 1.0),
+                    strokeWidth: 3,
+                    backgroundColor: context.mutedColor,
+                    valueColor: AlwaysStoppedAnimation(context.primaryColor),
+                  ),
+                  Center(
+                    child: Icon(Icons.timer_outlined, size: 14.r, color: context.primaryColor),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('REST', style: AppTextStyles.caption.copyWith(color: context.mutedForeground, fontWeight: FontWeight.w600, letterSpacing: 1)),
+                Text(timeStr, style: AppTextStyles.h3.copyWith(color: context.foreground, fontWeight: FontWeight.w700)),
+              ],
+            ),
+            const Spacer(),
+            _restAdjustButton(context, '−30', () {
+              setState(() => _restSecondsRemaining = max(5, _restSecondsRemaining - 30));
+            }),
+            SizedBox(width: 6.w),
+            _restAdjustButton(context, '+30', () {
+              setState(() {
+                _restSecondsRemaining += 30;
+                _restTotalSeconds = max(_restTotalSeconds, _restSecondsRemaining);
+              });
+            }),
+            SizedBox(width: 12.w),
+            GestureDetector(
+              onTap: _stopRestTimer,
+              child: Text('Skip', style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _restAdjustButton(BuildContext context, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: () {
+        PlatformAdapter.hapticLight();
+        onTap();
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          color: context.mutedColor,
+          borderRadius: AppRadius.borderSm,
+        ),
+        child: Text(label, style: AppTextStyles.caption.copyWith(color: context.mutedForeground, fontWeight: FontWeight.w600)),
       ),
     );
   }
