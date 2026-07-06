@@ -181,6 +181,7 @@ class WorkoutService {
       // and would render as confusing "0×0lbs" in the UI.
       previousSets: lastExercise?.sets.where((s) => s.completed).toList() ?? const [],
       poSuggestedWeight: suggestion?.suggestedWeight,
+      poSuggestedReps: suggestion?.suggestedReps,
       sets: List.generate(
         numSets,
         (i) {
@@ -251,9 +252,15 @@ class WorkoutService {
           history = const ProgressionHistory();
         }
 
+        // Prefer last working set for currentWeight; fall back to last set
+        // if all completed sets are warmups (completedSets is non-empty here).
+        final lastWorkingSet = completedSets.lastWhere(
+          (s) => !s.isWarmup,
+          orElse: () => completedSets.last,
+        );
         final suggestion = ProgressionEngine.suggest(
           performedSets: exercise.sets,
-          currentWeight: completedSets.last.weight,
+          currentWeight: lastWorkingSet.weight,
           repMin: repMin,
           repMax: repMax,
           targetRir: exercise.targetRir,

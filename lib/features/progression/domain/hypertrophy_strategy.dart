@@ -57,6 +57,8 @@ enum HypertrophyLevel {
 /// Deload trigger: 2 consecutive sessions < 75 score
 /// Deload: sets *= 0.5-0.6, keep load or *0.9, RIR 3-5
 class HypertrophyStrategy extends ProgressionStrategy {
+  // TODO(GYM-195): calibrate via session data; 0.75 is the initial approximation.
+  static const double _kNearMissThreshold = 0.75;
   @override
   SessionMetrics computeMetrics({
     required List<WorkoutSet> performedSets,
@@ -206,6 +208,30 @@ class HypertrophyStrategy extends ProgressionStrategy {
 
     // Apply set adjustment from weekly volume tracking.
     final adjustedSets = max(sets + setAdjustment, 2);
+
+    // Near-miss guard: if reps fell short but avg completion ≥ 75% of target
+    // AND the last set was not at absolute failure (lastSetRir > 0), hold weight
+    // and retry — a −5% deload would be premature. When lastSetRir == 0, Rule C
+    // still deloads regardless of completion rate (absolute failure warrants it).
+    if (repMax > 0 && minReps < repMin && lastSetRir > 0) {
+      final avgCompletion = repsPerSet.isEmpty
+          ? 0.0
+          : repsPerSet.fold<double>(0.0, (sum, r) => sum + r / repMax) /
+              repsPerSet.length;
+      if (avgCompletion >= _kNearMissThreshold) {
+        return ProgressionSuggestion(
+          suggestedWeight: currentWeight,
+          suggestedReps: repMin,
+          suggestedSets: adjustedSets,
+          reasoning:
+              'Hold: near-miss (avg ${(avgCompletion * 100).toStringAsFixed(0)}% of target reps) — retry same weight',
+          backoffWeight:
+              LoadQuantizer.snap(currentWeight * 0.90, equipment, unit),
+          score: score,
+          metrics: metrics,
+        );
+      }
+    }
 
     // Rule C: Reduce -- if min(reps) < r_min OR RIR_last == 0
     if (minReps < repMin || lastSetRir == 0) {
