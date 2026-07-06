@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../theme/app_icons.dart';
 
 import '../../../app/providers.dart';
@@ -361,10 +362,22 @@ class WorkoutScreen extends ConsumerWidget {
                       date: date,
                     );
                   } else {
-                    await CalendarSyncService.addWorkoutToCalendar(
+                    final synced = await CalendarSyncService.addWorkoutToCalendar(
                       day: workoutDay,
                       date: date,
                     );
+                    if (!synced && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text(
+                              'Could not sync to calendar. Check calendar permissions.'),
+                          action: SnackBarAction(
+                            label: 'Settings',
+                            onPressed: openAppSettings,
+                          ),
+                        ),
+                      );
+                    }
                   }
                   ref.invalidate(_calendarSyncStateProvider);
                 },

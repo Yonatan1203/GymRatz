@@ -52,7 +52,7 @@ class WorkoutLoggingScreen extends ConsumerStatefulWidget {
 }
 
 class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late List<List<WorkoutSet>> _sets;
   late List<WorkoutExercise> _exercises;
   late Set<int> _expanded;
@@ -72,6 +72,8 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
   int _restSecondsRemaining = 0;
   int _restTotalSeconds = 0;
   bool _restTimerActive = false;
+  // Absolute end time used to correct the displayed countdown after backgrounding.
+  DateTime? _restTimerEndsAt;
 
   bool _isCardioDay = false;
   CardioIntensity _cardioIntensity = CardioIntensity.lit;
@@ -268,7 +270,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
           // Start with template defaults synchronously (weight=0).
           _exercises = day.exercises.map((pe) => WorkoutExercise(
             name: pe.name,
-            equipment: pe.equipment ?? 'Cardio',
+            equipment: pe.equipment ?? (day.isCardio ? 'Cardio' : 'Barbell'),
             equipmentType: pe.equipmentType,
             exerciseType: pe.isTimeBased ? ExerciseType.timed : ExerciseType.reps,
             repRange: Formatters.reps(pe.repMin, pe.repMax),
@@ -440,10 +442,12 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _durationTimer?.cancel();
     _restTimer?.cancel();
     NotificationService().cancelRestTimer();
@@ -458,40 +462,66 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused && _restTimerActive) {
+      // Cancel the periodic tick while backgrounded to avoid rapid-fire
+      // callbacks batching on resume.
+      _restTimer?.cancel();
+      _restTimer = null;
+    } else if (state == AppLifecycleState.resumed &&
+        _restTimerActive &&
+        _restTimerEndsAt != null) {
+      final remaining =
+          _restTimerEndsAt!.difference(DateTime.now()).inSeconds;
+      if (remaining <= 0) {
+        _onRestTimerExpired();
+      } else {
+        setState(() => _restSecondsRemaining = remaining);
+        _restTimer = Timer.periodic(const Duration(seconds: 1), _restTimerTick);
+      }
+    }
+  }
+
+  void _restTimerTick(Timer t) {
+    if (!mounted) {
+      t.cancel();
+      return;
+    }
+    if (_restSecondsRemaining <= 1) {
+      t.cancel();
+      _restTimer = null;
+      _onRestTimerExpired();
+    } else {
+      setState(() => _restSecondsRemaining--);
+    }
+  }
+
+  void _onRestTimerExpired() {
+    _stopRestTimer();
+    PlatformAdapter.hapticMedium();
+  }
+
   void _startRestTimer(int seconds) {
     if (seconds <= 0) return;
     _restTimer?.cancel();
     NotificationService().cancelRestTimer();
     NotificationService().scheduleRestTimerNotification(seconds);
 
+    _restTimerEndsAt = DateTime.now().add(Duration(seconds: seconds));
     setState(() {
       _restTimerActive = true;
       _restSecondsRemaining = seconds;
       _restTotalSeconds = seconds;
     });
 
-    _restTimer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted) { t.cancel(); return; }
-      if (_restSecondsRemaining <= 1) {
-        t.cancel();
-        _restTimer = null;
-        if (mounted) {
-          setState(() {
-            _restTimerActive = false;
-            _restSecondsRemaining = 0;
-            _restTotalSeconds = 0;
-          });
-          PlatformAdapter.hapticMedium();
-        }
-      } else {
-        setState(() => _restSecondsRemaining--);
-      }
-    });
+    _restTimer = Timer.periodic(const Duration(seconds: 1), _restTimerTick);
   }
 
   void _stopRestTimer() {
     _restTimer?.cancel();
     _restTimer = null;
+    _restTimerEndsAt = null;
     NotificationService().cancelRestTimer();
     if (mounted) {
       setState(() {
@@ -924,13 +954,17 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
             ),
             const Spacer(),
             _restAdjustButton(context, '−30', () {
-              setState(() => _restSecondsRemaining = max(5, _restSecondsRemaining - 30));
+              setState(() {
+                _restSecondsRemaining = max(5, _restSecondsRemaining - 30);
+                _restTimerEndsAt = DateTime.now().add(Duration(seconds: _restSecondsRemaining));
+              });
             }),
             SizedBox(width: 6.w),
             _restAdjustButton(context, '+30', () {
               setState(() {
                 _restSecondsRemaining += 30;
                 _restTotalSeconds = max(_restTotalSeconds, _restSecondsRemaining);
+                _restTimerEndsAt = DateTime.now().add(Duration(seconds: _restSecondsRemaining));
               });
             }),
             SizedBox(width: 12.w),
@@ -1012,7 +1046,9 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
           ],
           if (hasPo)
             CustomBadge(
-              text: 'PO: ${_weightText(exercise.poSuggestedWeight!)} $unit',
+              text: exercise.poSuggestedReps != null
+                  ? 'PO: ${_weightText(exercise.poSuggestedWeight!)} $unit × ${exercise.poSuggestedReps} reps'
+                  : 'PO: ${_weightText(exercise.poSuggestedWeight!)} $unit',
               backgroundColor: context.primaryColor.withValues(alpha: 0.12),
               textColor: context.primaryColor,
             ),

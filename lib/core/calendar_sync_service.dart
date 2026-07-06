@@ -1,4 +1,5 @@
 import 'package:device_calendar/device_calendar.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -46,9 +47,15 @@ class CalendarSyncService {
     required DateTime date,
     int startHour = 7,
   }) async {
-    if (!await requestPermission()) return false;
+    if (!await requestPermission()) {
+      debugPrint('CalendarSyncService: calendar permission denied');
+      return false;
+    }
     final calId = await _getWritableCalendarId();
-    if (calId == null) return false;
+    if (calId == null) {
+      debugPrint('CalendarSyncService: no writable calendar found');
+      return false;
+    }
 
     final startDt = DateTime(date.year, date.month, date.day, startHour);
     final start = tz.TZDateTime.from(startDt, tz.local);
@@ -73,6 +80,7 @@ class CalendarSyncService {
       await prefs.setString(eventKey(day.id, date), result!.data!);
       return true;
     }
+    debugPrint('CalendarSyncService: createOrUpdateEvent failed — ${result?.errors}');
     return false;
   }
 

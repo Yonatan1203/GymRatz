@@ -21,6 +21,7 @@ class WorkoutExercise {
   // written once at construction and never mutated.
   final List<WorkoutSet> previousSets;
   final double? poSuggestedWeight;
+  final int? poSuggestedReps;
 
   const WorkoutExercise({
     required this.name,
@@ -35,6 +36,7 @@ class WorkoutExercise {
     required this.sets,
     this.previousSets = const [],
     this.poSuggestedWeight,
+    this.poSuggestedReps,
   });
 
   int get completedSets => sets.where((s) => s.completed).length;
@@ -106,6 +108,7 @@ class WorkoutExercise {
     List<WorkoutSet>? sets,
     List<WorkoutSet>? previousSets,
     double? poSuggestedWeight,
+    int? poSuggestedReps,
   }) =>
       WorkoutExercise(
         name: name ?? this.name,
@@ -120,5 +123,6 @@ class WorkoutExercise {
         sets: sets ?? this.sets,
         previousSets: previousSets ?? this.previousSets,
         poSuggestedWeight: poSuggestedWeight ?? this.poSuggestedWeight,
+        poSuggestedReps: poSuggestedReps ?? this.poSuggestedReps,
       );
 }
