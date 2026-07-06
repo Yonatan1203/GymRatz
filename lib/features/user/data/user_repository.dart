@@ -1,3 +1,5 @@
+import 'dart:math' show min;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../shared/models/user_profile.dart';
@@ -45,17 +47,20 @@ class UserRepository {
     await _userDoc(uid).delete();
   }
 
-  /// Deletes all user data including subcollections
+  /// Deletes all user data including subcollections.
+  /// Chunks deletes into groups of 499 to stay under Firestore's 500-op batch limit.
   Future<void> deleteAllUserData(String uid) async {
     final userDoc = _firestore.collection('users').doc(uid);
-    final subcollections = ['workouts', 'programs', 'achievements', 'prs', 'weightEntries', 'exercises', 'progression'];
+    const subcollections = ['workouts', 'programs', 'achievements', 'prs', 'weightEntries', 'exercises', 'progression'];
     for (final sub in subcollections) {
-      final snap = await userDoc.collection(sub).get();
-      final batch = _firestore.batch();
-      for (final doc in snap.docs) {
-        batch.delete(doc.reference);
+      final docs = (await userDoc.collection(sub).get()).docs;
+      for (var i = 0; i < docs.length; i += 499) {
+        final batch = _firestore.batch();
+        for (final doc in docs.sublist(i, min(i + 499, docs.length))) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
       }
-      await batch.commit();
     }
     await userDoc.delete();
   }

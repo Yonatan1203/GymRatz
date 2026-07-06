@@ -36,17 +36,22 @@ class ProgramRepository {
   Future<void> setActiveProgram(String uid, String programId) async {
     final batch = _firestore.batch();
 
-    // Deactivate all programs
+    // Deactivate all programs except the target (skip it to avoid two writes
+    // to the same document in one batch, which Firestore disallows).
     final allProgs = await _programs(uid).get();
     for (final doc in allProgs.docs) {
-      batch.update(doc.reference, {'isActive': false});
+      if (doc.id != programId) {
+        batch.update(doc.reference, {'isActive': false});
+      }
     }
 
-    // Activate the selected one
-    batch.update(_programs(uid).doc(programId), {
-      'isActive': true,
-      'activatedAt': DateTime.now().toIso8601String(),
-    });
+    // Activate the selected program. Use set+merge so this succeeds even if
+    // the document doesn't exist yet (e.g. community program not yet copied).
+    batch.set(
+      _programs(uid).doc(programId),
+      {'isActive': true, 'activatedAt': DateTime.now().toIso8601String()},
+      SetOptions(merge: true),
+    );
     await batch.commit();
   }
 
