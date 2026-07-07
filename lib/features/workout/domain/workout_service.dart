@@ -339,8 +339,11 @@ class WorkoutService {
         if (program != null) {
           final totalSessions = program.weeks * program.days.length;
           if (totalSessions > 0) {
-            final completedCount =
-                await _workoutRepo.getCompletedCountForProgram(uid, programId);
+            final completedCount = await _workoutRepo.getCompletedCountForProgram(
+              uid,
+              programId,
+              since: program.activationFloor,
+            );
             final progress = (completedCount / totalSessions * 100).clamp(0, 100).round();
             await _programRepo.updateProgram(uid, programId, {'progress': progress});
           }

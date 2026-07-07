@@ -343,5 +343,78 @@ void main() {
       expect(summary.totalSets, 1);
       expect(summary.totalVolume, 800.0); // 80 * 10
     });
+
+    // GYM-198: getCompletedCountForProgram must be scoped to the program's
+    // activationFloor, not the programId's entire history, so progress
+    // resets on each new activation cycle instead of accumulating forever.
+    test('scopes program progress count to activationFloor', () async {
+      final exercise = WorkoutExercise(
+        name: 'Squat',
+        equipment: 'Barbell',
+        repRange: '5-5',
+        targetRir: 1,
+        sets: [
+          const WorkoutSet(weight: 100.0, reps: 5, completed: false),
+        ],
+      );
+
+      final activatedAt = DateTime(2026, 7, 1);
+      final program = Program(
+        id: 'program-1',
+        name: 'Test Program',
+        workouts: 1,
+        weeks: 4,
+        days: [_day()],
+        activatedAt: activatedAt,
+      );
+
+      final workout = Workout(
+        id: 'w-progress',
+        programId: program.id,
+        date: DateTime(2026, 7, 6),
+        status: WorkoutStatus.inProgress,
+        exercises: [exercise],
+      );
+
+      when(() => programRepo.getProgram(_uid, program.id))
+          .thenAnswer((_) async => program);
+      when(() => workoutRepo.completeWorkout(_uid, any()))
+          .thenAnswer((_) async {});
+      when(() => workoutRepo.getWorkoutsForMonth(_uid, any(), any()))
+          .thenAnswer((_) async => []);
+      when(() => achievementService.checkAchievements(
+            _uid,
+            totalWorkouts: any(named: 'totalWorkouts'),
+            streak: any(named: 'streak'),
+            totalVolume: any(named: 'totalVolume'),
+            prCount: any(named: 'prCount'),
+          )).thenAnswer((_) async => []);
+      // Only 1 workout completed since this activation cycle — even though
+      // the programId may have many more completed workouts from a prior
+      // (deactivated) cycle, those must not be counted.
+      when(() => workoutRepo.getCompletedCountForProgram(
+            _uid,
+            program.id,
+            since: any(named: 'since'),
+          )).thenAnswer((_) async => 1);
+      when(() => programRepo.updateProgram(_uid, program.id, any()))
+          .thenAnswer((_) async {});
+
+      await sut.completeWorkout(_uid, workout, 'lbs');
+
+      // Count query must be scoped to the program's activationFloor.
+      verify(() => workoutRepo.getCompletedCountForProgram(
+            _uid,
+            program.id,
+            since: program.activationFloor,
+          )).called(1);
+
+      // 1 completed (this cycle only) / (4 weeks * 1 day) = 25%.
+      verify(() => programRepo.updateProgram(
+            _uid,
+            program.id,
+            {'progress': 25},
+          )).called(1);
+    });
   });
 }
