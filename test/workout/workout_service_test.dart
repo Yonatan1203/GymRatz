@@ -428,7 +428,7 @@ void main() {
         repRange: '5-5',
         targetRir: 1,
         sets: [
-          const WorkoutSet(weight: 100.0, reps: 5, completed: false),
+          const WorkoutSet(weight: 100.0, reps: 5, completed: true),
         ],
       );
 
