@@ -267,7 +267,7 @@ class ProgramsScreen extends ConsumerWidget {
             Row(
               children: [
                 Text(
-                  '${p.workouts} workouts/week \u2022 ${p.weeks} weeks',
+                  '${p.workouts} workouts/week \u2022 ${p.weeksLabel}',
                   style: AppTextStyles.bodySmall.copyWith(color: context.mutedForeground),
                 ),
                 if (p.difficulty != null) ...[
@@ -414,7 +414,7 @@ class ProgramsScreen extends ConsumerWidget {
                               ),
                               SizedBox(height: AppSpacing.xs),
                               Text(
-                                '${p.workouts}x/week \u2022 ${p.weeks} weeks',
+                                '${p.workouts}x/week \u2022 ${p.weeksLabel}',
                                 style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
                               ),
                             ],

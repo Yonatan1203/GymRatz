@@ -416,5 +416,62 @@ void main() {
             {'progress': 25},
           )).called(1);
     });
+
+    // GYM-197: an ongoing (weeks == null) program has no fixed session total,
+    // so progress must not be computed or written — and the count query
+    // (which needs a denominator) must not even be called.
+    test('skips progress update for an ongoing (weeks == null) program',
+        () async {
+      final exercise = WorkoutExercise(
+        name: 'Squat',
+        equipment: 'Barbell',
+        repRange: '5-5',
+        targetRir: 1,
+        sets: [
+          const WorkoutSet(weight: 100.0, reps: 5, completed: false),
+        ],
+      );
+
+      final program = Program(
+        id: 'program-ongoing',
+        name: 'Ongoing Program',
+        workouts: 1,
+        weeks: null,
+        days: [_day()],
+        activatedAt: DateTime(2026, 7, 1),
+      );
+
+      final workout = Workout(
+        id: 'w-ongoing',
+        programId: program.id,
+        date: DateTime(2026, 7, 6),
+        status: WorkoutStatus.inProgress,
+        exercises: [exercise],
+      );
+
+      when(() => programRepo.getProgram(_uid, program.id))
+          .thenAnswer((_) async => program);
+      when(() => workoutRepo.completeWorkout(_uid, any()))
+          .thenAnswer((_) async {});
+      when(() => workoutRepo.getWorkoutsForMonth(_uid, any(), any()))
+          .thenAnswer((_) async => []);
+      when(() => achievementService.checkAchievements(
+            _uid,
+            totalWorkouts: any(named: 'totalWorkouts'),
+            streak: any(named: 'streak'),
+            totalVolume: any(named: 'totalVolume'),
+            prCount: any(named: 'prCount'),
+          )).thenAnswer((_) async => []);
+
+      final summary = await sut.completeWorkout(_uid, workout, 'lbs');
+
+      expect(summary.totalSets, 1);
+      verifyNever(() => workoutRepo.getCompletedCountForProgram(
+            any(),
+            any(),
+            since: any(named: 'since'),
+          ));
+      verifyNever(() => programRepo.updateProgram(_uid, program.id, any()));
+    });
   });
 }

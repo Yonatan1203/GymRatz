@@ -53,6 +53,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
   String? _pickerOpenForDay;
   String? _customFormOpenForDay;
   String _difficulty = 'Intermediate';
+  bool _isOngoing = false;
   /// Weight autofill mode for coach-created programs.
   /// Only used when [CreateProgramScreen.forCoach] is true.
   WeightAutofillMode _weightAutofillMode = WeightAutofillMode.systemSuggested;
@@ -75,7 +76,8 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
     final edit = widget.editProgram;
     if (edit != null) {
       _nameController.text = edit.name;
-      _weeksController.text = '${edit.weeks}';
+      _isOngoing = edit.weeks == null;
+      _weeksController.text = edit.weeks != null ? '${edit.weeks}' : '';
       _descriptionController.text = edit.description ?? '';
       _difficulty = edit.difficulty ?? 'Intermediate';
       _weightAutofillMode = edit.weightAutofillMode;
@@ -296,7 +298,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
     setState(() => _saving = true);
 
     try {
-      final weeks = int.tryParse(_weeksController.text) ?? 8;
+      final weeks = _isOngoing ? null : (int.tryParse(_weeksController.text) ?? 8);
 
       final days = _workoutDays.map((day) {
         return wd.WorkoutDay(
@@ -433,6 +435,8 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                     descriptionController: _descriptionController,
                     nameFocus: _nameFocus,
                     weeksFocus: _weeksFocus,
+                    isOngoing: _isOngoing,
+                    onOngoingChanged: (v) => setState(() => _isOngoing = v),
                     difficulty: _difficulty,
                     onDifficultyChanged: (v) => setState(() => _difficulty = v),
                     forCoach: widget.forCoach,

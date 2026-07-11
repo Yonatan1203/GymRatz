@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gymratz/shared/models/program.dart';
 import 'package:gymratz/shared/models/workout_day.dart';
 
 // We test getTodaysWorkout logic directly since ProgramService.getTodaysWorkout
@@ -63,6 +64,52 @@ void main() {
         expect(result?.dayOfWeek, expected[i - 1],
             reason: 'weekday $i should map to ${expected[i - 1]}');
       }
+    });
+  });
+
+  // GYM-197: Program.weeks is nullable to represent an open-ended
+  // ("Ongoing") program with no fixed week count.
+  group('Program.weeksLabel / fromJson (GYM-197 open-ended programs)', () {
+    test('weeksLabel shows the count for a fixed-length program', () {
+      const program = Program(
+        id: 'p1',
+        name: 'PPL',
+        workouts: 3,
+        weeks: 8,
+      );
+      expect(program.weeksLabel, '8 weeks');
+    });
+
+    test('weeksLabel shows Ongoing when weeks is null', () {
+      const program = Program(
+        id: 'p1',
+        name: 'PPL',
+        workouts: 3,
+        weeks: null,
+      );
+      expect(program.weeksLabel, 'Ongoing');
+    });
+
+    test('fromJson leaves weeks null when absent from Firestore data', () {
+      final program = Program.fromJson({
+        'id': 'p1',
+        'name': 'PPL',
+        'workouts': 3,
+      });
+      expect(program.weeks, isNull);
+      expect(program.weeksLabel, 'Ongoing');
+    });
+
+    test('fromJson/toJson round-trips a null weeks value', () {
+      const program = Program(id: 'p1', name: 'PPL', workouts: 3, weeks: null);
+      final roundTripped = Program.fromJson(program.toJson());
+      expect(roundTripped.weeks, isNull);
+    });
+
+    test('fromJson/toJson round-trips a fixed weeks value', () {
+      const program = Program(id: 'p1', name: 'PPL', workouts: 3, weeks: 8);
+      final roundTripped = Program.fromJson(program.toJson());
+      expect(roundTripped.weeks, 8);
     });
   });
 }

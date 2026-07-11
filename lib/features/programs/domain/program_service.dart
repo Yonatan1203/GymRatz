@@ -16,7 +16,7 @@ class ProgramService {
     String uid, {
     required String name,
     required List<WorkoutDay> days,
-    int weeks = 8,
+    int? weeks = 8,
     String? description,
     String? difficulty,
   }) async {
@@ -46,7 +46,7 @@ class ProgramService {
     String programId, {
     required String name,
     required List<WorkoutDay> days,
-    int weeks = 8,
+    int? weeks = 8,
     String? description,
     String? difficulty,
   }) async {
