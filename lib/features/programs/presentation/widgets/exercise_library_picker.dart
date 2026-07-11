@@ -18,6 +18,9 @@ class ExerciseLibraryPicker extends StatefulWidget {
   final ValueChanged<Exercise> onExerciseSelected;
   final VoidCallback onCustomRequested;
   final VoidCallback onCancel;
+  /// Category to pre-select on open (e.g. 'Cardio' for a cardio day).
+  /// The user can still switch to another category or "All" afterward.
+  final String? initialCategory;
 
   const ExerciseLibraryPicker({
     super.key,
@@ -25,6 +28,7 @@ class ExerciseLibraryPicker extends StatefulWidget {
     required this.onExerciseSelected,
     required this.onCustomRequested,
     required this.onCancel,
+    this.initialCategory,
   });
 
   @override
@@ -34,6 +38,12 @@ class ExerciseLibraryPicker extends StatefulWidget {
 class _ExerciseLibraryPickerState extends State<ExerciseLibraryPicker> {
   String _searchQuery = '';
   String? _selectedCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCategory = widget.initialCategory;
+  }
 
   @override
   Widget build(BuildContext context) {

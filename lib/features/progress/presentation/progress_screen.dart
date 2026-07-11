@@ -20,6 +20,7 @@ import '../../../shared/widgets/custom_card.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
 import '../../../shared/widgets/gradient_header.dart';
 import '../../../shared/widgets/menu_item_widget.dart';
+import '../../../shared/widgets/scale_tap.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../../../shared/widgets/stats_grid.dart';
 
@@ -806,7 +807,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
 
                 return Padding(
                   padding: EdgeInsets.only(bottom: 8.h),
-                  child: CustomCard(
+                  child: ScaleTap(
+                    onTap: () => context.push('/workout/history/${w.id}', extra: w),
+                    child: CustomCard(
                     padding: EdgeInsets.all(12.r),
                     child: Row(
                       children: [
@@ -833,6 +836,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                           ],
                         ),
                       ],
+                    ),
                     ),
                   ),
                 );

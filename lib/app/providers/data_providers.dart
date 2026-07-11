@@ -53,6 +53,14 @@ final programByIdProvider =
   return ref.watch(programRepositoryProvider).getProgram(uid, programId);
 });
 
+// ─── Workout by ID (family) ───
+final workoutByIdProvider =
+    FutureProvider.family<Workout?, String>((ref, workoutId) async {
+  final uid = ref.watch(currentUidProvider);
+  if (uid == null) return null;
+  return ref.watch(workoutRepositoryProvider).getWorkoutById(uid, workoutId);
+});
+
 // ─── Recent Workouts ───
 final recentWorkoutsProvider = StreamProvider<List<Workout>>((ref) {
   final uid = ref.watch(currentUidProvider);

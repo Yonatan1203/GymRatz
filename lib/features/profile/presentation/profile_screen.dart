@@ -207,6 +207,11 @@ class ProfileScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(title: 'ACTIVITY'),
+        SizedBox(height: AppSpacing.xs),
+        Text(
+          'Your workout frequency over the last 12 weeks',
+          style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+        ),
         SizedBox(height: AppSpacing.lg),
         recentWorkoutsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -290,6 +295,8 @@ class ProfileScreen extends ConsumerWidget {
                         );
                       },
                     ),
+                    SizedBox(height: AppSpacing.md),
+                    _buildHeatmapLegend(context),
                   ],
                 ),
               ),
@@ -297,6 +304,35 @@ class ProfileScreen extends ConsumerWidget {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildHeatmapLegend(BuildContext context) {
+    // Kept in sync with the cell-shading thresholds above by construction —
+    // same three colors, not a separately hardcoded palette.
+    final entries = [
+      (context.mutedColor, 'Rest day'),
+      (context.primaryColor.withValues(alpha: 0.5), '1 workout'),
+      (context.primaryColor, '2+ workouts'),
+    ];
+    return Wrap(
+      spacing: AppSpacing.md,
+      runSpacing: AppSpacing.xs,
+      children: entries.map((entry) {
+        final (color, label) = entry;
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 10.r,
+              height: 10.r,
+              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2.r)),
+            ),
+            SizedBox(width: 4.w),
+            Text(label, style: AppTextStyles.caption.copyWith(color: context.mutedForeground)),
+          ],
+        );
+      }).toList(),
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/crashlytics_service.dart';
 import '../shared/models/program.dart';
+import '../shared/models/workout.dart';
 import '../features/auth/presentation/forgot_password_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/onboarding/presentation/onboarding_welcome_screen.dart';
@@ -17,6 +18,7 @@ import '../features/onboarding/presentation/onboarding_discovery_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/workout/presentation/workout_screen.dart';
 import '../features/workout/presentation/workout_logging_screen.dart';
+import '../features/workout/presentation/workout_detail_screen.dart';
 import '../features/calendar/presentation/calendar_screen.dart';
 import '../features/programs/presentation/programs_screen.dart';
 import '../features/programs/presentation/program_detail_screen.dart';
@@ -360,6 +362,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           state: state,
           child: ProgramDetailScreen(
             programId: state.pathParameters['id'] ?? '1',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/workout/history/:workoutId',
+        name: 'workout-history',
+        pageBuilder: (context, state) => slideFromBottomTransitionPage(
+          state: state,
+          child: WorkoutDetailScreen(
+            workoutId: state.pathParameters['workoutId'] ?? '',
+            initialWorkout: state.extra is Workout ? state.extra as Workout : null,
           ),
         ),
       ),
