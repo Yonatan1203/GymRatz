@@ -462,6 +462,14 @@ void main() {
             totalVolume: any(named: 'totalVolume'),
             prCount: any(named: 'prCount'),
           )).thenAnswer((_) async => []);
+      when(() => prRepo.checkAndUpdatePR(
+            _uid,
+            exerciseId: any(named: 'exerciseId'),
+            exerciseName: any(named: 'exerciseName'),
+            weight: any(named: 'weight'),
+            reps: any(named: 'reps'),
+            unit: any(named: 'unit'),
+          )).thenAnswer((_) async => false);
 
       final summary = await sut.completeWorkout(_uid, workout, 'lbs');
 
