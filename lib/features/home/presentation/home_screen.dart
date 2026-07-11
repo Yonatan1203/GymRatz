@@ -689,7 +689,9 @@ class HomeScreen extends ConsumerWidget {
 
                 return Padding(
                   padding: EdgeInsets.only(bottom: AppSpacing.md),
-                  child: CustomCard(
+                  child: ScaleTap(
+                    onTap: () => context.push('/workout/history/${workout.id}', extra: workout),
+                    child: CustomCard(
                     variant: CardVariant.standard,
                     padding: EdgeInsets.all(AppSpacing.lg),
                     child: Row(
@@ -711,6 +713,7 @@ class HomeScreen extends ConsumerWidget {
                         ),
                         Icon(AppIcons.chevronRight, size: 20.r, color: context.mutedForeground),
                       ],
+                    ),
                     ),
                   ),
                 );

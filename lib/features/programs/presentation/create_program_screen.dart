@@ -589,6 +589,7 @@ class _CreateProgramScreenState extends ConsumerState<CreateProgramScreen> {
                   else if (_pickerOpenForDay == day.id)
                     ExerciseLibraryPicker(
                       exercises: _cachedExercises,
+                      initialCategory: day.isCardio ? 'Cardio' : null,
                       onExerciseSelected: (ex) => _addExerciseFromLibrary(day.id, ex),
                       onCustomRequested: () => setState(() {
                         _pickerOpenForDay = null;

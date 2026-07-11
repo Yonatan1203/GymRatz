@@ -15,6 +15,12 @@ class WorkoutRepository {
     await _workouts(uid).doc(workout.id).set(workout.toJson());
   }
 
+  Future<Workout?> getWorkoutById(String uid, String workoutId) async {
+    final snap = await _workouts(uid).doc(workoutId).get();
+    if (!snap.exists || snap.data() == null) return null;
+    return Workout.fromJson(snap.data()!);
+  }
+
   Stream<List<Workout>> watchWorkouts(
       String uid, DateTime from, DateTime to) {
     return _workouts(uid)
