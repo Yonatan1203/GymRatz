@@ -506,7 +506,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     if (seconds <= 0) return;
     _restTimer?.cancel();
     NotificationService().cancelRestTimer();
-    NotificationService().scheduleRestTimerNotification(seconds);
+    _requestPermissionAndScheduleRestTimer(seconds);
 
     _restTimerEndsAt = DateTime.now().add(Duration(seconds: seconds));
     setState(() {
@@ -516,6 +516,15 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen>
     });
 
     _restTimer = Timer.periodic(const Duration(seconds: 1), _restTimerTick);
+  }
+
+  /// Requests notification permission before scheduling — users who never
+  /// opened Settings would otherwise never be prompted, and the OS silently
+  /// drops a scheduled notification when permission was never granted.
+  Future<void> _requestPermissionAndScheduleRestTimer(int seconds) async {
+    final granted = await NotificationService().requestPermission();
+    if (!granted) return;
+    await NotificationService().scheduleRestTimerNotification(seconds);
   }
 
   void _stopRestTimer() {
