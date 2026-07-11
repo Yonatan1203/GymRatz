@@ -5,7 +5,7 @@ class Program {
   final String id;
   final String name;
   final int workouts;
-  final int weeks;
+  final int? weeks;
   final int progress;
   final String? difficulty;
   final String? description;
@@ -50,6 +50,10 @@ class Program {
     return raw == null ? null : DateTime(raw.year, raw.month, raw.day);
   }
 
+  /// Display label for the program's duration: "N weeks" for a fixed-length
+  /// program, or "Ongoing" when [weeks] is null.
+  String get weeksLabel => weeks != null ? '$weeks weeks' : 'Ongoing';
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
@@ -72,7 +76,7 @@ class Program {
         id: json['id'] as String,
         name: json['name'] as String? ?? '',
         workouts: json['workouts'] as int? ?? 0,
-        weeks: json['weeks'] as int? ?? 0,
+        weeks: json['weeks'] as int?,
         progress: json['progress'] as int? ?? 0,
         difficulty: json['difficulty'] as String?,
         description: json['description'] as String?,

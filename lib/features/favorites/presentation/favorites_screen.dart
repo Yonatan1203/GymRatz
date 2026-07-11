@@ -65,7 +65,7 @@ class FavoritesScreen extends ConsumerWidget {
                                     Text(p.name, style: AppTextStyles.bodySmall.copyWith(color: context.foreground, fontWeight: FontWeight.w500)),
                                     SizedBox(height: 4.h),
                                     Text(
-                                      '${p.workouts} workouts/week \u2022 ${p.weeks} weeks',
+                                      '${p.workouts} workouts/week \u2022 ${p.weeksLabel}',
                                       style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
                                     ),
                                     SizedBox(height: 6.h),

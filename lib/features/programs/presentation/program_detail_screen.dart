@@ -232,8 +232,9 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
 
   Widget _buildBody(BuildContext context, bool isDark, Program program, {required bool isUserProgram}) {
     final programDesc = program.description ??
-        '${program.workouts} workouts/week \u2022 ${program.weeks} weeks';
-    final totalWorkouts = program.workouts * program.weeks;
+        '${program.workouts} workouts/week \u2022 ${program.weeksLabel}';
+    final totalWorkouts =
+        program.weeks != null ? program.workouts * program.weeks! : null;
 
     return SafeArea(
       top: false,
@@ -281,8 +282,9 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                   spacing: AppSpacing.lg,
                   runSpacing: AppSpacing.md,
                   children: [
-                    _headerChip(AppIcons.clock, '${program.weeks} weeks'),
-                    _headerChip(AppIcons.dumbbell, '$totalWorkouts workouts'),
+                    _headerChip(AppIcons.clock, program.weeksLabel),
+                    if (totalWorkouts != null)
+                      _headerChip(AppIcons.dumbbell, '$totalWorkouts workouts'),
                     if (program.difficulty != null)
                       Container(
                         padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
@@ -322,7 +324,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                       ),
                   ],
                 ),
-                if (isUserProgram) ...[
+                if (isUserProgram && program.weeks != null) ...[
                   SizedBox(height: AppSpacing.xl),
                   _buildProgressBar(program.progress),
                 ],
@@ -344,8 +346,11 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                       style: AppTextStyles.h2.copyWith(color: context.foreground),
                     ),
                     const Spacer(),
-                    if (program.isActive && program.activatedAt != null && program.weeks > 0)
-                      _buildWeekBadge(context, program),
+                    if (program.isActive && program.activatedAt != null)
+                      if (program.weeks != null && program.weeks! > 0)
+                        _buildWeekBadge(context, program)
+                      else if (program.weeks == null)
+                        _buildOngoingBadge(context),
                   ],
                 ),
                 SizedBox(height: AppSpacing.lg),
@@ -601,9 +606,11 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
   }
 
   Widget _buildWeekBadge(BuildContext context, Program program) {
+    // Safe: only called when the caller has already verified program.weeks != null.
+    final weeks = program.weeks!;
     final daysSinceActivation = DateTime.now().difference(program.activatedAt!).inDays;
     final currentWeek = (daysSinceActivation ~/ 7) + 1;
-    final clampedWeek = currentWeek.clamp(1, program.weeks);
+    final clampedWeek = currentWeek.clamp(1, weeks);
     return Container(
       padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       decoration: BoxDecoration(
@@ -611,7 +618,24 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
         borderRadius: AppRadius.borderFull,
       ),
       child: Text(
-        'Week $clampedWeek of ${program.weeks}',
+        'Week $clampedWeek of $weeks',
+        style: AppTextStyles.caption.copyWith(
+          color: context.primaryColor,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOngoingBadge(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: context.primaryColor.withValues(alpha: 0.12),
+        borderRadius: AppRadius.borderFull,
+      ),
+      child: Text(
+        'Ongoing',
         style: AppTextStyles.caption.copyWith(
           color: context.primaryColor,
           fontWeight: FontWeight.w600,
@@ -804,7 +828,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
             context,
             icon: AppIcons.calendar,
             label: 'Duration',
-            value: '${program.weeks} weeks',
+            value: program.weeksLabel,
           ),
           SizedBox(height: AppSpacing.md),
           _buildStatRow(

@@ -336,8 +336,8 @@ class WorkoutService {
     if (programId != null && programId.isNotEmpty) {
       try {
         final program = await _programRepo.getProgram(uid, programId);
-        if (program != null) {
-          final totalSessions = program.weeks * program.days.length;
+        if (program != null && program.weeks != null) {
+          final totalSessions = program.weeks! * program.days.length;
           if (totalSessions > 0) {
             final completedCount = await _workoutRepo.getCompletedCountForProgram(
               uid,

@@ -13,6 +13,8 @@ class ProgramInfoCard extends StatelessWidget {
   final TextEditingController descriptionController;
   final FocusNode nameFocus;
   final FocusNode weeksFocus;
+  final bool isOngoing;
+  final ValueChanged<bool> onOngoingChanged;
   final String difficulty;
   final ValueChanged<String> onDifficultyChanged;
   final bool forCoach;
@@ -26,6 +28,8 @@ class ProgramInfoCard extends StatelessWidget {
     required this.descriptionController,
     required this.nameFocus,
     required this.weeksFocus,
+    required this.isOngoing,
+    required this.onOngoingChanged,
     required this.difficulty,
     required this.onDifficultyChanged,
     required this.forCoach,
@@ -51,16 +55,18 @@ class ProgramInfoCard extends StatelessWidget {
           SizedBox(height: 12.h),
           Row(
             children: [
-              Expanded(
-                child: CustomInput(
-                  controller: weeksController,
-                  label: 'Duration (weeks)',
-                  keyboardType: TextInputType.number,
-                  focusNode: weeksFocus,
-                  textInputAction: TextInputAction.done,
+              if (!isOngoing) ...[
+                Expanded(
+                  child: CustomInput(
+                    controller: weeksController,
+                    label: 'Duration (weeks)',
+                    keyboardType: TextInputType.number,
+                    focusNode: weeksFocus,
+                    textInputAction: TextInputAction.done,
+                  ),
                 ),
-              ),
-              SizedBox(width: 12.w),
+                SizedBox(width: 12.w),
+              ],
               Expanded(
                 child: SelectField(
                   label: 'Difficulty',
@@ -70,6 +76,21 @@ class ProgramInfoCard extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          SizedBox(height: 12.h),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(
+              'Ongoing — no end date',
+              style: AppTextStyles.bodySmall.copyWith(color: context.foreground),
+            ),
+            subtitle: Text(
+              'Program continues indefinitely instead of a fixed week count',
+              style: AppTextStyles.caption.copyWith(color: context.mutedForeground),
+            ),
+            value: isOngoing,
+            activeColor: context.primaryColor,
+            onChanged: onOngoingChanged,
           ),
           SizedBox(height: 12.h),
           CustomInput(

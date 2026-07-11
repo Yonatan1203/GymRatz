@@ -151,7 +151,8 @@ class CoachProgramsScreen extends ConsumerWidget {
       BuildContext context, WidgetRef ref, Map<String, dynamic> programJson) {
     final name = programJson['name'] as String? ?? 'Untitled';
     final workouts = programJson['workouts'] as int? ?? 0;
-    final weeks = programJson['weeks'] as int? ?? 0;
+    final weeks = programJson['weeks'] as int?;
+    final weeksLabel = weeks != null ? '$weeks weeks' : 'Ongoing';
     final difficulty = programJson['difficulty'] as String?;
     final programId = programJson['id'] as String;
 
@@ -187,7 +188,7 @@ class CoachProgramsScreen extends ConsumerWidget {
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  '${workouts}x/week \u2022 $weeks weeks${difficulty != null ? ' \u2022 $difficulty' : ''}',
+                  '${workouts}x/week \u2022 $weeksLabel${difficulty != null ? ' \u2022 $difficulty' : ''}',
                   style: AppTextStyles.caption
                       .copyWith(color: context.mutedForeground),
                 ),
