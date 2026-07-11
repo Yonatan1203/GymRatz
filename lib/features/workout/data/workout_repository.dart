@@ -91,12 +91,17 @@ class WorkoutRepository {
     }
   }
 
-  Future<int> getCompletedCountForProgram(String uid, String programId) async {
-    final snap = await _workouts(uid)
+  /// Counts completed workouts for [programId], optionally scoped to
+  /// [since] (inclusive) so progress resets on each new activation cycle
+  /// instead of accumulating across the program's entire history.
+  Future<int> getCompletedCountForProgram(String uid, String programId, {DateTime? since}) async {
+    var query = _workouts(uid)
         .where('programId', isEqualTo: programId)
-        .where('status', isEqualTo: WorkoutStatus.completed.name)
-        .count()
-        .get();
+        .where('status', isEqualTo: WorkoutStatus.completed.name);
+    if (since != null) {
+      query = query.where('date', isGreaterThanOrEqualTo: since.toIso8601String());
+    }
+    final snap = await query.count().get();
     return snap.count ?? 0;
   }
 
