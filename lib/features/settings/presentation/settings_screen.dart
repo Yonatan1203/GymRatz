@@ -8,6 +8,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
@@ -174,7 +175,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           final prefs = await SharedPreferences.getInstance();
                           await prefs.setBool('notif_push_enabled', v);
                           if (v) {
-                            NotificationService().requestPermission();
+                            final granted = await NotificationService().requestPermission();
+                            if (!granted && mounted) _showNotificationPermissionDeniedSnackBar();
                           }
                         }),
                         Divider(color: context.mutedForeground.withValues(alpha:0.15), height: 1),
@@ -183,7 +185,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           final prefs = await SharedPreferences.getInstance();
                           await prefs.setBool('notif_workout_enabled', v);
                           if (v) {
-                            await NotificationService().requestPermission();
+                            final granted = await NotificationService().requestPermission();
+                            if (!granted) {
+                              if (mounted) _showNotificationPermissionDeniedSnackBar();
+                              return;
+                            }
                             final weekdays = _activeProgramWeekdays();
                             if (weekdays.isNotEmpty) {
                               NotificationService().scheduleWorkoutReminder(
@@ -230,7 +236,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         _toggleRow('Streak Reminders', _streakReminders, (v) async {
                           setState(() => _streakReminders = v);
                           if (v) {
-                            await NotificationService().requestPermission();
+                            final granted = await NotificationService().requestPermission();
+                            if (!granted) {
+                              if (mounted) _showNotificationPermissionDeniedSnackBar();
+                              return;
+                            }
                             await NotificationService().scheduleStreakReminder();
                           } else {
                             await NotificationService().cancelStreakReminder();
@@ -499,6 +509,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 8.h),
       child: Text(title, style: AppTextStyles.caption.copyWith(color: context.mutedForeground, fontWeight: FontWeight.w600, letterSpacing: 1)),
+    );
+  }
+
+  void _showNotificationPermissionDeniedSnackBar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text(
+            'Notifications are off. Enable them in Settings to receive reminders.'),
+        action: SnackBarAction(
+          label: 'Settings',
+          onPressed: openAppSettings,
+        ),
+      ),
     );
   }
 

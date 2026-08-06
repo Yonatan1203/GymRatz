@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 
+import 'crashlytics_service.dart';
+
 class NotificationService {
   static final NotificationService _instance = NotificationService._();
   factory NotificationService() => _instance;
@@ -167,7 +169,7 @@ class NotificationService {
     await prefs.setBool(_keyStreakEnabled, false);
   }
 
-  static const _fcmNotifId = 200;
+  static const _fcmNotifId = 300;
 
   /// Display a server-sent FCM message as a local notification while the app
   /// is in the foreground. [payload] is an optional route string for tap handling.
@@ -250,6 +252,9 @@ class NotificationService {
       );
     } on PlatformException {
       // SCHEDULE_EXACT_ALARM permission not granted or revoked — use inexact.
+      CrashlyticsService().log(
+        'NotificationService: exact alarm denied, falling back to inexact for id=$id',
+      );
       await _plugin.zonedSchedule(
         id,
         title,
